@@ -52,7 +52,7 @@ const Header = () => {
             </div>
 
             <div className="hover:bg-neutral-300 h-12 flex items-center justify-center grow ">
-            <Link href="/programming" className="nav">
+            <Link href="/page/programming" className="nav">
                     <p className="text-black text-base no-underline cursor-pointer">Programming</p>
                 </Link>
             </div>
@@ -70,7 +70,7 @@ const Header = () => {
             </div>
             
             <div className="hover:bg-neutral-300 h-12 flex justify-center items-center grow ">
-            <Link href="/contact">
+            <Link href="/page/contact">
                     <p className="text-black text-base no-underline cursor-pointer">Contact</p>
                 </Link>
             </div>   

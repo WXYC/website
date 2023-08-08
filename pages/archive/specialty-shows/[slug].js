@@ -71,8 +71,8 @@ export default ArchiveCategoryPage;
 
 
 export const getStaticPaths = async () => {
-  const { data } = await client.queries.blogConnection();
-  const paths = data.blogConnection.edges.map((x) => {
+  const { data } = await client.queries.categoryConnection();
+  const paths = data.categoryConnection.edges.map((x) => {
     return { params: { slug: x.node._sys.filename } };
   });
  

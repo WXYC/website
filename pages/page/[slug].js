@@ -1,6 +1,6 @@
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import { tinaField, useTina } from "tinacms/dist/react";
-import { client } from "../tina/__generated__/client";
+import { client } from "../../tina/__generated__/client";
 
 //editable static pages (about, programming, etc.)
 export default function Home(props) {
@@ -27,6 +27,9 @@ export default function Home(props) {
 }
 
 export const getStaticPaths = async () => {
+    // const paths = [{ params: { slug: "contact"}}, {params: {slug: "playlist"}}, {params: {slug: "programming"}},];
+
+
     const { data } = await client.queries.pageConnection();
     const paths = data.pageConnection.edges.map((x) => {
       return { params: { slug: x.node._sys.filename } };
