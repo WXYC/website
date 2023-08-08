@@ -30,9 +30,6 @@ export default function EventList(props) {
       <div className="relative z-10 -mt-10">
        <Image  src={photo} alt="A crowded dancefloor at a WXYC event."/>
       </div>
-    
-      
-      
 
       <div className="archive-grid w-full mx-auto">
         {structuredData.map((event) => (

@@ -8,7 +8,7 @@ const MyTable = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://wxyc.info/playlists/recentEntries?n=50', 
+        const response = await fetch('ec2-44-203-55-181.compute-1.amazonaws.com:80', 
         {
             // request body
         })
