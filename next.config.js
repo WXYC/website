@@ -1,11 +1,6 @@
 module.exports = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "assets.tina.io"
-      }
-    ]
+    domains: ['assets.tina.io'],
   },
   async rewrites() {
     return [
