@@ -1,0 +1,67 @@
+fragment PageParts on Page {
+  body
+}
+
+fragment BlogParts on Blog {
+  title
+  author
+  cover
+  categories {
+    __typename
+    category {
+      ... on Category {
+        title
+        specialtyShow
+        description
+      }
+      ... on Document {
+        _sys {
+          filename
+          basename
+          breadcrumbs
+          path
+          relativePath
+          extension
+        }
+        id
+      }
+    }
+  }
+  published
+  description
+  body
+}
+
+fragment ArchiveParts on Archive {
+  title
+  cover
+  categories {
+    __typename
+    category {
+      ... on Category {
+        title
+        specialtyShow
+        description
+      }
+      ... on Document {
+        _sys {
+          filename
+          basename
+          breadcrumbs
+          path
+          relativePath
+          extension
+        }
+        id
+      }
+    }
+  }
+  published
+  description
+}
+
+fragment CategoryParts on Category {
+  title
+  specialtyShow
+  description
+}
