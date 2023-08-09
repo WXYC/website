@@ -18,9 +18,9 @@ const schema = defineSchema({
 });
 
 export const config = defineConfig({
-  clientId: "id",
+  clientId: process.env.TINA_PUBLIC_CLIENT_ID,
   branch: "main",
-  token: "id",
+  token: process.env.TINA_TOKEN,
   media: {
     tina: {
       publicFolder: "public",
