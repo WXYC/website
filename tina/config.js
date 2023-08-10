@@ -1,7 +1,4 @@
 import { defineConfig, defineSchema } from "tinacms";
-// import * as dotenv from "dotenv";
-
-// dotenv.config();
 
 import collectionPage from './collections/page.js';
 import collectionBlog from './collections/blog.js';
@@ -36,8 +33,8 @@ export const config = defineConfig({
     maxSearchIndexFieldLength: 100
   },
   build: {
-    publicFolder: "public", // The public asset folder for your framework
-    outputFolder: "admin", // within the public folder
+    publicFolder: "public", 
+    outputFolder: "admin", 
     basePath: 'website'
   },
   schema,
