@@ -8,6 +8,7 @@ import Image from 'next/image'
 import React, {useState} from "react"
 import Link from "next/link";
 import SeeMoreButton from "../../components/SeeMoreButton.tsx";
+import Head from "next/head";
 
 //blog home page
 export default function PostList(props) {
@@ -21,7 +22,12 @@ export default function PostList(props) {
 
   return (
     <BlogLayout>
-
+      <Head>
+        <title>Tina App</title>
+        <meta name="description" content="A TinaCMS Application" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="apple-itunes-app" content="app-id=353182815" />
+      </Head>
       <div>
         <div className="pt-3 md:pt-0 mx-auto h-32 md:h-24 items-center justify-between w-5/6 flex flex-col md:flex-row">
           <div className="kallisto text-5xl">
