@@ -23,10 +23,9 @@ export default function PostList(props) {
   return (
     <BlogLayout>
       <Head>
-        <title>Tina App</title>
-        <meta name="description" content="A TinaCMS Application" />
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="apple-itunes-app" content="app-id=353182815" />
+        <title>WXYC PRESS</title>
+        {/* <meta name="description" content="A TinaCMS Application" /> */}
+        <link rel="icon" href="/10144964.png"/>
       </Head>
       <div>
         <div className="pt-3 md:pt-0 mx-auto h-32 md:h-24 items-center justify-between w-5/6 flex flex-col md:flex-row">

@@ -6,13 +6,13 @@ import Header from './Header'
 export const Layout = (props) => {
   return (
     <div>
-      {/* <Head>
+      <Head>
         <title>WXYC</title>
         <meta name="description" content="WXYC's website" />
-        <link rel="icon" type="image/png" href="10144964.png"/>
+        {/* <link rel="icon" type="image/png" href="10144964.png"/> */}
         <meta name="apple-itunes-app" content="app-id=353182815" />
         {/* <link rel="icon" href="../public/favicon.ico"/> */}
-      {/* </Head> */} 
+       </Head>  
 
       <header className='header'>
         <Header/>
