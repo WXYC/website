@@ -6,6 +6,8 @@ import PhotoGallery from "../components/PhotoGallery";
 import { AiFillInstagram, AiFillTwitterCircle } from "react-icons/ai";
 import { FiMail } from "react-icons/fi"
 import { BsSpotify } from "react-icons/bs"
+import WidgetForLayout from "../components/WidgetForLayout";
+
 
 //home page
 export default function Home(props) {
@@ -19,6 +21,12 @@ export default function Home(props) {
         {/* Left side of the screen container */}
         
         <div className="flex flex-col lg:w-4/6 w-full justify-center md:mr-10 md:mt-10 mt-0">
+          
+          <div className="md:hidden">
+            <iframe src={`https://dj.wxyc.org/#/NowPlaying?theme=dark`} className="border-0 w-full h-[16rem] overflow-hidden mb-16"/>
+            {/* <a className="mt-12">download/open the app</a> */}
+          </div>
+
           <p className="text-white lg:text-5xl mb-2 md:mb-4 whitespace-nowrap text-3xl kallisto mx-auto md:mx-0">This Week on WXYC</p>
           {events && (
             //This Week on WXYC
@@ -95,7 +103,8 @@ export default function Home(props) {
 
         <p className="kallisto text-3xl text-left">Listen Live</p>
 
-        <iframe src={`https://dj.wxyc.org/#/NowPlaying?theme=dark`} className="border-0 w-full h-[25rem] overflow-hidden mt-5 mb-12"/>
+        {/* <iframe src={`https://dj.wxyc.org/#/NowPlaying?theme=dark`} className="border-0 w-full h-[25rem] overflow-hidden mt-5 mb-12"/> */}
+        <WidgetForLayout/>
 
          
         <div className="mx-auto bg-gradient-to-b from-neutral-200 to-neutral-400 hover:text-neutral-700 text-black  w-5/6 flex flex-col justify-center items-center h-16 border-0 rounded-3xl mt-10 text-xl ">
@@ -111,7 +120,7 @@ export default function Home(props) {
 
       <div className=" hidden md:visible md:flex justify-center items-center mx-auto w-2/3 mt-20">
     
-    <PhotoGallery/>
+    <PhotoGallery className="z-1"/>
   </div>
 
   {/* Social media links footer */}
