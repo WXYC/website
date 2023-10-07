@@ -18,7 +18,7 @@
     "react-dom": "^17.0.2",
     "react-icons": "^4.10.1",
     "react-lazyload": "^3.2.0",
-    "tinacms": "1.5.20",
+    "tinacms": "1.5.21",
     "typescript": "^5.1.3",
     "wavesurfer.js": "^7.3.4"
   },
