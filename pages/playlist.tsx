@@ -38,14 +38,7 @@ const MyTable = () => {
 
       <AudioPlayer
           autoPlay
-          src="http://audio-mp3.ibiblio.org:8000/wxyc.mp3"
-          onPlay={e => console.log("onPlay")}
-          // other props here
-        />
-
-      <AudioPlayer
-          autoPlay
-          src="http://archive.wxyc.org/recordings/mp3/2023/02/03/Fri0200.mp3"
+          src="https://audio-mp3.ibiblio.org/wxyc.mp3"
           onPlay={e => console.log("onPlay")}
           // other props here
         />
@@ -53,7 +46,7 @@ const MyTable = () => {
       
       {/* <MyAudioPlayer/> */}
 
-      <iframe src="http://www.wxyc.info/playlists/recent.html" className='w-5/6 h-screen'></iframe>
+      {/* <iframe src="https://www.wxyc.info/playlists/recent.html" className='w-5/6 h-screen'></iframe> */}
   
       {/* <div className="sm:mx-auto sm:w-5/6 overflow-auto pb-10"> 
       <p className="text-5xl mb-2 kallisto">Live Playlist</p>
