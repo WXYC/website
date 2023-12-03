@@ -136,7 +136,7 @@ export default function Home(props) {
           {" "}
           <FiMail size={44} className="ml-.5 mt-0.5" />
         </a>
-        <a target="_blank" href="mailto:info@wxyc.org">
+        <a target="_blank" href="https://open.spotify.com/user/wxyc">
           {" "}
           <BsSpotify size={44} className="ml-;5 mt-0.5" />
         </a>
