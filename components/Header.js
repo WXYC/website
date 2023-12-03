@@ -110,9 +110,14 @@ const Header = () => {
                     </div>
                     <div className="flex justify-center items-center text-medium md:hover:bg-gray-200 rounded-md text-white md:text-black  w-full px-4 py-2">
                       <Menu.Item>
-                        <Link href="/playlist" legacyBehavior={false}>
+                        <Link
+                          href="http://www.wxyc.info/playlists/recent.html"
+                          target="_blank"
+                          legacyBehavior={false}
+                        ></Link>
+                        {/* <Link href="/playlist" legacyBehavior={false}>
                           <a onClick={toggleMenu}>Live playlist</a>
-                        </Link>
+                        </Link> */}
                       </Menu.Item>
                     </div>
                     <div className="flex justify-center items-center text-medium md:hover:bg-gray-200 hover:rounded-md text-white md:text-black w-full px-4 py-2">
@@ -131,7 +136,7 @@ const Header = () => {
             </div>
 
             <div className="flex justify-center items-center  ">
-              <Link href="https://wxyc.bigcartel.com/">
+              <Link href="https://merch.wxyc.org/">
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
@@ -217,7 +222,7 @@ const Header = () => {
               </div>
 
               <div className="hover:bg-neutral-300 h-12 flex justify-center items-center grow ">
-                <Link href="https://wxyc.bigcartel.com/">
+                <Link href="https://merch.wxyc.org/">
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
