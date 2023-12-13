@@ -56,6 +56,7 @@ const EventsCategoryPage = (props) => {
 												{event.weekEvents.map((event) => (
 													<EventPreview
 														id={event.event.id}
+														key={event.event.id}
 														title={event.event.title}
 														cover={event.event.cover}
 														subtitle={event.event.description.children[0].children[0].text.substring(

@@ -61,6 +61,7 @@ const ArchiveCategoryPage = (props) => {
 											<div className="events-row">
 												{event.weekEvents.map((event) => (
 													<EventPreview
+														key={event.event.id} // Add key prop here
 														id={event.event.id}
 														title={event.event.title}
 														cover={event.event.cover}

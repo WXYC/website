@@ -7,7 +7,7 @@ const Android = () => {
 					Android App Privacy Policy
 				</h1>
 				<br />
-				<p className="text-lg">We don't collect any data!</p>
+				<p className="text-lg">We don&apos;t collect any data!</p>
 			</div>
 		</div>
 	)

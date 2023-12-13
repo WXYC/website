@@ -83,7 +83,7 @@ export default function PostList(props) {
 			<div className="mx-auto grid w-5/6 grid-cols-1 justify-around gap-4 pb-10 md:grid-cols-2  lg:grid-cols-3">
 				{postsList.slice(0, postsToShow).map((post) => (
 					// <LazyLoad height={200} once={true} key={post.node.id}>
-					<div className="mb-8 flex justify-center">
+					<div className="mb-8 flex justify-center" key={post.node.id}>
 						<PostPreview
 							id={post.node.id}
 							title={post.node.title}
