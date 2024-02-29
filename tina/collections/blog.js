@@ -59,7 +59,7 @@ export default {
         type: "string",
         label: "Post Description",
         name: "description",
-        placeholder: "post description"
+        placeholder: "post description (optional, if skipped there won't be any text under post)"
       },
       {
         type: "rich-text",

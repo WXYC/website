@@ -8,7 +8,7 @@ const PostPreview = (props: PostPreviewData) => {
         <Link href={`/blog/${props.slug}`}>
           <a className="text-xl text-center h-12 font-bold">{props.title}</a>
         </Link>
-        <p>{props.subtitle}...</p>
+        <p>{props.subtitle}</p>
       </div>
     )
 
