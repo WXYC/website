@@ -1,7 +1,7 @@
 ---
 title: Alex G at Cat's Cradle
 author: Sheena Meng
-cover: /uploads/courtney-barnett-1-3.webp
+cover: /uploads/alex-g-4.webp
 hero: /uploads/alex-g-4.webp
 tags:
   - {}
@@ -39,6 +39,8 @@ The (planned) setlist wrapped up with “SugarHouse,” a song title borrowed fr
 Alex G and Company broke away from the last lovely, fleeting moments of “Sugarhouse – Live” as Sam Acchione, the guitarist, doubled over in pain, leaving Alex and Tom to rip a fake “alien” out of him. The band disappeared from the stage for a moment, reappearing with Alex sporting a haphazard bald cap on his head for the encore. Grinning wildly, he announced to the crowd that, “We’re Coldplay and I’m Chris Martin,” before launching into renditions of “Clocks” (whose lyrics evaded him until he was able to find a print copy of the lyrics to slap onto the piano) and “Yellow.” Tom Kelly, the drummer, then took over the center stage, belting “Viva la Vida” into the mic as the crowd shouted their approval.
 
 In the spirit of Halloween, the band members threw out packs of raisins (my friend was lucky enough to snag one!), and John Heywood, the bassist, led the audience in a surprisingly gentle performance of “Monster Mash.” With Alex looking drunker by the minute, they rounded the performance out with a rousing cover of Third Eye Blind’s “Jumper,” before promptly exiting stage left, leaving the concert-goers to make their way out of Cat’s Cradle and into the balmy Halloween night. All in all, I can say with certainty that that night was one of my favorite ways I’ve ever spent Halloween—I left feeling lighter than I had arrived.
+
+
 
 Setlist
 Gretel
