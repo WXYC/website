@@ -21,6 +21,16 @@ const DropdownMenu = () => {
 							</a>
 						</Menu.Item>
 					</div>
+					<div className="text-medium flex w-full items-center justify-center px-4 py-2 text-white hover:text-blue-300">
+						<Menu.Item>
+							<a
+								href="https://play.google.com/store/apps/details?id=org.wxyc.WXYCCH"
+								target="_blank"
+							>
+								Android App
+							</a>
+						</Menu.Item>
+					</div>
 					<div className="text-medium flex w-full items-center justify-center rounded-md px-4 py-2  text-white hover:text-blue-300">
 						<Menu.Item>
 							<Link

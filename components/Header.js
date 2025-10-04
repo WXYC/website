@@ -1,12 +1,12 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import DropdownMenu from './DropdownMenu'
 import photo from '../images/logo.png'
 import Image from 'next/image'
 import AudioPlayerStream from '../components/audioplayers/AudioPlayerStream'
-import {AiOutlineMenu, AiOutlineClose} from 'react-icons/ai'
-import {Menu} from '@headlessui/react'
-import {IoIosArrowDown, IoIosArrowUp} from 'react-icons/io'
+import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'
+import { Menu } from '@headlessui/react'
+import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io'
 
 const Header = () => {
 	const [submenuOpen, setSubmenuOpen] = useState(false)
@@ -63,9 +63,8 @@ const Header = () => {
 
 								{/* Submenu starts here */}
 								<div
-									className={`duration-450 my-5 ml-14 overflow-hidden text-2xl transition-all ease-in-out focus:outline-none focus:ring-0 md:text-3xl ${
-										submenuOpen ? 'max-h-[400px]' : 'max-h-0'
-									}`}
+									className={`duration-450 my-5 ml-14 overflow-hidden text-2xl transition-all ease-in-out focus:outline-none focus:ring-0 md:text-3xl ${submenuOpen ? 'max-h-[400px]' : 'max-h-0'
+										}`}
 								>
 									<div className="mb-2 flex w-full text-nowrap text-white">
 										<Menu.Item>
@@ -75,6 +74,16 @@ const Header = () => {
 											>
 												iPhone app
 											</Link>
+										</Menu.Item>
+									</div>
+									<div className="text-medium flex w-full items-center justify-center px-4 py-2 text-white hover:text-blue-300">
+										<Menu.Item>
+											<a
+												href="https://play.google.com/store/apps/details?id=org.wxyc.WXYCCH"
+												target="_blank"
+											>
+												Android App
+											</a>
 										</Menu.Item>
 									</div>
 									<div className="mb-2 flex w-full text-nowrap text-white">
