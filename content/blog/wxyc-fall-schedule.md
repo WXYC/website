@@ -3,6 +3,7 @@ title: WXYC Programming Schedule Fall 2025
 cover: /uploads/IMG_5715.jpg
 categories:
   - category: content/category/event.md
+published: 2025-10-11T04:00:00.000Z
 description: Tune in to hear your favorite DJs this fall!
 ---
 
