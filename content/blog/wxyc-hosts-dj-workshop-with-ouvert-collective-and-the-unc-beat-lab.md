@@ -3,6 +3,7 @@ title: WXYC Hosts DJ Workshop with Ouvert Collective and the UNC Beat Lab
 cover: /uploads/djworkshopposter.png
 categories:
   - category: content/category/event.md
+published: 2025-10-11T04:00:00.000Z
 description: 'Meet at the Beat Lab at 6pm on Tuesday, October 14th'
 ---
 
