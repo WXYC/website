@@ -32,4 +32,4 @@ MUSIC: 10PM-2AM
 $5 w/ OneCard, $8 without
 📌 Cat’s Cradle Main Room
 
-Buy tickets online, or pay at the door. Costumes encouraged. 
+[Buy tickets online](https://catscradle.com/event/wxyc-goes-psycho-halloween-dance-party/cats-cradle/carrboro-north-carolina/), or pay at the door. Costumes encouraged. 
