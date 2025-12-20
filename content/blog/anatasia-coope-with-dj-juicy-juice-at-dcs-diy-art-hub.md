@@ -1,12 +1,12 @@
 ---
-title: Anatasia Coope with DJ Juicy Juice at DC's DIY Art Hub
+title: Anastasia Coope with DJ Juicy Juice at DC's DIY Art Hub
 author: Kate Golden
 cover: /uploads/IMG_5932.PNG
 categories:
   - category: content/category/artist-interview.md
 published: 2025-07-16T04:00:00.000Z
 description: >-
-  WXYC's DJ Juicy Juice spoke with Anatasia Coope, New York based freak folk
+  WXYC's DJ Juicy Juice spoke with Anastasia Coope, New York based freak folk
   musician, before her show at DC's house turned DIY music venue, Rhizome.
 ---
 
