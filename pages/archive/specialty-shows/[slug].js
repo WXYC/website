@@ -3,20 +3,11 @@ import EventPreview from '../../../components/EventPreview'
 import {
 	groupEventsByWeek,
 	generateStructuredData,
+	getDescriptionText,
 } from '../../../components/OrganizingArchive'
 import ArchiveLayout from '../../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../../components/SeeMoreButton'
-
-// Helper to safely extract description text from TinaCMS rich-text field
-const getDescriptionText = (description, maxLength = 75) => {
-	try {
-		const text = description?.children?.[0]?.children?.[0]?.text
-		return text ? text.substring(0, maxLength) : ''
-	} catch {
-		return ''
-	}
-}
 
 // filter archive by a specific specialty show
 const ArchiveCategoryPage = (props) => {

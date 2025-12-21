@@ -3,6 +3,7 @@ import EventPreview from '../../../components/EventPreview'
 import {
 	groupEventsByWeek,
 	generateStructuredData,
+	getDescriptionText,
 } from '../../../components/OrganizingArchive'
 import Link from 'next/link'
 import ArchiveLayout from '../../../components/ArchiveLayout'
@@ -67,10 +68,7 @@ const SpecialtyShowsPage = (props) => {
 															id={event.event.id}
 															title={event.event.title}
 															cover={event.event.cover}
-															subtitle={event.event.description.children[0].children[0].text.substring(
-																0,
-																75
-															)}
+															subtitle={getDescriptionText(event.event.description)}
 															slug={event.event._sys.filename}
 														/>
 													</div>
