@@ -3,6 +3,7 @@ import {client} from '../../tina/__generated__/client'
 import {
 	groupEventsByWeek,
 	generateStructuredData,
+	getDescriptionText,
 } from '../../components/OrganizingArchive'
 // import LazyLoad from 'react-lazyload';
 import ArchiveDropdown from '../../components/DropdownArchive'
@@ -12,16 +13,6 @@ import mobilephoto from '/images/crowdmobile.jpeg'
 import Image from 'next/image'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../components/SeeMoreButton'
-
-// Helper to safely extract description text from TinaCMS rich-text field
-const getDescriptionText = (description, maxLength = 75) => {
-	try {
-		const text = description?.children?.[0]?.children?.[0]?.text
-		return text ? text.substring(0, maxLength) : ''
-	} catch {
-		return ''
-	}
-}
 
 // archive home page
 export default function EventList(props) {
