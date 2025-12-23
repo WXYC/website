@@ -80,7 +80,7 @@ jobs:
           SEARCH_TOKEN: ${{ secrets.SEARCH_TOKEN }}
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
           NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
-        run: npx tinacms build --skip-cloud-checks
+        run: npx tinacms build 
       - name: Build with Next.js
         env:
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
