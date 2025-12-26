@@ -46,13 +46,3 @@ export function generateStructuredData(groupedEvents) {
 
 	return structuredData
 }
-
-// Helper to safely extract description text from TinaCMS rich-text field
-export function getDescriptionText(description, maxLength = 75) {
-	try {
-		const text = description?.children?.[0]?.children?.[0]?.text
-		return text ? text.substring(0, maxLength) : ''
-	} catch {
-		return ''
-	}
-}
