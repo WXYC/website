@@ -71,7 +71,14 @@ const PostPage = (props) => {
 export default PostPage
 
 export const getStaticPaths = async () => {
-	const {data} = await client.queries.blogConnection()
+	// First, get the total count of blog posts
+	const length = await client.queries.blogConnection()
+	const postCount = length.data.blogConnection.totalCount
+
+	// Then fetch all blog posts using the count
+	const {data} = await client.queries.blogConnection({
+		last: postCount,
+	})
 	const paths = data.blogConnection.edges.map((x) => {
 		return {params: {slug: x.node._sys.filename}}
 	})
