@@ -8,7 +8,7 @@ import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'
 import { Menu } from '@headlessui/react'
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io'
 
-const Header = () => {
+const Header = ({ isHomePage = false }) => {
 	const [submenuOpen, setSubmenuOpen] = useState(false)
 
 	const toggleSubmenu = () => {
@@ -39,9 +39,12 @@ const Header = () => {
 						)}
 					</button>
 
-					<div className="my-auto mr-3">
-						<AudioPlayerStream />
-					</div>
+					{/* Hide player in mobile header on home page - it appears below main logo instead */}
+					{!isHomePage && (
+						<div className="my-auto mr-3">
+							<AudioPlayerStream />
+						</div>
+					)}
 				</div>
 
 				{/* Collapsible menu for mobile*/}
@@ -200,42 +203,50 @@ const Header = () => {
 
 				{/* WXYC logo in mobile header */}
 
-				<div className="mx-auto flex w-5/6 flex-col items-start justify-center pt-10 md:mb-10 md:pt-2 lg:hidden ">
-					<Link href="/">
-						{/* Header text parent container */}
-						<div className="mb-20 flex w-full  cursor-pointer flex-col items-center justify-center pt-20 md:flex-row md:items-end md:pt-20 lg:mb-5 lg:pt-1">
-							{/* Actual header text */}
-							<div className="flex w-full flex-col items-center justify-center md:w-3/4 md:pt-20 lg:w-2/5 lg:pt-1">
-								<Image src={photo} alt="Picture of the author" priority />
-								<h1 className=" kallistobold m-0 mx-auto text-6xl font-bold text-white no-underline">
-									89.3FM
-								</h1>
-								<div className="mt-2">
-									<h3 className="poppins mx-auto w-full text-center text-base md:mx-0  md:text-xl lg:text-base">
-										UNC-Chapel Hill&apos;s student-run, freeform radio station
-									</h3>
-								</div>
+				<div className="mx-auto flex w-5/6 flex-col items-center justify-center pt-10 md:mb-10 md:pt-2 lg:hidden ">
+					{/* Header text parent container */}
+					<div className={`flex w-full flex-col items-center justify-center pt-20 md:pt-20 lg:pt-1 ${isHomePage ? 'mb-5' : 'mb-20'}`}>
+						{/* Actual header text */}
+						<div className="flex w-full flex-col items-center justify-center md:w-3/4 md:pt-20 lg:w-2/5 lg:pt-1">
+							<Link href="/">
+								<Image src={photo} alt="WXYC logo" priority className="cursor-pointer" />
+							</Link>
+							<h1 className="kallistobold m-0 mx-auto text-6xl font-bold text-white no-underline">
+								89.3FM
+							</h1>
+							<div className="mt-2">
+								<h3 className="poppins mx-auto w-full text-center text-base md:mx-0 md:text-xl lg:text-base">
+									UNC-Chapel Hill&apos;s student-run, freeform radio station
+								</h3>
 							</div>
+							{/* Audio player below the logo on home page (mobile) */}
+							{isHomePage && (
+								<div className="mt-6">
+									<AudioPlayerStream />
+								</div>
+							)}
 						</div>
-					</Link>
+					</div>
 				</div>
 
 				{/* Parent container of web navbar */}
 				<div className="mb-20 hidden w-full lg:flex">
 					{/* Actual navbar */}
-					<div className="flex h-14 w-full flex-row justify-between bg-transparent px-1 py-4 ">
-						{/* Logo and player*/}
-						<div className="my-auto flex flex-row">
-							<Link href="/">
-								<div className="my-auto ml-10 flex h-10 w-28 cursor-pointer">
-									<Image src={photo} />
-								</div>
-							</Link>
+					<div className={`flex h-14 w-full flex-row bg-transparent px-1 py-4 ${isHomePage ? 'justify-end' : 'justify-between'}`}>
+						{/* Logo and player - hidden on home page where they appear in the main content */}
+						{!isHomePage && (
+							<div className="my-auto flex flex-row">
+								<Link href="/">
+									<div className="my-auto ml-10 flex h-10 w-28 cursor-pointer">
+										<Image src={photo} />
+									</div>
+								</Link>
 
-							<div className="ml-5">
-								<AudioPlayerStream />
+								<div className="ml-5">
+									<AudioPlayerStream />
+								</div>
 							</div>
-						</div>
+						)}
 
 						{/* Links*/}
 						<div className="my-auto flex w-1/2 flex-row">

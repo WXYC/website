@@ -8,10 +8,11 @@ import React, {useEffect, useRef, useState, useCallback} from 'react'
 
 // Symbols to store audio nodes on audio element (survives HMR)
 // Increment version to force recreation of analyzer
-const ANALYZER_VERSION = 5
+const ANALYZER_VERSION = 6
 const ANALYZER_KEY = '__audioMotionAnalyzer'
 const AUDIO_NODES_KEY = '__audioNodes'
 const VERSION_KEY = '__audioMotionVersion'
+const CONTAINER_KEY = '__audioMotionContainer'
 
 // Shared analyzer configuration
 const ANALYZER_CONFIG = {
@@ -71,10 +72,11 @@ const AudioVisualizer = ({audioRef, isPlaying}) => {
 		const audioElement = audioRef.current
 
 		const initAnalyzer = async () => {
-			// Check if already connected with current version (survives HMR)
+			// Check if already connected with current version AND same container (survives HMR)
 			if (
 				audioElement[ANALYZER_KEY] &&
-				audioElement[VERSION_KEY] === ANALYZER_VERSION
+				audioElement[VERSION_KEY] === ANALYZER_VERSION &&
+				audioElement[CONTAINER_KEY] === containerRef.current
 			) {
 				console.log('[Visualizer] Reusing existing analyzer')
 				const analyzer = audioElement[ANALYZER_KEY]
@@ -94,15 +96,17 @@ const AudioVisualizer = ({audioRef, isPlaying}) => {
 				return
 			}
 
-			// Old version detected - destroy and recreate
+			// Old analyzer exists but container changed (navigation) or version mismatch - destroy and recreate
 			if (audioElement[ANALYZER_KEY]) {
-				console.log('[Visualizer] Old version detected, recreating')
+				const reason = audioElement[CONTAINER_KEY] !== containerRef.current ? 'container changed' : 'version mismatch'
+				console.log(`[Visualizer] ${reason}, recreating analyzer`)
 				try {
 					audioElement[ANALYZER_KEY].destroy()
 				} catch (e) {
 					// Ignore cleanup errors
 				}
 				delete audioElement[ANALYZER_KEY]
+				delete audioElement[CONTAINER_KEY]
 			}
 
 			console.log('[Visualizer] Creating new analyzer...')
@@ -112,37 +116,54 @@ const AudioVisualizer = ({audioRef, isPlaying}) => {
 					'../../lib/audioMotion-analyzer.js'
 				)
 
-				// Create audio context and mono mixer
-				let audioNodes = audioElement[AUDIO_NODES_KEY]
+				let analyzer
+				let connectedToAudio = false
 
-				if (!audioNodes) {
-					const audioContext = new (window.AudioContext ||
-						window.webkitAudioContext)()
+				// Try to create audio context and connect to audio
+				try {
+					let audioNodes = audioElement[AUDIO_NODES_KEY]
 
-					const source = audioContext.createMediaElementSource(audioElement)
+					if (!audioNodes) {
+						const audioContext = new (window.AudioContext ||
+							window.webkitAudioContext)()
 
-					// Create mono mixer
-					const monoMixer = audioContext.createGain()
-					monoMixer.channelCount = 1
-					monoMixer.channelCountMode = 'explicit'
-					monoMixer.channelInterpretation = 'speakers'
-					monoMixer.gain.value = 1.0
+						const source = audioContext.createMediaElementSource(audioElement)
 
-					source.connect(monoMixer)
-					source.connect(audioContext.destination)
+						// Create mono mixer
+						const monoMixer = audioContext.createGain()
+						monoMixer.channelCount = 1
+						monoMixer.channelCountMode = 'explicit'
+						monoMixer.channelInterpretation = 'speakers'
+						monoMixer.gain.value = 1.0
 
-					audioNodes = {audioContext, source, monoMixer}
-					audioElement[AUDIO_NODES_KEY] = audioNodes
+						source.connect(monoMixer)
+						source.connect(audioContext.destination)
+
+						audioNodes = {audioContext, source, monoMixer}
+						audioElement[AUDIO_NODES_KEY] = audioNodes
+					}
+
+					// Create analyzer with audio connection
+					analyzer = new AudioMotionAnalyzer(containerRef.current, {
+						audioCtx: audioNodes.audioContext,
+						...ANALYZER_CONFIG,
+					})
+
+					// Connect mono-mixed signal
+					analyzer.connectInput(audioNodes.monoMixer)
+					connectedToAudio = true
+					console.log('[Visualizer] Connected to audio')
+				} catch (audioError) {
+					console.warn('[Visualizer] Could not connect to audio (CORS?):', audioError.message)
+					
+					// Create analyzer WITHOUT audio connection (for visual-only fallback)
+					analyzer = new AudioMotionAnalyzer(containerRef.current, {
+						...ANALYZER_CONFIG,
+					})
+					
+					// Mark that we need fallback animation
+					usingFallbackAnimation.current = true
 				}
-
-				// Create analyzer
-				const analyzer = new AudioMotionAnalyzer(containerRef.current, {
-					audioCtx: audioNodes.audioContext,
-					...ANALYZER_CONFIG,
-				})
-
-				// Connect mono-mixed signal
-				analyzer.connectInput(audioNodes.monoMixer)
 
 				// Custom white gradient
 				analyzer.registerGradient('white-bars', {
@@ -150,9 +171,10 @@ const AudioVisualizer = ({audioRef, isPlaying}) => {
 				})
 				analyzer.gradient = 'white-bars'
 
-				// Store on audio element
+				// Store on audio element (including container reference for navigation detection)
 				audioElement[ANALYZER_KEY] = analyzer
 				audioElement[VERSION_KEY] = ANALYZER_VERSION
+				audioElement[CONTAINER_KEY] = containerRef.current
 				analyzerRef.current = analyzer
 				setIsReady(true)
 
@@ -161,7 +183,7 @@ const AudioVisualizer = ({audioRef, isPlaying}) => {
 				initialValuesRef.current = generateRandomBarValues(barCount)
 				analyzer.setCustomData(initialValuesRef.current)
 
-				console.log('[Visualizer] Ready with', barCount, 'bars')
+				console.log('[Visualizer] Ready with', barCount, 'bars, audio connected:', connectedToAudio)
 			} catch (error) {
 				console.error('[Visualizer] Failed to initialize:', error)
 			}
@@ -203,13 +225,18 @@ const AudioVisualizer = ({audioRef, isPlaying}) => {
 		const analyzer = analyzerRef.current
 
 		if (isPlaying) {
-			// First play - switch from custom data to real audio
+			// First play
 			if (!hasEverPlayed.current) {
 				hasEverPlayed.current = true
-				analyzer.clearCustomData()
-				console.log('[Visualizer] First play - using real audio data')
+				// Only clear custom data if we have real audio connection
+				if (!usingFallbackAnimation.current) {
+					analyzer.clearCustomData()
+					console.log('[Visualizer] First play - using real audio data')
+				} else {
+					console.log('[Visualizer] First play - using fallback animation (no audio connection)')
+				}
 			}
-			// If using fallback, restart animation
+			// If using fallback, start/restart animation
 			if (usingFallbackAnimation.current) {
 				startFallbackAnimation()
 			}

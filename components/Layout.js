@@ -3,6 +3,8 @@ import Header from './Header'
 import Footer from './Footer'
 
 export const Layout = (props) => {
+	const { isHomePage } = props
+
 	return (
 		<div>
 			<Head>
@@ -21,7 +23,7 @@ export const Layout = (props) => {
 			</Head>
 
 			<header className="header">
-				<Header />
+				<Header isHomePage={isHomePage} />
 			</header>
 
 			<main>{props.children}</main>
