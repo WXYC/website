@@ -26,7 +26,8 @@
 		"react-h5-audio-player": "^3.9.0",
 		"react-icons": "^5.4.0",
 		"tinacms": "^2.1.0",
-		"wavesurfer.js": "^7.4.2"
+		"wavesurfer.js": "^7.4.2",
+		"yaml": "^2.8.2"
 	},
 	"devDependencies": {
 		"@swc/helpers": "^0.5.18",
