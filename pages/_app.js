@@ -3,9 +3,10 @@ import '/styles/globals.css'
 import {Layout} from '../components/Layout'
 import {PostHogProvider} from 'posthog-js/react'
 import {useEffect} from 'react'
-import {Router} from 'next/router'
+import {Router, useRouter} from 'next/router'
 import posthog from 'posthog-js'
 import dynamic from 'next/dynamic'
+import {AudioProvider} from '../context/AudioContext'
 
 // Dynamically import LavaLite to avoid SSR issues with WebGL
 const LavaLiteBackground = dynamic(
@@ -14,6 +15,8 @@ const LavaLiteBackground = dynamic(
 )
 
 const App = ({Component, pageProps}) => {
+	const router = useRouter()
+	const isHomePage = router.pathname === '/'
 	useEffect(() => {
 		posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
 			api_host:
@@ -35,14 +38,16 @@ const App = ({Component, pageProps}) => {
 	}, [])
 	return (
 		<PostHogProvider client={posthog}>
-			<LavaLiteBackground brightness={0.85} />
-			<div className="flex flex-col lg:items-center">
-				<div className="m-0 flex h-full w-full flex-col overflow-hidden bg-transparent font-poppins text-base text-white">
-					<Layout>
-						<Component {...pageProps} />
-					</Layout>
+			<AudioProvider>
+				<LavaLiteBackground brightness={0.85} />
+				<div className="flex flex-col lg:items-center">
+					<div className="m-0 flex h-full w-full flex-col overflow-hidden bg-transparent font-poppins text-base text-white">
+						<Layout isHomePage={isHomePage}>
+							<Component {...pageProps} />
+						</Layout>
+					</div>
 				</div>
-			</div>
+			</AudioProvider>
 		</PostHogProvider>
 	)
 }
