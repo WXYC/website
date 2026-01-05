@@ -26,6 +26,7 @@ const AudioPlayerStream = () => {
 				<audio
 					ref={audioPlayer}
 					src="https://audio-mp3.ibiblio.org/wxyc.mp3"
+					preload="none"
 				></audio>
 				<button
 					className="rounded-lg bg-transparent p-2 text-gray-200"

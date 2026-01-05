@@ -25,7 +25,7 @@ const Header = () => {
 		//Parent Container
 		<div className="h-full">
 			{/* MOBILE NAVBAR STARTS HERE */}
-			<div className="fixed top-0 z-50 flex h-16 w-full flex-col bg-black/90 backdrop-blur-md lg:hidden ">
+			<div className="fixed top-0 z-50 flex h-16 w-full flex-col bg-transparent backdrop-blur-md lg:hidden ">
 				<div className="flex flex-row items-center justify-between">
 					{/* Hamburger icon */}
 					<button
@@ -46,7 +46,7 @@ const Header = () => {
 
 				{/* Collapsible menu for mobile*/}
 				{isOpen && (
-					<ul className="duration-450 h-screen w-screen flex-col justify-start bg-black/90 backdrop-blur-md transition-all ease-in-out md:gap-6">
+					<ul className="duration-450 h-screen w-screen flex-col justify-start bg-transparent backdrop-blur-md transition-all ease-in-out md:gap-6">
 						<div className="w-full">
 							<Menu as="div" className="relative w-full">
 								<Menu.Button
@@ -223,7 +223,7 @@ const Header = () => {
 				{/* Parent container of web navbar */}
 				<div className="mb-20 hidden w-full lg:flex">
 					{/* Actual navbar */}
-					<div className="flex h-14 w-full flex-row justify-between bg-black px-1 py-4 ">
+					<div className="flex h-14 w-full flex-row justify-between bg-transparent px-1 py-4 ">
 						{/* Logo and player*/}
 						<div className="my-auto flex flex-row">
 							<Link href="/">

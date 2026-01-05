@@ -5,6 +5,13 @@ import {PostHogProvider} from 'posthog-js/react'
 import {useEffect} from 'react'
 import {Router} from 'next/router'
 import posthog from 'posthog-js'
+import dynamic from 'next/dynamic'
+
+// Dynamically import LavaLite to avoid SSR issues with WebGL
+const LavaLiteBackground = dynamic(
+	() => import('../components/LavaLiteBackground'),
+	{ssr: false}
+)
 
 const App = ({Component, pageProps}) => {
 	useEffect(() => {
@@ -28,8 +35,9 @@ const App = ({Component, pageProps}) => {
 	}, [])
 	return (
 		<PostHogProvider client={posthog}>
+			<LavaLiteBackground brightness={0.85} />
 			<div className="flex flex-col lg:items-center">
-				<div className="m-0 flex h-full w-full flex-col overflow-hidden bg-black font-poppins text-base text-white">
+				<div className="m-0 flex h-full w-full flex-col overflow-hidden bg-transparent font-poppins text-base text-white">
 					<Layout>
 						<Component {...pageProps} />
 					</Layout>
