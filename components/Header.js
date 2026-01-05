@@ -239,7 +239,7 @@ const Header = () => {
 
 						{/* Links*/}
 						<div className="my-auto flex w-1/2 flex-row">
-							<Link href="/about">
+							<Link href="/about" legacyBehavior>
 								<a className="flex h-12 grow items-center justify-center">
 									<p className="cursor-pointer text-base text-white no-underline hover:text-blue-300">
 										About
@@ -247,7 +247,7 @@ const Header = () => {
 								</a>
 							</Link>
 
-							<Link href="/programming">
+							<Link href="/programming" legacyBehavior>
 								<a className="flex h-12 grow items-center justify-center">
 									<p className="cursor-pointer text-base text-white no-underline hover:text-blue-300">
 										Programming
@@ -255,7 +255,7 @@ const Header = () => {
 								</a>
 							</Link>
 
-							<Link href="/archive">
+							<Link href="/archive" legacyBehavior>
 								<a className="flex h-12 grow items-center justify-center">
 									<p className="cursor-pointer text-base text-white no-underline hover:text-blue-300">
 										Archive
@@ -263,36 +263,36 @@ const Header = () => {
 								</a>
 							</Link>
 
-							<Link href="/blog">
-								<a className="flex h-12 grow items-center justify-center ">
+							<Link href="/blog" legacyBehavior>
+								<a className="flex h-12 grow items-center justify-center">
 									<p className="cursor-pointer text-base no-underline hover:text-blue-300">
 										Blog
 									</p>
 								</a>
 							</Link>
 
-							<Link href="/contact">
-								<a className="flex h-12 grow items-center justify-center ">
+							<Link href="/contact" legacyBehavior>
+								<a className="flex h-12 grow items-center justify-center">
 									<p className="cursor-pointer text-base no-underline hover:text-blue-300">
 										Contact
 									</p>
 								</a>
 							</Link>
 
-							<div className="flex h-12 grow items-center justify-center ">
+							<div className="flex h-12 grow items-center justify-center">
 								<DropdownMenu />
 							</div>
 
-							<Link href="https://merch.wxyc.org/">
-								<a
-									href="https://merch.wxyc.org/"
-									className="flex h-12 grow items-center justify-center "
-								>
-									<a className="text-base text-white no-underline hover:text-blue-300 ">
-										Merch
-									</a>
-								</a>
-							</Link>
+							<a
+								href="https://merch.wxyc.org/"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="flex h-12 grow items-center justify-center"
+							>
+								<span className="text-base text-white no-underline hover:text-blue-300">
+									Merch
+								</span>
+							</a>
 						</div>
 					</div>
 				</div>
