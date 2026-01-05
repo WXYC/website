@@ -1,8 +1,6 @@
-import React, {useState, useRef} from 'react'
+import React, {useState, useRef, useEffect} from 'react'
 import {FaPlay, FaPause} from 'react-icons/fa'
-import soundwaves from '../../images/soundwaves.gif'
-import nosoundwaves from '../../images/staticsoundwave.gif'
-import Image from 'next/image'
+import AudioVisualizer from './AudioVisualizer'
 
 // audio player for radio broadcast aka infinite stream
 const AudioPlayerStream = () => {
@@ -10,23 +8,60 @@ const AudioPlayerStream = () => {
 
 	const audioPlayer = useRef() // ref to audio player
 
+	// Log audio element events to track stream connection timing
+	useEffect(() => {
+		const audio = audioPlayer.current
+		if (!audio) return
+
+		const logEvent = (eventName) => (e) => {
+			console.log(`[AudioStream] ${eventName}`, {
+				currentTime: audio.currentTime,
+				readyState: audio.readyState,
+				networkState: audio.networkState,
+				paused: audio.paused,
+			})
+		}
+
+		const events = [
+			'loadstart',
+			'loadedmetadata',
+			'loadeddata',
+			'canplay',
+			'canplaythrough',
+			'playing',
+			'waiting',
+			'stalled',
+			'suspend',
+			'error',
+		]
+
+		events.forEach((evt) => audio.addEventListener(evt, logEvent(evt)))
+
+		return () => {
+			events.forEach((evt) => audio.removeEventListener(evt, logEvent(evt)))
+		}
+	}, [])
+
 	const togglePlayPause = () => {
 		const prevValue = isPlaying
 		setIsPlaying(!prevValue)
 		if (!prevValue) {
+			console.log('[AudioStream] Play requested, calling audio.play()')
 			audioPlayer.current.play()
 		} else {
+			console.log('[AudioStream] Pause requested')
 			audioPlayer.current.pause()
 		}
 	}
 
 	return (
 		<div className="flex h-16 max-w-sm items-center justify-center">
-			<div className="flex flex-row  items-center">
+			<div className="flex flex-row items-center">
 				<audio
 					ref={audioPlayer}
 					src="https://audio-mp3.ibiblio.org/wxyc.mp3"
 					preload="none"
+					crossOrigin="anonymous"
 				></audio>
 				<button
 					className="rounded-lg bg-transparent p-2 text-gray-200"
@@ -39,18 +74,9 @@ const AudioPlayerStream = () => {
 					)}
 				</button>
 
-				{/* render moving waves vs still waves based on playing state */}
-				<div className="w-36 md:w-60 lg:w-48">
-					{isPlaying && (
-						<div className="pt-0.5">
-							<Image src={soundwaves} />
-						</div>
-					)}
-					{!isPlaying && (
-						<div className="pt-1">
-							<Image src={nosoundwaves} />
-						</div>
-					)}
+				{/* Real-time audio visualizer */}
+				<div className="h-10 w-36 md:w-60 lg:w-48">
+					<AudioVisualizer audioRef={audioPlayer} isPlaying={isPlaying} />
 				</div>
 			</div>
 		</div>
