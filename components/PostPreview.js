@@ -23,7 +23,7 @@ const PostPreview = (props) => {
 						className="h-72 w-72 object-cover lg:h-[23.5rem] lg:w-[23.5rem]"
 						alt=""
 					/>
-					<a className="text-left text-xl font-bold">{props.title}</a>
+					<span className="text-left text-xl font-bold">{props.title}</span>
 					<p>{props.subtitle}</p>
 				</div>
 			</Link>
@@ -48,7 +48,7 @@ const PostPreview = (props) => {
 						className="h-72 w-72 object-cover md:h-[22rem] md:w-[22rem]"
 						alt=""
 					/>
-					<a className="text-left text-xl font-bold">{props.title}</a>
+					<span className="text-left text-xl font-bold">{props.title}</span>
 					<p>{props.subtitle}</p>
 					{displayCategories && displayCategories.map((category) => (
 
