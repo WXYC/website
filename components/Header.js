@@ -76,7 +76,7 @@ const Header = () => {
 											</Link>
 										</Menu.Item>
 									</div>
-									<div className="text-medium flex w-full items-center justify-center px-4 py-2 text-white hover:text-blue-300">
+									<div className="mb-2 flex w-full text-nowrap text-white">
 										<Menu.Item>
 											<a
 												href="https://play.google.com/store/apps/details?id=org.wxyc.WXYCCH"
