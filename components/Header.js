@@ -25,28 +25,27 @@ const Header = () => {
 		//Parent Container
 		<div className="h-full">
 			{/* MOBILE NAVBAR STARTS HERE */}
-			<div className="fixed top-0 z-50 flex h-16 w-full flex-col bg-transparent backdrop-blur-md lg:hidden ">
-				<div className="flex flex-row items-center justify-between">
-					{/* Hamburger icon */}
-					<button
-						onClick={toggleMenu}
-						className="hamburger-icon duration-450 h-full transition-all ease-in-out"
-					>
-						{isOpen ? (
-							<AiOutlineClose size={32} className="ml-4 mt-1 md:ml-6" />
-						) : (
-							<AiOutlineMenu size={32} className="ml-4 mt-1 md:ml-6" />
-						)}
-					</button>
+			<div className="fixed top-0 z-50 flex h-16 w-full flex-row items-center justify-between bg-black/30 backdrop-blur-md lg:hidden">
+				{/* Hamburger icon */}
+				<button
+					onClick={toggleMenu}
+					className="hamburger-icon duration-450 h-full transition-all ease-in-out"
+				>
+					{isOpen ? (
+						<AiOutlineClose size={32} className="ml-4 mt-1 md:ml-6" />
+					) : (
+						<AiOutlineMenu size={32} className="ml-4 mt-1 md:ml-6" />
+					)}
+				</button>
 
-					<div className="my-auto mr-3">
-						<AudioPlayerStream />
-					</div>
+				<div className="my-auto mr-3">
+					<AudioPlayerStream />
 				</div>
+			</div>
 
-				{/* Collapsible menu for mobile*/}
-				{isOpen && (
-					<ul className="duration-450 h-screen w-screen flex-col justify-start bg-transparent backdrop-blur-md transition-all ease-in-out md:gap-6">
+			{/* Collapsible menu for mobile*/}
+			{isOpen && (
+				<ul className="fixed inset-0 z-40 flex h-screen w-screen flex-col justify-start bg-black/50 backdrop-blur-xl backdrop-saturate-150 backdrop-brightness-75 pt-16 transition-all duration-450 ease-in-out md:gap-6">
 						<div className="w-full">
 							<Menu as="div" className="relative w-full">
 								<Menu.Button
@@ -190,9 +189,8 @@ const Header = () => {
 							</Link>
 						</div>
 						{/* Add more navigation links as needed */}
-					</ul>
-				)}
-			</div>
+				</ul>
+			)}
 
 			{/* Makes the mobile navbar overlap the rest of the header content */}
 			<div className="relative z-20">
