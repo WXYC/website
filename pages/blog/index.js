@@ -49,20 +49,20 @@ export default function PostList(props) {
 					</p>
 				</div>
 
+				
 				{/* Desktop banner image */}
-{/* Desktop banner image */}
-<div className="relative z-10 mx-auto -mt-20 mb-5 hidden w-5/6 md:block">
-  <div className="relative h-[320px] w-full overflow-hidden lg:h-[420px]">
-    <Image
-      src={photo}
-      alt="A crowded dancefloor at a WXYC event."
-      fill
-      className="object-cover object-center"
-      sizes="83vw"
-      priority
-    />
-  </div>
-</div>
+				<div className="relative z-10 mx-auto -mt-20 mb-5 hidden w-5/6 md:block">
+	  				<div className="relative h-[320px] w-full overflow-hidden lg:h-[420px]">
+   		 				<Image
+      					src={photo}
+      					alt="A crowded dancefloor at a WXYC event."
+     					fill
+      					className="object-cover object-center"
+     					sizes="83vw"
+     					priority
+   						 />
+  					</div>
+				</div>
 
 
 
