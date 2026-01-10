@@ -1,6 +1,7 @@
 import {TinaMarkdown} from 'tinacms/dist/rich-text'
 import {tinaField, useTina} from 'tinacms/dist/react'
 import {client} from '../tina/__generated__/client'
+import {STATIC_FALLBACK} from '../lib/staticPaths'
 
 //editable static pages (programming, contact, etc.)
 export default function Home(props) {
@@ -33,7 +34,7 @@ export const getStaticPaths = async () => {
 
 	return {
 		paths,
-		fallback: 'blocking',
+		fallback: STATIC_FALLBACK,
 	}
 }
 

@@ -7,6 +7,7 @@ import {
 import ArchiveLayout from '../../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../../components/SeeMoreButton'
+import {STATIC_FALLBACK} from '../../../lib/staticPaths'
 
 // Helper to safely extract description text from TinaCMS rich-text field
 const getDescriptionText = (description, maxLength = 75) => {
@@ -106,7 +107,7 @@ export const getStaticPaths = async () => {
 
 	return {
 		paths,
-		fallback: 'blocking',
+		fallback: STATIC_FALLBACK,
 	}
 }
 
