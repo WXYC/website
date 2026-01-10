@@ -1,12 +1,15 @@
 import React, {useState, useRef, useEffect} from 'react'
 import {FaPlay, FaPause} from 'react-icons/fa'
 import AudioVisualizer from './AudioVisualizer'
+import {useStreamTracking} from '../../lib/useStreamTracking'
 
 // audio player for radio broadcast aka infinite stream
 const AudioPlayerStream = () => {
 	const [isPlaying, setIsPlaying] = useState(false)
 
 	const audioPlayer = useRef() // ref to audio player
+	const {startPlaybackSession, endPlaybackSession, trackError} =
+		useStreamTracking()
 
 	// Log audio element events to track stream connection timing
 	useEffect(() => {
@@ -32,24 +35,35 @@ const AudioPlayerStream = () => {
 			'waiting',
 			'stalled',
 			'suspend',
-			'error',
 		]
 
 		events.forEach((evt) => audio.addEventListener(evt, logEvent(evt)))
 
+		// Handle audio errors
+		const handleError = (e) => {
+			logEvent('error')(e)
+			trackError(audio.error)
+			setIsPlaying(false)
+		}
+
+		audio.addEventListener('error', handleError)
+
 		return () => {
 			events.forEach((evt) => audio.removeEventListener(evt, logEvent(evt)))
+			audio.removeEventListener('error', handleError)
 		}
-	}, [])
+	}, [trackError])
 
 	const togglePlayPause = () => {
 		const prevValue = isPlaying
 		setIsPlaying(!prevValue)
 		if (!prevValue) {
 			console.log('[AudioStream] Play requested, calling audio.play()')
+			startPlaybackSession()
 			audioPlayer.current.play()
 		} else {
 			console.log('[AudioStream] Pause requested')
+			endPlaybackSession('pause')
 			audioPlayer.current.pause()
 		}
 	}
