@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ArchiveLayout from '../../components/ArchiveLayout'
 import {AiFillTag} from 'react-icons/ai'
 import Head from 'next/head'
+import {STATIC_FALLBACK} from '../../lib/staticPaths'
 
 // page for a specific specialty show after it's been opened
 const EventPage = (props) => {
@@ -91,7 +92,7 @@ export const getStaticPaths = async () => {
 
 	return {
 		paths,
-		fallback: 'blocking',
+		fallback: STATIC_FALLBACK,
 	}
 }
 

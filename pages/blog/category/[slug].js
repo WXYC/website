@@ -3,6 +3,7 @@ import PostPreview from '../../../components/PostPreview'
 import BlogLayout from '../../../components/BlogLayout'
 import SeeMoreButton from '../../../components/SeeMoreButton'
 import React, {useState} from 'react'
+import {STATIC_FALLBACK} from '../../../lib/staticPaths'
 
 // filtering bog by category (either artist interview, show review, or album review)
 const BlogCategoryPage = (props) => {
@@ -65,7 +66,7 @@ export const getStaticPaths = async () => {
 
 	return {
 		paths,
-		fallback: 'blocking',
+		fallback: STATIC_FALLBACK,
 	}
 }
 
