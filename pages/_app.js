@@ -1,4 +1,8 @@
 import React from 'react'
+import '@fontsource/poppins/400.css'
+import '@fontsource/poppins/500.css'
+import '@fontsource/poppins/600.css'
+import '@fontsource/poppins/700.css'
 import '/styles/globals.css'
 import {Layout} from '../components/Layout'
 import {PostHogProvider} from 'posthog-js/react'
@@ -39,7 +43,7 @@ const App = ({Component, pageProps}) => {
 		<PostHogProvider client={posthog}>
 			<LavaLiteBackground brightness={0.85} />
 			<div className="flex flex-col lg:items-center">
-				<div className="m-0 flex h-full w-full flex-col overflow-hidden bg-transparent font-poppins text-base text-white">
+				<div className="m-0 flex h-full w-full flex-col overflow-hidden bg-transparent font-sans text-base text-white">
 					<Layout>
 						<Component {...pageProps} />
 					</Layout>
