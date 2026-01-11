@@ -20,6 +20,9 @@ const AboutLayout = ({children}) => {
 					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
 						<Link href="/about/mission">Mission</Link>
 					</div>
+					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
+						<Link href="/about/first">First Simulcast</Link>
+					</div>
 				</div>
 			)}
 			{/* active route is history */}
@@ -34,6 +37,9 @@ const AboutLayout = ({children}) => {
 					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
 						<Link href="/about/mission">Mission</Link>
 					</div>
+					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
+						<Link href="/about/first">First Simulcast</Link>
+					</div>
 				</div>
 			)}
 			{/* active route is mission */}
@@ -47,6 +53,26 @@ const AboutLayout = ({children}) => {
 					</div>
 					<div className="w-full bg-neutral-700 px-6 py-4 text-center hover:bg-neutral-500 md:text-left">
 						<Link href="/about/mission">Mission</Link>
+					</div>
+					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
+						<Link href="/about/first">First Simulcast</Link>
+					</div>
+				</div>
+			)}
+			{/* active route is first */}
+			{currentRoute === '/about/first' && (
+				<div className="kallisto mx-auto mb-10 ml-2 mr-2 flex h-14 w-full flex-row justify-between bg-gradient-to-b from-neutral-900 to-black text-xl md:mx-0 md:mb-0 md:ml-2 md:mr-2 md:h-full md:w-1/5 md:flex-col">
+					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
+						<Link href="/about">About</Link>
+					</div>
+					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
+						<Link href="/about/history">History</Link>
+					</div>
+					<div className="w-full px-6 py-4 text-center text-neutral-400 hover:bg-neutral-500 hover:text-white md:text-left">
+						<Link href="/about/mission">Mission</Link>
+					</div>
+					<div className="w-full bg-neutral-700 px-6 py-4 text-center hover:bg-neutral-500 md:text-left">
+						<Link href="/about/first">First Simulcast</Link>
 					</div>
 				</div>
 			)}

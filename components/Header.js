@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import DropdownMenu from './DropdownMenu'
+import AboutDropdown from './AboutDropdown'
 import photo from '../images/logo.png'
 import Image from 'next/image'
 import AudioPlayerStream from '../components/audioplayers/AudioPlayerStream'
@@ -10,9 +11,14 @@ import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io'
 
 const Header = () => {
 	const [submenuOpen, setSubmenuOpen] = useState(false)
+	const [aboutSubmenuOpen, setAboutSubmenuOpen] = useState(false)
 
 	const toggleSubmenu = () => {
 		setSubmenuOpen(!submenuOpen)
+	}
+
+	const toggleAboutSubmenu = () => {
+		setAboutSubmenuOpen(!aboutSubmenuOpen)
 	}
 
 	const [isOpen, setIsOpen] = useState(false)
@@ -117,16 +123,72 @@ const Header = () => {
 							</Menu>
 						</div>
 
-						<div className="ml-10 flex h-8 text-3xl">
-							<Link
-								href="/about"
-								legacyBehavior={false}
-								className="cursor-pointer"
-								rel="noopener noreferrer"
-								onClick={toggleMenu}
-							>
-								About
-							</Link>
+						<div className="w-full">
+							<Menu as="div" className="relative w-full">
+								<Menu.Button
+									onClick={toggleAboutSubmenu}
+									className="ml-10 mt-8 flex h-8 text-3xl"
+								>
+									About
+									{aboutSubmenuOpen ? (
+										<IoIosArrowUp size={24} className="ml-1 mt-2 md:ml-3" />
+									) : (
+										<IoIosArrowDown size={24} className="ml-1 mt-2 md:ml-3" />
+									)}
+								</Menu.Button>
+
+								{/* About Submenu */}
+								<div
+									className={`duration-450 my-5 ml-14 overflow-hidden text-2xl transition-all ease-in-out focus:outline-none focus:ring-0 md:text-3xl ${aboutSubmenuOpen ? 'max-h-[400px]' : 'max-h-0'
+										}`}
+								>
+									<div className="mb-2 flex w-full text-nowrap text-white">
+										<Menu.Item>
+											<Link
+												href="/about"
+												legacyBehavior={false}
+												onClick={toggleMenu}
+											>
+												About WXYC
+											</Link>
+										</Menu.Item>
+									</div>
+									<div className="mb-2 flex w-full text-nowrap text-white">
+										<Menu.Item>
+											<Link
+												href="/about/mission"
+												legacyBehavior={false}
+												onClick={toggleMenu}
+											>
+												Mission
+											</Link>
+										</Menu.Item>
+									</div>
+									<div className="mb-2 flex w-full text-nowrap text-white">
+										<Menu.Item>
+											<Link
+												href="/about/history"
+												legacyBehavior={false}
+												onClick={toggleMenu}
+											>
+												History
+											</Link>
+										</Menu.Item>
+									</div>
+									<div className="mb-2 flex w-full text-nowrap text-white">
+										<Menu.Item>
+											<Link
+												href="/about/first"
+												legacyBehavior={false}
+												onClick={toggleMenu}
+											>
+												First Simulcast
+											</Link>
+										</Menu.Item>
+									</div>
+								</div>
+								{/* About Submenu ends here */}
+							</Menu>
 						</div>
 
 						<div className="ml-10 mt-8 flex h-8 text-3xl">
@@ -237,13 +299,9 @@ const Header = () => {
 
 						{/* Links*/}
 						<div className="my-auto flex w-1/2 flex-row">
-							<Link href="/about" legacyBehavior>
-								<a className="flex h-12 grow items-center justify-center">
-									<p className="cursor-pointer text-base text-white no-underline hover:text-blue-300">
-										About
-									</p>
-								</a>
-							</Link>
+							<div className="flex h-12 grow items-center justify-center">
+								<AboutDropdown />
+							</div>
 
 							<Link href="/programming" legacyBehavior>
 								<a className="flex h-12 grow items-center justify-center">
