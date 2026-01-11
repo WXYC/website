@@ -8,7 +8,7 @@ module.exports = {
 	theme: {
 		extend: {
 			fontFamily: {
-				poppins: ['Poppins', 'sans-serif'],
+				sans: ['Futura', 'Futura-Medium', 'Poppins', 'Century Gothic', 'sans-serif'],
 				kallisto: ['kallisto', 'serif'],
 			},
 			objectFit: {
