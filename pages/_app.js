@@ -3,9 +3,8 @@ import '/styles/globals.css'
 import {Layout} from '../components/Layout'
 import {PostHogProvider} from 'posthog-js/react'
 import {useEffect} from 'react'
-import {Router} from 'next/router'
-import posthog from 'posthog-js'
 import dynamic from 'next/dynamic'
+import {initPostHog, usePostHogPageview, posthog} from '../lib/usePostHog'
 
 // Dynamically import LavaLite to avoid SSR issues with WebGL
 const LavaLiteBackground = dynamic(
@@ -15,26 +14,12 @@ const LavaLiteBackground = dynamic(
 
 const App = ({Component, pageProps}) => {
 	useEffect(() => {
-		posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-			api_host:
-				process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
-			person_profiles: 'identified_only',
-			capture_pageleave: true,
-			loaded: (posthog) => {
-				if (process.env.NODE_ENV === 'development') posthog.debug()
-				// Capture initial pageview on first load
-				posthog.capture('$pageview')
-			},
+		initPostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+			apiHost: process.env.NEXT_PUBLIC_POSTHOG_HOST,
 		})
-
-		const handleRouteChange = () => posthog?.capture('$pageview')
-
-		Router.events.on('routeChangeComplete', handleRouteChange)
-
-		return () => {
-			Router.events.off('routeChangeComplete', handleRouteChange)
-		}
 	}, [])
+
+	usePostHogPageview()
 	return (
 		<PostHogProvider client={posthog}>
 			<LavaLiteBackground brightness={0.85} />
