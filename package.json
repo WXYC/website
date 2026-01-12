@@ -35,7 +35,7 @@
 	"devDependencies": {
 		"@tailwindcss/typography": "^0.5.9",
 		"@testing-library/react": "^14.3.1",
-		"@tinacms/cli": "^2.0.5",
+		"@tinacms/cli": "^2.1.0",
 		"@vitejs/plugin-react": "^5.1.2",
 		"autoprefixer": "^10.4.14",
 		"eslint-config-prettier": "^9.1.0",
