@@ -56,6 +56,8 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Run tests
+        run: npm test
       - name: Build with TinaCMS (local mode)
         # Run in local mode so PR builds can access new content files
         # that haven't been merged to main yet. Start the TinaCMS local
@@ -63,6 +65,6 @@ jobs:
         run: |
           npx tinacms dev &
           TINA_PID=$!
-          sleep 10  # Wait for TinaCMS server to start
+          sleep 10
           npx next build
           kill $TINA_PID || true
