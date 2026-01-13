@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize, reopened]
 
 concurrency:
-  group: 'pages'
+  group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -58,11 +58,13 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Run tests
         run: npm test
-      - name: Build TinaCMS
-        env:
-          TINA_PUBLIC_CLIENT_ID: ${{ secrets.TINA_PUBLIC_CLIENT_ID }}
-          TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-          SEARCH_TOKEN: ${{ secrets.SEARCH_TOKEN }}
-        run: npx tinacms build 
-      - name: Build with Next.js
-        run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Build with TinaCMS (local mode)
+        # Run in local mode so PR builds can access new content files
+        # that haven't been merged to main yet. Start the TinaCMS local
+        # server in the background, run Next.js build, then stop it.
+        run: |
+          npx tinacms dev &
+          TINA_PID=$!
+          sleep 10
+          npx next build
+          kill $TINA_PID || true
