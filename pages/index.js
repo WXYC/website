@@ -2,15 +2,19 @@ import {client} from '../tina/__generated__/client'
 import PhotoGallery from '../components/homepage/PhotoGallery'
 import ArchiveCarousel from '../components/homepage/ArchiveCarousel'
 import BlogCarouselFull from '../components/homepage/BlogCarouselFull'
+import InstagramFeed from '../components/homepage/InstagramFeed'
 import HomepageBanner from '../components/HomepageBanner'
 import Link from 'next/link'
 import photo from '../images/logo.png'
 import Image from 'next/image'
+import {getInstagramFeed} from '../lib/instagram'
+import {filterInstagramPosts} from '../lib/instagramFilter'
 
 // home page
 export default function Home(props) {
 	const posts = props.data.blogConnection.edges
 	const events = props.data.archiveConnection.edges
+	const instagramPosts = props.instagramPosts || []
 
 	return (
 		<div>
@@ -68,6 +72,11 @@ export default function Home(props) {
 						</div>
 					</div>
 
+					{/* Instagram feed */}
+					{instagramPosts.length > 0 && (
+						<InstagramFeed posts={instagramPosts} />
+					)}
+
 					{/* Photo gallery */}
 					<div className="mx-auto mt-16 hidden w-5/6 items-center justify-center md:visible md:flex">
 						<PhotoGallery />
@@ -102,6 +111,7 @@ export const getStaticProps = async () => {
               cover
               published
               description
+              instagramUrl
 			  categories {
 				category {
 		  			... on Category {
@@ -151,5 +161,10 @@ export const getStaticProps = async () => {
 		},
 	})
 
-	return {props: {data}}
+	// Fetch Instagram posts and filter out duplicates
+	const allInstagramPosts = await getInstagramFeed({limit: 8})
+	const blogPosts = data.blogConnection.edges
+	const instagramPosts = filterInstagramPosts(allInstagramPosts, blogPosts)
+
+	return {props: {data, instagramPosts}}
 }
