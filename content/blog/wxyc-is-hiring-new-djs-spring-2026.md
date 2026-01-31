@@ -5,6 +5,7 @@ categories:
   - category: content/category/event.md
 published: 2025-12-20T05:00:00.000Z
 description: We're hiring! No experience is necessary!
+instagramUrl: https://www.instagram.com/p/PLACEHOLDER/
 ---
 
 Do you love music? Join UNC's student-run radio station, broadcasting live 24/7 from the student union.

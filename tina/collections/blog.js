@@ -65,6 +65,14 @@ export default {
 				'post description (optional, if skipped there will be no text under post title in preview)',
 		},
 		{
+			type: 'string',
+			label: 'Instagram Post URL',
+			name: 'instagramUrl',
+			placeholder: 'https://www.instagram.com/p/ABC123/',
+			description:
+				'If this blog post has a matching Instagram post, paste the full URL here to suppress it from the homepage Instagram feed.',
+		},
+		{
 			type: 'rich-text',
 			label: 'Blog Post Body',
 			name: 'body',
