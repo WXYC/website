@@ -1,6 +1,7 @@
 import React, {useState, useRef, useEffect} from 'react'
 import {FaPlay, FaPause} from 'react-icons/fa'
 import {BsArrowLeftShort, BsArrowRightShort} from 'react-icons/bs'
+import {calculateTime} from '../../lib/timeUtils'
 
 // audio player for embedding hosted mp3s in blog posts, non-waveform
 const AudioPlayerMP3 = ({url}) => {
@@ -18,15 +19,6 @@ const AudioPlayerMP3 = ({url}) => {
 		setDuration(seconds)
 		progressBar.current.max = seconds
 	}, [audioPlayer?.current?.loadedmetadata, audioPlayer?.current?.readyState])
-
-	// calculate and format progress and duration
-	const calculateTime = (secs) => {
-		const minutes = Math.floor(secs / 60)
-		const returnedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`
-		const seconds = Math.floor(secs % 60)
-		const returnedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`
-		return `${returnedMinutes}:${returnedSeconds}`
-	}
 
 	const togglePlayPause = () => {
 		const prevValue = isPlaying

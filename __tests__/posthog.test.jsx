@@ -64,6 +64,47 @@ describe('PostHog tracking', () => {
 				})
 			)
 		})
+
+		it('calls debug() in development mode via loaded callback', async () => {
+			const originalEnv = process.env.NODE_ENV
+			process.env.NODE_ENV = 'development'
+
+			const {initPostHog} = await import('../lib/usePostHog')
+			initPostHog('test-key')
+
+			// Get the loaded callback that was passed to init
+			const initCall = mockInit.mock.calls[0]
+			const options = initCall[1]
+			expect(options.loaded).toBeDefined()
+
+			// Call the loaded callback with a mock posthog instance
+			const mockPosthogInstance = {debug: mockDebug}
+			options.loaded(mockPosthogInstance)
+
+			expect(mockDebug).toHaveBeenCalled()
+
+			process.env.NODE_ENV = originalEnv
+		})
+
+		it('does not call debug() in production mode', async () => {
+			const originalEnv = process.env.NODE_ENV
+			process.env.NODE_ENV = 'production'
+
+			const {initPostHog} = await import('../lib/usePostHog')
+			initPostHog('test-key')
+
+			// Get the loaded callback
+			const initCall = mockInit.mock.calls[0]
+			const options = initCall[1]
+
+			// Call the loaded callback
+			const mockPosthogInstance = {debug: mockDebug}
+			options.loaded(mockPosthogInstance)
+
+			expect(mockDebug).not.toHaveBeenCalled()
+
+			process.env.NODE_ENV = originalEnv
+		})
 	})
 
 	describe('usePostHogPageview', () => {
