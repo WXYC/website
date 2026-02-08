@@ -168,4 +168,90 @@ describe('useStreamTracking', () => {
 
 		expect(result.current.isPlaying()).toBe(false)
 	})
+
+	it('getPlaybackDuration returns 0 when not playing', async () => {
+		const {useStreamTracking} = await import('../lib/useStreamTracking')
+		const {result} = renderHook(() => useStreamTracking())
+
+		// Should return 0 when no session has started
+		expect(result.current.getPlaybackDuration()).toBe(0)
+	})
+
+	it('trackError uses "Unknown error" when message is missing', async () => {
+		const {useStreamTracking} = await import('../lib/useStreamTracking')
+		const {result} = renderHook(() => useStreamTracking())
+
+		act(() => {
+			result.current.startPlaybackSession()
+		})
+		mockCapture.mockClear()
+
+		// Pass error with no message
+		act(() => {
+			result.current.trackError({code: 1})
+		})
+
+		expect(mockCapture).toHaveBeenCalledWith('stream_error', {
+			error_code: 1,
+			error_message: 'Unknown error',
+			duration_seconds: 0,
+		})
+	})
+
+	it('trackError handles null error', async () => {
+		const {useStreamTracking} = await import('../lib/useStreamTracking')
+		const {result} = renderHook(() => useStreamTracking())
+
+		act(() => {
+			result.current.startPlaybackSession()
+		})
+		mockCapture.mockClear()
+
+		act(() => {
+			result.current.trackError(null)
+		})
+
+		expect(mockCapture).toHaveBeenCalledWith('stream_error', {
+			error_code: undefined,
+			error_message: 'Unknown error',
+			duration_seconds: 0,
+		})
+	})
+
+	it('captures stream_end with page_close reason on beforeunload', async () => {
+		const {useStreamTracking} = await import('../lib/useStreamTracking')
+		const {result} = renderHook(() => useStreamTracking())
+
+		act(() => {
+			result.current.startPlaybackSession()
+		})
+
+		act(() => {
+			vi.advanceTimersByTime(20000)
+		})
+
+		mockCapture.mockClear()
+
+		// Simulate beforeunload (in addition to pagehide)
+		act(() => {
+			window.dispatchEvent(new Event('beforeunload'))
+		})
+
+		expect(mockCapture).toHaveBeenCalledWith('stream_end', {
+			reason: 'page_close',
+			duration_seconds: 20,
+		})
+	})
+
+	it('does not capture stream_end on page events when not playing', async () => {
+		const {useStreamTracking} = await import('../lib/useStreamTracking')
+		renderHook(() => useStreamTracking())
+
+		// Don't start a session, just trigger page events
+		act(() => {
+			window.dispatchEvent(new Event('pagehide'))
+		})
+
+		expect(mockCapture).not.toHaveBeenCalled()
+	})
 })
