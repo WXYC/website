@@ -2,7 +2,7 @@
 title: Sarah Records
 cover: /uploads/IMG_3753.jpg
 categories:
-  - category: content/category/thursday-night-feature.md
+  - category: ''
 published: 2025-01-30T05:00:00.000Z
 ---
 
