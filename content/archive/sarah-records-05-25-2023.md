@@ -2,8 +2,8 @@
 title: Sarah Records
 cover: /uploads/IMG_3753.jpg
 categories:
-  - category: content/category/thursday-night-feature.md
-published: 2023-05-25T04:00:00.000Z
+  - category: ''
+published: 2025-01-30T05:00:00.000Z
 ---
 
-From 1987 to 1995, Sarah Records released 100 singles of DIY indie-pop perfection. Then they threw a party & shut themselves down. This Thursday, join DJ spacetime to hear the story of Sarah Records—and the sweet, sweet sounds of jangly guitars and young-adult introspection 🤍🍒
+Calling all indieheads! This Thursday Night Feature explores Sarah Records, the short-lived yet dearly missed independent label created by two youngsters in 1980s Bristol. DJ Juicy Juice covers nearly EVERYTHING known about the rather mystifying Sarah, from its founding to its untimely ending.
