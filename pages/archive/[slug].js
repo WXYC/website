@@ -85,25 +85,11 @@ const EventPage = (props) => {
 export default EventPage
 
 export const getStaticPaths = async () => {
-	const countResult = await client.request({
-		query: `{ archiveConnection { totalCount } }`,
-	})
-	const totalCount = countResult.data.archiveConnection.totalCount
+	const length = await client.queries.archiveConnection()
+	const postCount = length.data.archiveConnection.totalCount
 
-	const {data} = await client.request({
-		query: `
-		query getPaths($count: Float) {
-			archiveConnection(last: $count, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u") {
-				edges {
-					node {
-						_sys {
-							filename
-						}
-					}
-				}
-			}
-		}`,
-		variables: {count: totalCount},
+	const {data} = await client.queries.archiveConnection({
+		last: postCount,
 	})
 
 	const paths = data.archiveConnection.edges.map((x) => {

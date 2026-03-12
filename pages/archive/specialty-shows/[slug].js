@@ -136,7 +136,7 @@ export const getStaticProps = async (ctx) => {
 	const {data} = await client.request({
 		query: `
       query getContent($title: String, $endOfWeek: String) {
-      archiveConnection(filter: {categories: {category: {category: {title: {eq: $title}}}}, published: {before: $endOfWeek}}, sort: "published", last: 30, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u") {
+      archiveConnection(filter: {categories: {category: {category: {title: {eq: $title}}}}, published: {before: $endOfWeek}}, sort: "published", last: 100) {
       edges {
         node {
           id

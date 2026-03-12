@@ -89,7 +89,7 @@ export const getStaticProps = async () => {
 	const {data} = await client.request({
 		query: `
       {
-      archiveConnection(filter: {categories: {category: {category: {title: {eq: "Event"}}}}}, sort: "published", last:30, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u") {
+      archiveConnection(filter: {categories: {category: {category: {title: {eq: "Event"}}}}}, sort: "published", last:30) {
       edges {
         node {
           id
