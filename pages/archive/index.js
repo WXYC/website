@@ -129,7 +129,7 @@ export const getStaticProps = async () => {
 		query: `
     query getContent($eventCount: Float, $endOfWeek: String)
     {
-      archiveConnection(filter: {published: {before: $endOfWeek}}, sort: "published", last: $eventCount, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u"){
+      archiveConnection(filter: {published: {before: $endOfWeek}}, sort: "published", last: $eventCount){
         edges {
           node {
             id

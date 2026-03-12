@@ -94,7 +94,7 @@ export const getStaticProps = async () => {
 		query: `
     query getContent($startOfWeek: String, $endOfWeek: String)
     {    
-        blogConnection(sort: "published", last:6, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u"){
+        blogConnection(sort: "published", last:6){
           edges {
             node {
               id
@@ -119,7 +119,7 @@ export const getStaticProps = async () => {
           }
         },
        
-      archiveConnection(filter: {published: {after: $startOfWeek, before: $endOfWeek}}, sort: "published", last:30, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u") {
+      archiveConnection(filter: {published: {after: $startOfWeek, before: $endOfWeek}}, sort: "published", last:30) {
         edges {
           node {
             id

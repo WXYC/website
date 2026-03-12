@@ -87,7 +87,7 @@ export const getStaticProps = async (ctx) => {
 	const {data} = await client.request({
 		query: `
         query getContent($title: String) {
-        blogConnection(filter: {categories: {category: {category: {title: {eq: $title}}}}}, sort: "published", last:30, before: "cG9zdCNkYXRlIzE2NTc4Njg0MDAwMDAjY29udGVudC9wb3N0cy9hbm90aGVyUG9zdC5qc29u") {
+        blogConnection(filter: {categories: {category: {category: {title: {eq: $title}}}}}, sort: "published", last:30) {
         edges {
           node {
             id
