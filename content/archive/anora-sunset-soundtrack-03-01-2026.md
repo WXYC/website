@@ -1,6 +1,8 @@
 ---
 title: Anora Sunset Soundtrack
 cover: /uploads/8835F749-0245-402A-B5E3-B3194E6A78FC - Andjela Starcevic.jpeg
+categories:
+  - category: content/category/sunset-soundtrack.md
 published: 2026-03-01T18:37:45.202Z
 ---
 
