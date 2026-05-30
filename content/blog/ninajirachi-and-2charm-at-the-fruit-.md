@@ -8,7 +8,7 @@ published: 2026-02-03T16:53:00.006Z
 description: 'On February 3rd 2026, Ninajirachi took the stage at “Durham''s ‘Best Kept Secret”, The Fruit, transforming the venue into an electrifying, EDM and hyperpop -influenced ‘online’ party'
 ---
 
-   Long before Ninajirachi ever stepped onto a stage, her relationship with electronic music was mediated through a screen. That same internet-born sensibility defined the night at The Fruit, where she and fellow Australian act 2charm transformed a Durham venue into something less local and more globally online. On February 3rd, headliner Ninajirachi and upcoming duo 2charm brought their influences and sensibilities to Durham, translating both their cultural and digital roots onto the stage proudly.
+Long before Ninajirachi ever stepped onto a stage, her relationship with electronic music was mediated through a screen. That same internet-born sensibility defined the night at The Fruit, where she and fellow Australian act 2charm transformed a Durham venue into something less local and more globally online. On February 3rd, headliner Ninajirachi and upcoming duo 2charm brought their influences and sensibilities to Durham, translating both their cultural and digital roots onto the stage proudly.
 
 &#x9;The night began early, with five total acts, including three local DJs from the Triangle. Their sets felt intentionally curated for the space: a large, open room that resembled an aircraft hangar only with brick accents on the wall. The DJs played a wide variety of genres–house, techno, drum & bass, footwork, and more– playing a mix of genres for a diverse crowd.
 
@@ -20,7 +20,7 @@ description: 'On February 3rd 2026, Ninajirachi took the stage at “Durham''s �
 
 ![](</uploads/2 charm.jpg>)Photo by Sam Jump
 
-     After the buzz and left by 2charm, Ninajirachi began her set at around 9:45 pm. She built her entrance deliberately, dimming the lights and stretching “London Song” into a nearly ten-minute introduction before revealing herself at the first chorus. Though she did not perform vocals during this tour, instead focusing entirely on mixing, the set felt deeply personal; less like a standard DJ performance and more like an emotional experience. It was a deliberate artistic choice, fully intentional rather than a concession to limitations.
+    After the buzz and left by 2charm, Ninajirachi began her set at around 9:45 pm. She built her entrance deliberately, dimming the lights and stretching “London Song” into a nearly ten-minute introduction before revealing herself at the first chorus. Though she did not perform vocals during this tour, instead focusing entirely on mixing, the set felt deeply personal; less like a standard DJ performance and more like an emotional experience. It was a deliberate artistic choice, fully intentional rather than a concession to limitations.
 
     I Love My Computer maps Ninajirachi’s relationship with the internet in all its contradictions: the good, the bad, and the ugly. Opener “London Song” captures the good—online escapism as freedom. An experience mediated through a screen, the song suggests, is still better than no experience at all. It was, after all, the internet that first introduced Ninajirachi to electronic music, discovering the genre through a denim-dyeing tutorial in ninth grade—the same art form that now sustains her career.
 
