@@ -1,7 +1,7 @@
 ---
 title: 'Ninajirachi and 2charm at The Fruit '
 author: 'By Sam Jump aka Xx_CoolSocc3r101_xX '
-cover: /uploads/Nina cover.jpg
+cover: /uploads/Nina%20cover.jpg
 categories:
   - category: content/category/show-review.md
 published: 2026-02-03T16:53:00.006Z
