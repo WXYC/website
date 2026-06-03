@@ -12,6 +12,7 @@ import mobilephoto from '/images/crowdmobile.jpeg'
 import Image from 'next/image'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../components/SeeMoreButton'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
 
 // Helper to safely extract description text from TinaCMS rich-text field
 const getDescriptionText = (description, maxLength = 75) => {
@@ -58,7 +59,7 @@ export default function EventList(props) {
 			</div>
 
 			{/* Desktop banner image */}
-			<div className="relative z-5 -mt-10 hidden md:block">
+			<div className="z-5 relative -mt-10 hidden md:block">
 				<Image src={photo} alt="A crowded dancefloor at a WXYC event." />
 			</div>
 
@@ -115,56 +116,58 @@ export const getStaticProps = async () => {
 		currentDateTime.getMonth(),
 		currentDateTime.getDate() + (6 - currentDateTime.getDay())
 	)
+	const endOfWeekStr = endOfWeek.toDateString()
 
-	const length = await client.request({
-		query: `{
-      archiveConnection {
-        totalCount
-      }
-    }
-    `,
+	const archiveEdges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetEvents($first: Float, $after: String, $endOfWeek: String) {
+					archiveConnection(
+						filter: {published: {before: $endOfWeek}}
+						sort: "published"
+						first: $first
+						after: $after
+					) {
+						edges {
+							node {
+								id
+								title
+								cover
+								published
+								description
+								_sys { filename }
+							}
+						}
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {first: TINA_PAGE_SIZE, after, endOfWeek: endOfWeekStr},
+		})
+		return data.archiveConnection
 	})
+	archiveEdges.reverse()
 
-	const {data} = await client.request({
-		query: `
-    query getContent($eventCount: Float, $endOfWeek: String)
-    {
-      archiveConnection(filter: {published: {before: $endOfWeek}}, sort: "published", last: $eventCount){
-        edges {
-          node {
-            id
-            title
-            cover
-            published
-            description
-            _sys {
-              filename
-            }
-          }
-        }
-      },
-      categoryConnection(filter: {specialtyShow: { eq:true}}) {
-        edges {
-          node {
-            id
-            title
-            _sys {
-              filename
-            }
-          }
-        }
-      }
-    }
-    `,
-		variables: {
-			eventCount: length.data.archiveConnection.totalCount,
-			endOfWeek: endOfWeek.toDateString(),
-		},
+	const {data: categoryData} = await client.request({
+		query: `{
+			categoryConnection(filter: {specialtyShow: {eq: true}}) {
+				edges {
+					node {
+						id
+						title
+						_sys { filename }
+					}
+				}
+			}
+		}`,
 	})
 
 	return {
 		props: {
-			data,
+			data: {
+				archiveConnection: {edges: archiveEdges},
+				categoryConnection: categoryData.categoryConnection,
+			},
 		},
 	}
 }

@@ -8,6 +8,7 @@ import Image from 'next/image'
 import React, {useState} from 'react'
 import Link from 'next/link'
 import SeeMoreButton from '../../components/SeeMoreButton.js'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
 
 //blog home page
 export default function PostList(props) {
@@ -49,22 +50,19 @@ export default function PostList(props) {
 					</p>
 				</div>
 
-				
 				{/* Desktop banner image */}
 				<div className="relative z-10 mx-auto -mt-20 mb-5 hidden w-5/6 md:block">
-	  				<div className="relative h-[320px] w-full overflow-hidden lg:h-[420px]">
-   		 				<Image
-      					src={photo}
-      					alt="A crowded dancefloor at a WXYC event."
-     					fill
-      					className="object-cover object-center"
-     					sizes="83vw"
-     					priority
-   						 />
-  					</div>
+					<div className="relative h-[320px] w-full overflow-hidden lg:h-[420px]">
+						<Image
+							src={photo}
+							alt="A crowded dancefloor at a WXYC event."
+							fill
+							className="object-cover object-center"
+							sizes="83vw"
+							priority
+						/>
+					</div>
 				</div>
-
-
 
 				{/* Mobile banner image */}
 				<div className="relative z-10 mx-auto -mt-20 mb-5 w-5/6 md:-mt-20 md:hidden">
@@ -116,42 +114,36 @@ export default function PostList(props) {
 }
 
 export const getStaticProps = async () => {
-	const length = await client.request({
-		query: `{
-      blogConnection {
-        totalCount
-      }
-    }`,
+	const edges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetPosts($first: Float, $after: String) {
+					blogConnection(sort: "published", first: $first, after: $after) {
+						edges {
+							node {
+								id
+								title
+								cover
+								published
+								description
+								_sys { filename }
+							}
+						}
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {first: TINA_PAGE_SIZE, after},
+		})
+		return data.blogConnection
 	})
 
-	const {data} = await client.request({
-		query: `
-    query getContent($postCount: Float)
-    {
-      blogConnection(sort: "published", last: $postCount){
-        edges {
-          node {
-            id
-            title
-            cover
-            published
-            description
-            _sys {
-              filename
-            }
-          }
-        }
-      }
-    }
-    `,
-		variables: {
-			postCount: length.data.blogConnection.totalCount,
-		},
-	})
+	// `first` walks ascending by `published`; reverse so newest renders first.
+	edges.reverse()
 
 	return {
 		props: {
-			data,
+			data: {blogConnection: {edges}},
 		},
 	}
 }

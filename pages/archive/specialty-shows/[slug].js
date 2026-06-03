@@ -8,6 +8,7 @@ import ArchiveLayout from '../../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../../components/SeeMoreButton'
 import {STATIC_FALLBACK} from '../../../lib/staticPaths'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../../lib/tinaPagination'
 
 // Helper to safely extract description text from TinaCMS rich-text field
 const getDescriptionText = (description, maxLength = 75) => {
@@ -76,7 +77,9 @@ const ArchiveCategoryPage = (props) => {
 														id={event.event.id}
 														title={event.event.title}
 														cover={event.event.cover}
-														subtitle={getDescriptionText(event.event.description)}
+														subtitle={getDescriptionText(
+															event.event.description
+														)}
 														slug={event.event._sys.filename}
 													/>
 												))}
@@ -133,45 +136,67 @@ export const getStaticProps = async (ctx) => {
 		},
 	})
 
-	const {data} = await client.request({
-		query: `
-      query getContent($title: String, $endOfWeek: String) {
-      archiveConnection(filter: {categories: {category: {category: {title: {eq: $title}}}}, published: {before: $endOfWeek}}, sort: "published", last: 100) {
-      edges {
-        node {
-          id
-          title
-          description
-          cover
-          published
-          _sys {
-            filename
-          }
-        }
-      }
-    },
-    categoryConnection(filter: {specialtyShow: { eq:true}}) {
-      edges {
-        node {
-          id
-          title
-          _sys {
-            filename
-          }
-        }
-      }
-    }
+	const categoryTitle = title.data.category.title
+	const endOfWeekStr = endOfWeek.toDateString()
 
-  }`,
-		variables: {
-			title: title.data.category.title,
-			endOfWeek: endOfWeek.toDateString(),
-		},
+	const archiveEdges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetShowEvents($first: Float, $after: String, $title: String, $endOfWeek: String) {
+					archiveConnection(
+						filter: {
+							categories: {category: {category: {title: {eq: $title}}}}
+							published: {before: $endOfWeek}
+						}
+						sort: "published"
+						first: $first
+						after: $after
+					) {
+						edges {
+							node {
+								id
+								title
+								description
+								cover
+								published
+								_sys { filename }
+							}
+						}
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {
+				first: TINA_PAGE_SIZE,
+				after,
+				title: categoryTitle,
+				endOfWeek: endOfWeekStr,
+			},
+		})
+		return data.archiveConnection
+	})
+	archiveEdges.reverse()
+
+	const {data: categoryData} = await client.request({
+		query: `{
+			categoryConnection(filter: {specialtyShow: {eq: true}}) {
+				edges {
+					node {
+						id
+						title
+						_sys { filename }
+					}
+				}
+			}
+		}`,
 	})
 
 	return {
 		props: {
-			data,
+			data: {
+				archiveConnection: {edges: archiveEdges},
+				categoryConnection: categoryData.categoryConnection,
+			},
 			title,
 		},
 	}

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import ArchiveLayout from '../../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../../components/SeeMoreButton'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../../lib/tinaPagination'
 
 // page filtering for all specialty shows
 const SpecialtyShowsPage = (props) => {
@@ -101,55 +102,61 @@ export const getStaticProps = async () => {
 		currentDateTime.getMonth(),
 		currentDateTime.getDate() + (6 - currentDateTime.getDay())
 	)
+	const endOfWeekStr = endOfWeek.toDateString()
 
-	const length = await client.request({
-		query: `{
-      archiveConnection {
-        totalCount
-      }
-    }
-    `,
+	const archiveEdges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetSpecialtyShows($first: Float, $after: String, $endOfWeek: String) {
+					archiveConnection(
+						filter: {
+							categories: {category: {category: {title: {eq: "Specialty Show"}}}}
+							published: {before: $endOfWeek}
+						}
+						sort: "published"
+						first: $first
+						after: $after
+					) {
+						edges {
+							node {
+								id
+								title
+								description
+								cover
+								published
+								_sys { filename }
+							}
+						}
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {first: TINA_PAGE_SIZE, after, endOfWeek: endOfWeekStr},
+		})
+		return data.archiveConnection
 	})
+	archiveEdges.reverse()
 
-	const {data} = await client.request({
-		query: `
-		query getContent($endOfWeek:String, $eventCount: Float)  
-		{
-		  archiveConnection(filter: {categories: {category: {category: {title: {eq: "Specialty Show"}}}}, published: {before: $endOfWeek}}, sort: "published", last:$eventCount) {
-		  edges {
-			node {
-			  id
-			  title
-			  description
-			  cover
-			  published
-			  _sys {
-				filename
-			  }
+	const {data: categoryData} = await client.request({
+		query: `{
+			categoryConnection(filter: {specialtyShow: {eq: true}}) {
+				edges {
+					node {
+						id
+						title
+						_sys { filename }
+					}
+				}
 			}
-		  }
-		},
-    categoryConnection(filter: {specialtyShow: { eq:true}}) {
-        edges {
-          node {
-            id
-            title
-            _sys {
-              filename
-            }
-          }
-        }
-      }
-  }`,
-		variables: {
-			endOfWeek: endOfWeek.toDateString(),
-			eventCount: length.data.archiveConnection.totalCount,
-		},
+		}`,
 	})
 
 	return {
 		props: {
-			data,
+			data: {
+				archiveConnection: {edges: archiveEdges},
+				categoryConnection: categoryData.categoryConnection,
+			},
 		},
 	}
 }

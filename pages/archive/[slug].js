@@ -6,6 +6,7 @@ import ArchiveLayout from '../../components/ArchiveLayout'
 import {AiFillTag} from 'react-icons/ai'
 import Head from 'next/head'
 import {STATIC_FALLBACK} from '../../lib/staticPaths'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
 
 // page for a specific specialty show after it's been opened
 const EventPage = (props) => {
@@ -85,16 +86,21 @@ const EventPage = (props) => {
 export default EventPage
 
 export const getStaticPaths = async () => {
-	const length = await client.queries.archiveConnection()
-	const postCount = length.data.archiveConnection.totalCount
-
-	const {data} = await client.queries.archiveConnection({
-		last: postCount,
+	const edges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetArchiveSlugs($first: Float, $after: String) {
+					archiveConnection(first: $first, after: $after) {
+						edges { node { _sys { filename } } }
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {first: TINA_PAGE_SIZE, after},
+		})
+		return data.archiveConnection
 	})
-
-	const paths = data.archiveConnection.edges.map((x) => {
-		return {params: {slug: x.node._sys.filename}}
-	})
+	const paths = edges.map((x) => ({params: {slug: x.node._sys.filename}}))
 
 	return {
 		paths,

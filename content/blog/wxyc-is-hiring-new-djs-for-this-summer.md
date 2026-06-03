@@ -4,6 +4,7 @@ author: WXYC
 cover: /uploads/Screenshot%202026-05-11%20134116.png
 categories:
   - category: content/category/event.md
+published: 2026-05-11T21:35:48.000Z
 description: 'No experience is necessary, just a love of music!'
 ---
 

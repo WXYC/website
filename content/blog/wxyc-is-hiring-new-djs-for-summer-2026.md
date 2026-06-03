@@ -3,6 +3,7 @@ title: WXYC is Hiring New DJs for Summer 2026!
 cover: /uploads/Screenshot 2026-05-11 134116.png
 categories:
   - category: content/category/event.md
+published: 2026-05-11T18:50:01.000Z
 description: 'No experience necessary, just a love for music!'
 ---
 

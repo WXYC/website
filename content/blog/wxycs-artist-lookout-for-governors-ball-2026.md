@@ -4,6 +4,7 @@ author: Julian Swart aka DJ Bluedog
 cover: /uploads/Gov ball 26 cover.jpg
 categories:
   - category: content/category/event.md
+published: 2026-06-03T18:59:00.000Z
 description: 'In anticipation of one of live music’s most exciting weekends, Julian Swart aka DJ Blue Dog highlights emerging acts to watch ahead of the upcoming Governors Ball Festival, taking place June 5–7.'
 ---
 
