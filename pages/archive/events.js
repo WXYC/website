@@ -7,6 +7,7 @@ import {
 import ArchiveLayout from '../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../components/SeeMoreButton'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
 
 // page for filtering archive by event status (i.e. non-specialty shows)
 const EventsCategoryPage = (props) => {
@@ -86,40 +87,56 @@ const EventsCategoryPage = (props) => {
 export default EventsCategoryPage
 
 export const getStaticProps = async () => {
-	const {data} = await client.request({
-		query: `
-      {
-      archiveConnection(filter: {categories: {category: {category: {title: {eq: "Event"}}}}}, sort: "published", last:30) {
-      edges {
-        node {
-          id
-          title
-          description
-          cover
-          published
-          _sys {
-            filename
-          }
-        }
-      }
-    },
-    categoryConnection(filter: {specialtyShow: { eq:true}}) {
-        edges {
-          node {
-            id
-            title
-            _sys {
-              filename
-            }
-          }
-        }
-      }
-  }`,
+	const archiveEdges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetEventArchive($first: Float, $after: String) {
+					archiveConnection(
+						filter: {categories: {category: {category: {title: {eq: "Event"}}}}}
+						sort: "published"
+						first: $first
+						after: $after
+					) {
+						edges {
+							node {
+								id
+								title
+								description
+								cover
+								published
+								_sys { filename }
+							}
+						}
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {first: TINA_PAGE_SIZE, after},
+		})
+		return data.archiveConnection
+	})
+	archiveEdges.reverse()
+
+	const {data: categoryData} = await client.request({
+		query: `{
+			categoryConnection(filter: {specialtyShow: {eq: true}}) {
+				edges {
+					node {
+						id
+						title
+						_sys { filename }
+					}
+				}
+			}
+		}`,
 	})
 
 	return {
 		props: {
-			data,
+			data: {
+				archiveConnection: {edges: archiveEdges},
+				categoryConnection: categoryData.categoryConnection,
+			},
 		},
 	}
 }

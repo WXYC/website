@@ -4,6 +4,7 @@ import BlogLayout from '../../../components/BlogLayout'
 import SeeMoreButton from '../../../components/SeeMoreButton'
 import React, {useState} from 'react'
 import {STATIC_FALLBACK} from '../../../lib/staticPaths'
+import {fetchAllEdges, TINA_PAGE_SIZE} from '../../../lib/tinaPagination'
 
 // filtering bog by category (either artist interview, show review, or album review)
 const BlogCategoryPage = (props) => {
@@ -84,33 +85,42 @@ export const getStaticProps = async (ctx) => {
 		},
 	})
 
-	const {data} = await client.request({
-		query: `
-        query getContent($title: String) {
-        blogConnection(filter: {categories: {category: {category: {title: {eq: $title}}}}}, sort: "published", last:30) {
-        edges {
-          node {
-            id
-            title
-            author
-            description
-            cover
-            published
-            _sys {
-              filename
-            }
-          }
-        }
-      }
-    }`,
-		variables: {
-			title: title.data.category.title,
-		},
+	const categoryTitle = title.data.category.title
+
+	const edges = await fetchAllEdges(async (after) => {
+		const {data} = await client.request({
+			query: `
+				query GetCategoryPosts($first: Float, $after: String, $title: String) {
+					blogConnection(
+						filter: {categories: {category: {category: {title: {eq: $title}}}}}
+						sort: "published"
+						first: $first
+						after: $after
+					) {
+						edges {
+							node {
+								id
+								title
+								author
+								description
+								cover
+								published
+								_sys { filename }
+							}
+						}
+						pageInfo { hasNextPage endCursor }
+					}
+				}
+			`,
+			variables: {first: TINA_PAGE_SIZE, after, title: categoryTitle},
+		})
+		return data.blogConnection
 	})
+	edges.reverse()
 
 	return {
 		props: {
-			data,
+			data: {blogConnection: {edges}},
 			title,
 		},
 	}
