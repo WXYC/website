@@ -56,6 +56,10 @@ export default {
 			type: 'datetime',
 			label: 'Published',
 			name: 'published',
+			required: true,
+			ui: {
+				defaultValue: () => new Date().toISOString(),
+			},
 		},
 		{
 			type: 'string',

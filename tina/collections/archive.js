@@ -11,17 +11,23 @@ export default {
 			slugify: (values) => {
 				// Values is an object containing all the values of the form. In this case it is {title?: string, topic?: string}
 				//
-				let formattedDate = '';
+				let formattedDate = ''
 				if (values.published) {
-					const date = new Date(values.published); 
-					const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-					formattedDate = date.toLocaleDateString('en-US', options).replace(/\//g, '-');
+					const date = new Date(values.published)
+					const options = {day: '2-digit', month: '2-digit', year: 'numeric'}
+					formattedDate = date
+						.toLocaleDateString('en-US', options)
+						.replace(/\//g, '-')
 				}
 
-				return `${values?.title
-					?.toLowerCase()
-					.replace(/[^\w\s]/gi, '')
-					.replace(/\s+/g, '-')}` + '-' + formattedDate
+				return (
+					`${values?.title
+						?.toLowerCase()
+						.replace(/[^\w\s]/gi, '')
+						.replace(/\s+/g, '-')}` +
+					'-' +
+					formattedDate
+				)
 			},
 		},
 	},
@@ -30,7 +36,7 @@ export default {
 			type: 'string',
 			label: 'Title',
 			name: 'title',
-			placeholder: 'subject of specialty show or show title'
+			placeholder: 'subject of specialty show or show title',
 		},
 		{
 			name: 'cover',
@@ -56,6 +62,10 @@ export default {
 			type: 'datetime',
 			label: 'Published',
 			name: 'published',
+			required: true,
+			ui: {
+				defaultValue: () => new Date().toISOString(),
+			},
 		},
 		{
 			type: 'rich-text',

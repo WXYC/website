@@ -1,6 +1,7 @@
 ---
 title: WXYC is Hiring New DJs this Summer!
 cover: /uploads/1.png
+published: 2026-05-11T14:53:43.000Z
 description: 'No experience is necessary, just a love of music!'
 ---
 
