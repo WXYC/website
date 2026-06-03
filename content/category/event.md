@@ -1,4 +1,5 @@
 ---
-title: Event
+title: Concert Preview
+specialtyShow: false
 ---
 
