@@ -1,5 +1,5 @@
 ---
-title: Concert Preview
+title: Event
 specialtyShow: false
 ---
 
