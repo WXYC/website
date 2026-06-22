@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest'
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {
 	fetchCollectionNodes,
 	sortByPublishedDesc,
@@ -37,6 +37,11 @@ describe('resilientPosts', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		vi.spyOn(console, 'warn').mockImplementation(() => {})
+	})
+
+	afterEach(() => {
+		// Restore the console.warn spy so it can't leak into sibling test files.
+		vi.restoreAllMocks()
 	})
 
 	describe('sortByPublishedDesc', () => {
@@ -239,6 +244,27 @@ describe('resilientPosts', () => {
 			expect(nodes.map((n) => n.title)).toEqual(['ok.md'])
 			// The filename-less edge must not trigger a `client.queries.blog(undefined)` call.
 			expect(queries.blog).toHaveBeenCalledTimes(1)
+		})
+
+		it('returns an empty list without crashing when the connection resolves to null', async () => {
+			// A broken index can return `{data: {blogConnection: null}}` (a resolved
+			// 200, not a rejection); this must not throw and break the build.
+			const queries = {blog: vi.fn()}
+			const client = mockClient(
+				'blogConnection',
+				[['blogConnection', null]],
+				queries
+			)
+
+			const nodes = await fetchCollectionNodes({
+				client,
+				collection: 'blog',
+				fields,
+				label: 'blog',
+			})
+
+			expect(nodes).toEqual([])
+			expect(queries.blog).not.toHaveBeenCalled()
 		})
 	})
 })
