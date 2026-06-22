@@ -125,8 +125,13 @@ export const getStaticProps = async () => {
 			label: 'home/archive',
 		}),
 	])
+	// The carousels render in array order. The prior implementation used Tina's
+	// `last: N` over an ascending `published` sort, which returned the N most
+	// recent items oldest-first; take the N newest then `.reverse()` to reproduce
+	// that exact order. (Flipping to newest-first would be a separate UX change.)
 	const blogEdges = sortByPublishedDesc(blogNodes)
 		.slice(0, 6)
+		.reverse()
 		.map((node) => ({node}))
 	const archiveEdges = sortByPublishedDesc(
 		filterByPublishedWindow(archiveNodes, {
@@ -135,6 +140,7 @@ export const getStaticProps = async () => {
 		})
 	)
 		.slice(0, 30)
+		.reverse()
 		.map((node) => ({node}))
 
 	return {
