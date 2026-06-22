@@ -7,7 +7,10 @@ import {
 import ArchiveLayout from '../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../components/SeeMoreButton'
-import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
+import {
+	fetchCollectionNodes,
+	sortByPublishedDesc,
+} from '../../lib/resilientPosts'
 
 // page for filtering archive by event status (i.e. non-specialty shows)
 const EventsCategoryPage = (props) => {
@@ -89,35 +92,38 @@ const EventsCategoryPage = (props) => {
 export default EventsCategoryPage
 
 export const getStaticProps = async () => {
-	const archiveEdges = await fetchAllEdges(async (after) => {
-		const {data} = await client.request({
-			query: `
-				query GetEventArchive($first: Float, $after: String) {
-					archiveConnection(
-						filter: {categories: {category: {category: {title: {eq: "Event"}}}}}
-						sort: "published"
-						first: $first
-						after: $after
-					) {
-						edges {
-							node {
-								id
-								title
-								description
-								cover
-								published
-								_sys { filename }
-							}
-						}
-						pageInfo { hasNextPage endCursor }
+	// Pull every event without server-side `sort`/`filter` on `published` (which
+	// fails the whole export if any document has a stale `published` index), then
+	// keep only "Event"-category items and order them newest-first in JS.
+	// See lib/resilientPosts.js.
+	const archiveNodes = await fetchCollectionNodes({
+		connection: 'archiveConnection',
+		fields: `
+			id
+			title
+			description
+			cover
+			published
+			categories {
+				category {
+					... on Category {
+						title
 					}
 				}
-			`,
-			variables: {first: TINA_PAGE_SIZE, after},
-		})
-		return data.archiveConnection
+			}
+			_sys { filename }
+		`,
+		request: (query) => client.request(query),
+		fetchOne: (filename) =>
+			client.queries
+				.archive({relativePath: `${filename}.md`})
+				.then((res) => res.data.archive),
+		label: 'archive/events',
 	})
-	archiveEdges.reverse()
+	const events = archiveNodes.filter((node) =>
+		node.categories?.some((entry) => entry?.category?.title === 'Event')
+	)
+	const archiveEdges = sortByPublishedDesc(events).map((node) => ({node}))
 
 	const {data: categoryData} = await client.request({
 		query: `{

@@ -8,7 +8,11 @@ import ArchiveLayout from '../../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../../components/SeeMoreButton'
 import {STATIC_FALLBACK} from '../../../lib/staticPaths'
-import {fetchAllEdges, TINA_PAGE_SIZE} from '../../../lib/tinaPagination'
+import {
+	fetchCollectionNodes,
+	sortByPublishedDesc,
+	filterByPublishedWindow,
+} from '../../../lib/resilientPosts'
 
 // Helper to safely extract description text from TinaCMS rich-text field
 const getDescriptionText = (description, maxLength = 75) => {
@@ -137,45 +141,41 @@ export const getStaticProps = async (ctx) => {
 	})
 
 	const categoryTitle = title.data.category.title
-	const endOfWeekStr = endOfWeek.toDateString()
 
-	const archiveEdges = await fetchAllEdges(async (after) => {
-		const {data} = await client.request({
-			query: `
-				query GetShowEvents($first: Float, $after: String, $title: String, $endOfWeek: String) {
-					archiveConnection(
-						filter: {
-							categories: {category: {category: {title: {eq: $title}}}}
-							published: {before: $endOfWeek}
-						}
-						sort: "published"
-						first: $first
-						after: $after
-					) {
-						edges {
-							node {
-								id
-								title
-								description
-								cover
-								published
-								_sys { filename }
-							}
-						}
-						pageInfo { hasNextPage endCursor }
+	// Pull every event without server-side `sort`/`filter` on `published` (which
+	// fails the whole export if any document has a stale `published` index), then
+	// keep only this show's already-aired events and order them newest-first in
+	// JS. See lib/resilientPosts.js.
+	const archiveNodes = await fetchCollectionNodes({
+		connection: 'archiveConnection',
+		fields: `
+			id
+			title
+			description
+			cover
+			published
+			categories {
+				category {
+					... on Category {
+						title
 					}
 				}
-			`,
-			variables: {
-				first: TINA_PAGE_SIZE,
-				after,
-				title: categoryTitle,
-				endOfWeek: endOfWeekStr,
-			},
-		})
-		return data.archiveConnection
+			}
+			_sys { filename }
+		`,
+		request: (query) => client.request(query),
+		fetchOne: (filename) =>
+			client.queries
+				.archive({relativePath: `${filename}.md`})
+				.then((res) => res.data.archive),
+		label: `archive/specialty-shows/${ctx.params.slug}`,
 	})
-	archiveEdges.reverse()
+	const showEvents = filterByPublishedWindow(archiveNodes, {
+		before: endOfWeek,
+	}).filter((node) =>
+		node.categories?.some((entry) => entry?.category?.title === categoryTitle)
+	)
+	const archiveEdges = sortByPublishedDesc(showEvents).map((node) => ({node}))
 
 	const {data: categoryData} = await client.request({
 		query: `{

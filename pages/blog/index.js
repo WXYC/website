@@ -8,7 +8,10 @@ import Image from 'next/image'
 import React, {useState} from 'react'
 import Link from 'next/link'
 import SeeMoreButton from '../../components/SeeMoreButton.js'
-import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
+import {
+	fetchCollectionNodes,
+	sortByPublishedDesc,
+} from '../../lib/resilientPosts'
 
 //blog home page
 export default function PostList(props) {
@@ -114,32 +117,28 @@ export default function PostList(props) {
 }
 
 export const getStaticProps = async () => {
-	const edges = await fetchAllEdges(async (after) => {
-		const {data} = await client.request({
-			query: `
-				query GetPosts($first: Float, $after: String) {
-					blogConnection(sort: "published", first: $first, after: $after) {
-						edges {
-							node {
-								id
-								title
-								cover
-								published
-								description
-								_sys { filename }
-							}
-						}
-						pageInfo { hasNextPage endCursor }
-					}
-				}
-			`,
-			variables: {first: TINA_PAGE_SIZE, after},
-		})
-		return data.blogConnection
+	// Pull every post without a server-side `sort: "published"` (which fails the
+	// whole export if any document has a stale `published` index) and order in
+	// JS instead. See lib/resilientPosts.js.
+	const nodes = await fetchCollectionNodes({
+		connection: 'blogConnection',
+		fields: `
+			id
+			title
+			cover
+			published
+			description
+			_sys { filename }
+		`,
+		request: (query) => client.request(query),
+		fetchOne: (filename) =>
+			client.queries
+				.blog({relativePath: `${filename}.md`})
+				.then((res) => res.data.blog),
+		label: 'blog/index',
 	})
 
-	// `first` walks ascending by `published`; reverse so newest renders first.
-	edges.reverse()
+	const edges = sortByPublishedDesc(nodes).map((node) => ({node}))
 
 	return {
 		props: {

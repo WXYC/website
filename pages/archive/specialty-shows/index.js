@@ -8,7 +8,11 @@ import Link from 'next/link'
 import ArchiveLayout from '../../../components/ArchiveLayout'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../../components/SeeMoreButton'
-import {fetchAllEdges, TINA_PAGE_SIZE} from '../../../lib/tinaPagination'
+import {
+	fetchCollectionNodes,
+	sortByPublishedDesc,
+	filterByPublishedWindow,
+} from '../../../lib/resilientPosts'
 
 // page filtering for all specialty shows
 const SpecialtyShowsPage = (props) => {
@@ -102,40 +106,44 @@ export const getStaticProps = async () => {
 		currentDateTime.getMonth(),
 		currentDateTime.getDate() + (6 - currentDateTime.getDay())
 	)
-	const endOfWeekStr = endOfWeek.toDateString()
-
-	const archiveEdges = await fetchAllEdges(async (after) => {
-		const {data} = await client.request({
-			query: `
-				query GetSpecialtyShows($first: Float, $after: String, $endOfWeek: String) {
-					archiveConnection(
-						filter: {
-							categories: {category: {category: {title: {eq: "Specialty Show"}}}}
-							published: {before: $endOfWeek}
-						}
-						sort: "published"
-						first: $first
-						after: $after
-					) {
-						edges {
-							node {
-								id
-								title
-								description
-								cover
-								published
-								_sys { filename }
-							}
-						}
-						pageInfo { hasNextPage endCursor }
+	// Pull every event without server-side `sort`/`filter` on `published` (which
+	// fails the whole export if any document has a stale `published` index), then
+	// keep only Specialty Show events that have already aired and order them
+	// newest-first in JS. See lib/resilientPosts.js.
+	const archiveNodes = await fetchCollectionNodes({
+		connection: 'archiveConnection',
+		fields: `
+			id
+			title
+			description
+			cover
+			published
+			categories {
+				category {
+					... on Category {
+						title
 					}
 				}
-			`,
-			variables: {first: TINA_PAGE_SIZE, after, endOfWeek: endOfWeekStr},
-		})
-		return data.archiveConnection
+			}
+			_sys { filename }
+		`,
+		request: (query) => client.request(query),
+		fetchOne: (filename) =>
+			client.queries
+				.archive({relativePath: `${filename}.md`})
+				.then((res) => res.data.archive),
+		label: 'archive/specialty-shows',
 	})
-	archiveEdges.reverse()
+	const specialtyShowEvents = filterByPublishedWindow(archiveNodes, {
+		before: endOfWeek,
+	}).filter((node) =>
+		node.categories?.some(
+			(entry) => entry?.category?.title === 'Specialty Show'
+		)
+	)
+	const archiveEdges = sortByPublishedDesc(specialtyShowEvents).map((node) => ({
+		node,
+	}))
 
 	const {data: categoryData} = await client.request({
 		query: `{
