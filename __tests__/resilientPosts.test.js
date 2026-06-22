@@ -266,5 +266,35 @@ describe('resilientPosts', () => {
 			expect(nodes).toEqual([])
 			expect(queries.blog).not.toHaveBeenCalled()
 		})
+
+		it('recovers via the filename walk when only the full-field walk returns null', async () => {
+			// A null on the full-field walk must be treated as a failure and fall
+			// back to the (here-succeeding) filename walk, not silently truncate.
+			const queries = {
+				blog: vi.fn((args) =>
+					Promise.resolve({data: {blog: {title: args.relativePath}}})
+				),
+			}
+			const client = mockClient(
+				'blogConnection',
+				[
+					// Full-field walk (contains `title`) returns a null connection...
+					['title', null],
+					// ...but the filename-only walk resolves with real edges.
+					['_sys { filename }', page([node('a'), node('b')])],
+				],
+				queries
+			)
+
+			const nodes = await fetchCollectionNodes({
+				client,
+				collection: 'blog',
+				fields,
+				label: 'blog',
+			})
+
+			expect(nodes.map((n) => n.title)).toEqual(['a.md', 'b.md'])
+			expect(queries.blog).toHaveBeenCalledTimes(2)
+		})
 	})
 })
