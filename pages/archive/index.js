@@ -124,7 +124,8 @@ export const getStaticProps = async () => {
 	// fails the whole export if any document has a stale `published` index), then
 	// drop future events and order newest-first in JS. See lib/resilientPosts.js.
 	const archiveNodes = await fetchCollectionNodes({
-		connection: 'archiveConnection',
+		client,
+		collection: 'archive',
 		fields: `
 			id
 			title
@@ -133,11 +134,6 @@ export const getStaticProps = async () => {
 			description
 			_sys { filename }
 		`,
-		request: (query) => client.request(query),
-		fetchOne: (filename) =>
-			client.queries
-				.archive({relativePath: `${filename}.md`})
-				.then((res) => res.data.archive),
 		label: 'archive/index',
 	})
 	const archiveEdges = sortByPublishedDesc(

@@ -107,36 +107,27 @@ export const getStaticProps = async () => {
 		currentDateTime.getDate() + (8 - currentDateTime.getDay())
 	)
 
-	const request = (query) => client.request(query)
-
 	// Both collections are pulled without server-side `sort`/`filter` on
 	// `published`, then ordered and windowed in JS, so a single document with a
-	// stale `published` index can't fail the whole homepage export.
-	// See lib/resilientPosts.js.
-	const blogNodes = await fetchCollectionNodes({
-		connection: 'blogConnection',
-		fields: CAROUSEL_FIELDS,
-		request,
-		fetchOne: (filename) =>
-			client.queries
-				.blog({relativePath: `${filename}.md`})
-				.then((res) => res.data.blog),
-		label: 'home/blog',
-	})
+	// stale `published` index can't fail the whole homepage export. The two
+	// walks are independent, so run them concurrently. See lib/resilientPosts.js.
+	const [blogNodes, archiveNodes] = await Promise.all([
+		fetchCollectionNodes({
+			client,
+			collection: 'blog',
+			fields: CAROUSEL_FIELDS,
+			label: 'home/blog',
+		}),
+		fetchCollectionNodes({
+			client,
+			collection: 'archive',
+			fields: CAROUSEL_FIELDS,
+			label: 'home/archive',
+		}),
+	])
 	const blogEdges = sortByPublishedDesc(blogNodes)
 		.slice(0, 6)
 		.map((node) => ({node}))
-
-	const archiveNodes = await fetchCollectionNodes({
-		connection: 'archiveConnection',
-		fields: CAROUSEL_FIELDS,
-		request,
-		fetchOne: (filename) =>
-			client.queries
-				.archive({relativePath: `${filename}.md`})
-				.then((res) => res.data.archive),
-		label: 'home/archive',
-	})
 	const archiveEdges = sortByPublishedDesc(
 		filterByPublishedWindow(archiveNodes, {
 			after: startOfWeek,

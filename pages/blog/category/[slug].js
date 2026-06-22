@@ -7,6 +7,7 @@ import {STATIC_FALLBACK} from '../../../lib/staticPaths'
 import {
 	fetchCollectionNodes,
 	sortByPublishedDesc,
+	filterByCategoryTitle,
 } from '../../../lib/resilientPosts'
 
 // filtering bog by category (either artist interview, show review, or album review)
@@ -95,7 +96,8 @@ export const getStaticProps = async (ctx) => {
 	// keep only this category's posts and order them newest-first in JS.
 	// See lib/resilientPosts.js.
 	const blogNodes = await fetchCollectionNodes({
-		connection: 'blogConnection',
+		client,
+		collection: 'blog',
 		fields: `
 			id
 			title
@@ -112,16 +114,9 @@ export const getStaticProps = async (ctx) => {
 			}
 			_sys { filename }
 		`,
-		request: (query) => client.request(query),
-		fetchOne: (filename) =>
-			client.queries
-				.blog({relativePath: `${filename}.md`})
-				.then((res) => res.data.blog),
 		label: `blog/category/${ctx.params.slug}`,
 	})
-	const categoryPosts = blogNodes.filter((node) =>
-		node.categories?.some((entry) => entry?.category?.title === categoryTitle)
-	)
+	const categoryPosts = filterByCategoryTitle(blogNodes, categoryTitle)
 	const edges = sortByPublishedDesc(categoryPosts).map((node) => ({node}))
 
 	return {

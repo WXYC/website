@@ -121,7 +121,8 @@ export const getStaticProps = async () => {
 	// whole export if any document has a stale `published` index) and order in
 	// JS instead. See lib/resilientPosts.js.
 	const nodes = await fetchCollectionNodes({
-		connection: 'blogConnection',
+		client,
+		collection: 'blog',
 		fields: `
 			id
 			title
@@ -130,11 +131,6 @@ export const getStaticProps = async () => {
 			description
 			_sys { filename }
 		`,
-		request: (query) => client.request(query),
-		fetchOne: (filename) =>
-			client.queries
-				.blog({relativePath: `${filename}.md`})
-				.then((res) => res.data.blog),
 		label: 'blog/index',
 	})
 
