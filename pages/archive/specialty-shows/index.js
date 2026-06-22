@@ -12,6 +12,7 @@ import {
 	fetchCollectionNodes,
 	sortByPublishedDesc,
 	filterByPublishedWindow,
+	filterByCategoryTitle,
 } from '../../../lib/resilientPosts'
 
 // page filtering for all specialty shows
@@ -111,7 +112,8 @@ export const getStaticProps = async () => {
 	// keep only Specialty Show events that have already aired and order them
 	// newest-first in JS. See lib/resilientPosts.js.
 	const archiveNodes = await fetchCollectionNodes({
-		connection: 'archiveConnection',
+		client,
+		collection: 'archive',
 		fields: `
 			id
 			title
@@ -127,19 +129,11 @@ export const getStaticProps = async () => {
 			}
 			_sys { filename }
 		`,
-		request: (query) => client.request(query),
-		fetchOne: (filename) =>
-			client.queries
-				.archive({relativePath: `${filename}.md`})
-				.then((res) => res.data.archive),
 		label: 'archive/specialty-shows',
 	})
-	const specialtyShowEvents = filterByPublishedWindow(archiveNodes, {
-		before: endOfWeek,
-	}).filter((node) =>
-		node.categories?.some(
-			(entry) => entry?.category?.title === 'Specialty Show'
-		)
+	const specialtyShowEvents = filterByCategoryTitle(
+		filterByPublishedWindow(archiveNodes, {before: endOfWeek}),
+		'Specialty Show'
 	)
 	const archiveEdges = sortByPublishedDesc(specialtyShowEvents).map((node) => ({
 		node,

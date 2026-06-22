@@ -10,6 +10,7 @@ import SeeMoreButton from '../../components/SeeMoreButton'
 import {
 	fetchCollectionNodes,
 	sortByPublishedDesc,
+	filterByCategoryTitle,
 } from '../../lib/resilientPosts'
 
 // page for filtering archive by event status (i.e. non-specialty shows)
@@ -97,7 +98,8 @@ export const getStaticProps = async () => {
 	// keep only "Event"-category items and order them newest-first in JS.
 	// See lib/resilientPosts.js.
 	const archiveNodes = await fetchCollectionNodes({
-		connection: 'archiveConnection',
+		client,
+		collection: 'archive',
 		fields: `
 			id
 			title
@@ -113,16 +115,9 @@ export const getStaticProps = async () => {
 			}
 			_sys { filename }
 		`,
-		request: (query) => client.request(query),
-		fetchOne: (filename) =>
-			client.queries
-				.archive({relativePath: `${filename}.md`})
-				.then((res) => res.data.archive),
 		label: 'archive/events',
 	})
-	const events = archiveNodes.filter((node) =>
-		node.categories?.some((entry) => entry?.category?.title === 'Event')
-	)
+	const events = filterByCategoryTitle(archiveNodes, 'Event')
 	const archiveEdges = sortByPublishedDesc(events).map((node) => ({node}))
 
 	const {data: categoryData} = await client.request({

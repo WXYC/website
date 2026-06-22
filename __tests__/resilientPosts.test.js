@@ -3,28 +3,35 @@ import {
 	fetchCollectionNodes,
 	sortByPublishedDesc,
 	filterByPublishedWindow,
+	filterByCategoryTitle,
 } from '../lib/resilientPosts'
 
-// Build a `request` mock that returns one connection page. `byQuery` maps a
-// substring of the GraphQL query to the connection payload it should resolve
-// (or an Error to reject with), letting a test make the full-field walk fail
-// while the filename-only walk succeeds.
-function mockRequest(connection, byQuery) {
-	return vi.fn(({query}) => {
-		for (const [needle, payload] of byQuery) {
-			if (query.includes(needle)) {
-				if (payload instanceof Error) return Promise.reject(payload)
-				return Promise.resolve({data: {[connection]: payload}})
+// Build a mock Tina `client` whose `request` returns one connection page per
+// matching query. `byQuery` maps a substring of the GraphQL query to the
+// connection payload it should resolve (or an Error to reject with), letting a
+// test make the full-field walk fail while the filename-only walk succeeds.
+// `queries[collection]` is the per-document fallback fetch.
+function mockClient(connection, byQuery, queries = {}) {
+	return {
+		request: vi.fn(({query}) => {
+			for (const [needle, payload] of byQuery) {
+				if (query.includes(needle)) {
+					if (payload instanceof Error) return Promise.reject(payload)
+					return Promise.resolve({data: {[connection]: payload}})
+				}
 			}
-		}
-		throw new Error(`unexpected query: ${query}`)
-	})
+			throw new Error(`unexpected query: ${query}`)
+		}),
+		queries,
+	}
 }
 
 const page = (edges) => ({
 	edges,
 	pageInfo: {hasNextPage: false, endCursor: null},
 })
+
+const node = (filename, fields = {}) => ({node: {_sys: {filename}, ...fields}})
 
 describe('resilientPosts', () => {
 	beforeEach(() => {
@@ -55,6 +62,23 @@ describe('resilientPosts', () => {
 			expect(sortByPublishedDesc(nodes)[0].title).toBe('dated')
 		})
 
+		it('does not treat a valid pre-1970 date as missing', () => {
+			const nodes = [
+				{title: 'undated', _sys: {filename: 'z'}},
+				{title: 'epoch', published: '1969-01-01', _sys: {filename: 'a'}},
+			]
+			// The real (pre-epoch) date must outrank the genuinely-undated node.
+			expect(sortByPublishedDesc(nodes)[0].title).toBe('epoch')
+		})
+
+		it('breaks ties by filename for deterministic order', () => {
+			const nodes = [
+				{title: 'b', published: '2025-01-01', _sys: {filename: 'b-post'}},
+				{title: 'a', published: '2025-01-01', _sys: {filename: 'a-post'}},
+			]
+			expect(sortByPublishedDesc(nodes).map((n) => n.title)).toEqual(['a', 'b'])
+		})
+
 		it('does not mutate the input array', () => {
 			const nodes = [
 				{title: 'a', published: '2024-01-01'},
@@ -73,7 +97,7 @@ describe('resilientPosts', () => {
 			{title: 'undated'},
 		]
 
-		it('keeps only nodes inside the half-open window', () => {
+		it('keeps only nodes strictly inside the open window', () => {
 			const result = filterByPublishedWindow(nodes, {
 				after: '2026-06-05',
 				before: '2026-06-15',
@@ -81,11 +105,18 @@ describe('resilientPosts', () => {
 			expect(result.map((n) => n.title)).toEqual(['inside'])
 		})
 
-		it('treats the upper bound as exclusive', () => {
-			const result = filterByPublishedWindow(nodes, {
-				before: '2026-06-10',
-			})
-			expect(result.map((n) => n.title)).toEqual(['before'])
+		it('treats both bounds as exclusive, matching Tina', () => {
+			// 'inside' sits exactly on both bounds and must be excluded from each.
+			expect(
+				filterByPublishedWindow(nodes, {after: '2026-06-10'}).map(
+					(n) => n.title
+				)
+			).toEqual(['after'])
+			expect(
+				filterByPublishedWindow(nodes, {before: '2026-06-10'}).map(
+					(n) => n.title
+				)
+			).toEqual(['before'])
 		})
 
 		it('drops nodes with missing published dates', () => {
@@ -94,64 +125,120 @@ describe('resilientPosts', () => {
 		})
 	})
 
+	describe('filterByCategoryTitle', () => {
+		const cat = (title) => ({categories: [{category: {title}}]})
+
+		it('keeps nodes referencing the given category title', () => {
+			const nodes = [
+				{title: 'a', ...cat('Event')},
+				{title: 'b', ...cat('Specialty Show')},
+				{title: 'c', ...cat('Event')},
+			]
+			expect(filterByCategoryTitle(nodes, 'Event').map((n) => n.title)).toEqual(
+				['a', 'c']
+			)
+		})
+
+		it('tolerates nodes with no categories array', () => {
+			const nodes = [{title: 'a'}, {title: 'b', ...cat('Event')}]
+			expect(filterByCategoryTitle(nodes, 'Event').map((n) => n.title)).toEqual(
+				['b']
+			)
+		})
+	})
+
 	describe('fetchCollectionNodes', () => {
 		const fields = 'id title cover published _sys { filename }'
 
 		it('returns nodes from the unsorted walk on the happy path', async () => {
-			const request = mockRequest('blogConnection', [
+			const queries = {blog: vi.fn()}
+			const client = mockClient(
+				'blogConnection',
 				[
-					'title',
-					page([
-						{node: {title: 'a', published: '2025-01-01'}},
-						{node: {title: 'b', published: '2026-01-01'}},
-					]),
+					[
+						'title',
+						page([
+							{node: {title: 'a', published: '2025-01-01'}},
+							{node: {title: 'b', published: '2026-01-01'}},
+						]),
+					],
 				],
-			])
-			const fetchOne = vi.fn()
+				queries
+			)
 
 			const nodes = await fetchCollectionNodes({
-				connection: 'blogConnection',
+				client,
+				collection: 'blog',
 				fields,
-				request,
-				fetchOne,
 				label: 'blog',
 			})
 
 			expect(nodes.map((n) => n.title)).toEqual(['a', 'b'])
 			// Happy path must never touch the per-document fallback.
-			expect(fetchOne).not.toHaveBeenCalled()
+			expect(queries.blog).not.toHaveBeenCalled()
 		})
 
 		it('falls back to per-document fetch when the full walk fails', async () => {
-			const request = mockRequest('blogConnection', [
-				// The full-field walk (selecting `title`) fails like a broken index...
-				['title', new Error('Error querying file bad.md from collection blog')],
-				// ...but the filename-only walk still resolves.
+			const queries = {
+				blog: vi.fn((args) =>
+					args.relativePath === 'bad.md'
+						? Promise.reject(new Error('still broken'))
+						: Promise.resolve({
+								data: {blog: {title: args.relativePath, _sys: args}},
+							})
+				),
+			}
+			const client = mockClient(
+				'blogConnection',
 				[
-					'_sys { filename }',
-					page([
-						{node: {_sys: {filename: 'good'}}},
-						{node: {_sys: {filename: 'bad'}}},
-					]),
+					// The full-field walk (selecting `title`) fails like a broken index...
+					[
+						'title',
+						new Error('Error querying file bad.md from collection blog'),
+					],
+					// ...but the filename-only walk still resolves.
+					['_sys { filename }', page([node('good'), node('bad')])],
 				],
-			])
-			const fetchOne = vi.fn((filename) =>
-				filename === 'bad'
-					? Promise.reject(new Error('still broken'))
-					: Promise.resolve({title: filename, _sys: {filename}})
+				queries
 			)
 
 			const nodes = await fetchCollectionNodes({
-				connection: 'blogConnection',
+				client,
+				collection: 'blog',
 				fields,
-				request,
-				fetchOne,
 				label: 'blog',
 			})
 
 			// The good document survives; the broken one is skipped, not fatal.
-			expect(nodes.map((n) => n.title)).toEqual(['good'])
-			expect(fetchOne).toHaveBeenCalledTimes(2)
+			expect(nodes.map((n) => n.title)).toEqual(['good.md'])
+			expect(queries.blog).toHaveBeenCalledTimes(2)
+		})
+
+		it('skips fallback edges that have no filename without calling fetch', async () => {
+			const queries = {
+				blog: vi.fn((args) =>
+					Promise.resolve({data: {blog: {title: args.relativePath}}})
+				),
+			}
+			const client = mockClient(
+				'blogConnection',
+				[
+					['title', new Error('broken index')],
+					['_sys { filename }', page([{node: {_sys: {}}}, node('ok')])],
+				],
+				queries
+			)
+
+			const nodes = await fetchCollectionNodes({
+				client,
+				collection: 'blog',
+				fields,
+				label: 'blog',
+			})
+
+			expect(nodes.map((n) => n.title)).toEqual(['ok.md'])
+			// The filename-less edge must not trigger a `client.queries.blog(undefined)` call.
+			expect(queries.blog).toHaveBeenCalledTimes(1)
 		})
 	})
 })

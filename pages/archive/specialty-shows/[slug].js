@@ -12,6 +12,7 @@ import {
 	fetchCollectionNodes,
 	sortByPublishedDesc,
 	filterByPublishedWindow,
+	filterByCategoryTitle,
 } from '../../../lib/resilientPosts'
 
 // Helper to safely extract description text from TinaCMS rich-text field
@@ -147,7 +148,8 @@ export const getStaticProps = async (ctx) => {
 	// keep only this show's already-aired events and order them newest-first in
 	// JS. See lib/resilientPosts.js.
 	const archiveNodes = await fetchCollectionNodes({
-		connection: 'archiveConnection',
+		client,
+		collection: 'archive',
 		fields: `
 			id
 			title
@@ -163,17 +165,11 @@ export const getStaticProps = async (ctx) => {
 			}
 			_sys { filename }
 		`,
-		request: (query) => client.request(query),
-		fetchOne: (filename) =>
-			client.queries
-				.archive({relativePath: `${filename}.md`})
-				.then((res) => res.data.archive),
 		label: `archive/specialty-shows/${ctx.params.slug}`,
 	})
-	const showEvents = filterByPublishedWindow(archiveNodes, {
-		before: endOfWeek,
-	}).filter((node) =>
-		node.categories?.some((entry) => entry?.category?.title === categoryTitle)
+	const showEvents = filterByCategoryTitle(
+		filterByPublishedWindow(archiveNodes, {before: endOfWeek}),
+		categoryTitle
 	)
 	const archiveEdges = sortByPublishedDesc(showEvents).map((node) => ({node}))
 
