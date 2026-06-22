@@ -4,7 +4,10 @@ import BlogLayout from '../../../components/BlogLayout'
 import SeeMoreButton from '../../../components/SeeMoreButton'
 import React, {useState} from 'react'
 import {STATIC_FALLBACK} from '../../../lib/staticPaths'
-import {fetchAllEdges, TINA_PAGE_SIZE} from '../../../lib/tinaPagination'
+import {
+	fetchCollectionNodes,
+	sortByPublishedDesc,
+} from '../../../lib/resilientPosts'
 
 // filtering bog by category (either artist interview, show review, or album review)
 const BlogCategoryPage = (props) => {
@@ -87,36 +90,39 @@ export const getStaticProps = async (ctx) => {
 
 	const categoryTitle = title.data.category.title
 
-	const edges = await fetchAllEdges(async (after) => {
-		const {data} = await client.request({
-			query: `
-				query GetCategoryPosts($first: Float, $after: String, $title: String) {
-					blogConnection(
-						filter: {categories: {category: {category: {title: {eq: $title}}}}}
-						sort: "published"
-						first: $first
-						after: $after
-					) {
-						edges {
-							node {
-								id
-								title
-								author
-								description
-								cover
-								published
-								_sys { filename }
-							}
-						}
-						pageInfo { hasNextPage endCursor }
+	// Pull every post without server-side `sort`/`filter` on `published` (which
+	// fails the whole export if any document has a stale `published` index), then
+	// keep only this category's posts and order them newest-first in JS.
+	// See lib/resilientPosts.js.
+	const blogNodes = await fetchCollectionNodes({
+		connection: 'blogConnection',
+		fields: `
+			id
+			title
+			author
+			description
+			cover
+			published
+			categories {
+				category {
+					... on Category {
+						title
 					}
 				}
-			`,
-			variables: {first: TINA_PAGE_SIZE, after, title: categoryTitle},
-		})
-		return data.blogConnection
+			}
+			_sys { filename }
+		`,
+		request: (query) => client.request(query),
+		fetchOne: (filename) =>
+			client.queries
+				.blog({relativePath: `${filename}.md`})
+				.then((res) => res.data.blog),
+		label: `blog/category/${ctx.params.slug}`,
 	})
-	edges.reverse()
+	const categoryPosts = blogNodes.filter((node) =>
+		node.categories?.some((entry) => entry?.category?.title === categoryTitle)
+	)
+	const edges = sortByPublishedDesc(categoryPosts).map((node) => ({node}))
 
 	return {
 		props: {

@@ -12,7 +12,11 @@ import mobilephoto from '/images/crowdmobile.jpeg'
 import Image from 'next/image'
 import React, {useState} from 'react'
 import SeeMoreButton from '../../components/SeeMoreButton'
-import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
+import {
+	fetchCollectionNodes,
+	sortByPublishedDesc,
+	filterByPublishedWindow,
+} from '../../lib/resilientPosts'
 
 // Helper to safely extract description text from TinaCMS rich-text field
 const getDescriptionText = (description, maxLength = 75) => {
@@ -116,37 +120,29 @@ export const getStaticProps = async () => {
 		currentDateTime.getMonth(),
 		currentDateTime.getDate() + (6 - currentDateTime.getDay())
 	)
-	const endOfWeekStr = endOfWeek.toDateString()
-
-	const archiveEdges = await fetchAllEdges(async (after) => {
-		const {data} = await client.request({
-			query: `
-				query GetEvents($first: Float, $after: String, $endOfWeek: String) {
-					archiveConnection(
-						filter: {published: {before: $endOfWeek}}
-						sort: "published"
-						first: $first
-						after: $after
-					) {
-						edges {
-							node {
-								id
-								title
-								cover
-								published
-								description
-								_sys { filename }
-							}
-						}
-						pageInfo { hasNextPage endCursor }
-					}
-				}
-			`,
-			variables: {first: TINA_PAGE_SIZE, after, endOfWeek: endOfWeekStr},
-		})
-		return data.archiveConnection
+	// Pull every event without server-side `sort`/`filter` on `published` (which
+	// fails the whole export if any document has a stale `published` index), then
+	// drop future events and order newest-first in JS. See lib/resilientPosts.js.
+	const archiveNodes = await fetchCollectionNodes({
+		connection: 'archiveConnection',
+		fields: `
+			id
+			title
+			cover
+			published
+			description
+			_sys { filename }
+		`,
+		request: (query) => client.request(query),
+		fetchOne: (filename) =>
+			client.queries
+				.archive({relativePath: `${filename}.md`})
+				.then((res) => res.data.archive),
+		label: 'archive/index',
 	})
-	archiveEdges.reverse()
+	const archiveEdges = sortByPublishedDesc(
+		filterByPublishedWindow(archiveNodes, {before: endOfWeek})
+	).map((node) => ({node}))
 
 	const {data: categoryData} = await client.request({
 		query: `{
