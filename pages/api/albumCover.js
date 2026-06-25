@@ -1,6 +1,6 @@
 // URL for the library-metadata-lookup Python service (Discogs)
 // uses localhost:8000 locally, or whatever LML_URL is set to in production
-const LML_URL = process.env.LML_URL || 'http://localhost:8000';
+const LML_URL = process.env.LML_URL || null;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.wxdu.art';
 
@@ -48,6 +48,8 @@ export default async function handler(req, res) {
 
 // given an artist, song and album name, searches Discogs and returns an album cover URL
 async function fetchDiscogsLocal(artist, song, album) {
+
+  if (!LML_URL) return null
 
   // This is Temporary
   if (!song) return null
