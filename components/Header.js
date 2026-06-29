@@ -1,31 +1,59 @@
-import React, {useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import Link from 'next/link'
 import photo from '../images/logo.png'
 import Image from 'next/image'
 import {AiOutlineMenu, AiOutlineClose} from 'react-icons/ai'
 import {useAudio} from './AudioContext'
+import StationInfoDropdownMenu from "./StationInfoDropdownMenu"
 
 const Header = () => {
 	const {isPlaying, togglePlayPause} = useAudio()
 
 	const [isOpen, setIsOpen] = useState(false)
+	const mobileNavRef = useRef(null)
+
+	const closeMenu = () => {
+		setIsOpen(false)
+	}
 
 	const toggleMenu = () => {
-		setIsOpen(!isOpen)
+		setIsOpen((current) => !current)
 	}
+
+	// manages the closing behavior of the hamburger menu nav bar
+	useEffect(() => {
+		if (!isOpen) return
+
+		const handleOutsideClick = (event) => {
+			if (mobileNavRef.current?.contains(event.target)) return
+			closeMenu()
+		}
+
+		document.addEventListener('mousedown', handleOutsideClick)
+		document.addEventListener('touchstart', handleOutsideClick)
+
+		return () => {
+			document.removeEventListener('mousedown', handleOutsideClick)
+			document.removeEventListener('touchstart', handleOutsideClick)
+		}
+	}, [isOpen])
 
 	return (
 		//Parent Container
 		<div className="h-full">
 			{/* MOBILE NAVBAR STARTS HERE */}
-			<div className="fixed top-10 z-50 flex h-16 w-full flex-col bg-black/90 backdrop-blur-md lg:hidden ">
+			<div
+				ref={mobileNavRef}
+				className="fixed top-10 z-50 flex h-16 w-full flex-col bg-black/90 backdrop-blur-md lg:hidden "
+			>
 				<div className="flex flex-row items-center justify-between">
 					{/* Hamburger icon */}
-						<button
-							onClick={toggleMenu}
-							className="hamburger-icon duration-450 h-full transition-all ease-in-out"
-							aria-label={isOpen ? 'Close main menu' : 'Open main menu'}
-						>
+					<button
+						type="button"
+						onClick={toggleMenu}
+						className="hamburger-icon duration-450 h-full transition-all ease-in-out"
+						aria-label={isOpen ? 'Close main menu' : 'Open main menu'}
+					>
 						{isOpen ? (
 							<AiOutlineClose size={32} className="ml-4 mt-1 md:ml-6" aria-hidden="true" />
 						) : (
@@ -38,41 +66,29 @@ const Header = () => {
 				{isOpen && (
 					<ul
 						className="duration-450 h-screen w-screen flex-col justify-start bg-black/90 backdrop-blur-md transition-all ease-in-out md:gap-6"
-						onClick={() => setIsOpen(false)}
+						onClick={closeMenu}
 					>
-						<div className="ml-10 mt-16 flex h-8 text-3xl">
-							<Link
-								href="/listen"
-								legacyBehavior={false}
-								className="cursor-pointer"
-								rel="noopener noreferrer"
-								onClick={toggleMenu}
-							>
-								Listen
-							</Link>
-						</div>
-
 						<div className="ml-10 mt-8 flex h-8 text-3xl">
 							<Link
 								href="/"
 								legacyBehavior={false}
 								className="cursor-pointer"
 								rel="noopener noreferrer"
-								onClick={toggleMenu}
+								onClick={closeMenu}
 							>
 								Home
 							</Link>
 						</div>
 
-						<div className="ml-10 flex h-8 text-3xl">
+						<div className="ml-10 mt-16 flex h-8 text-3xl">
 							<Link
-								href="/about"
+								href="/listen"
 								legacyBehavior={false}
 								className="cursor-pointer"
 								rel="noopener noreferrer"
-								onClick={toggleMenu}
+								onClick={closeMenu}
 							>
-								About
+								Listen
 							</Link>
 						</div>
 
@@ -82,7 +98,7 @@ const Header = () => {
 								legacyBehavior={false}
 								className="cursor-pointer"
 								rel="noopener noreferrer"
-								onClick={toggleMenu}
+								onClick={closeMenu}
 							>
 								Schedule
 							</Link>
@@ -94,21 +110,9 @@ const Header = () => {
 								legacyBehavior={false}
 								className="cursor-pointer"
 								rel="noopener noreferrer"
-								onClick={toggleMenu}
-								>
-									Charts
-								</Link>
-						</div>
-
-						<div className="ml-10 mt-8 flex h-8 text-3xl">
-							<Link
-								href="/archive"
-								legacyBehavior={false}
-								className="cursor-pointer"
-								rel="noopener noreferrer"
-								onClick={toggleMenu}
+								onClick={closeMenu}
 							>
-								Archive
+								Charts
 							</Link>
 						</div>
 
@@ -118,7 +122,7 @@ const Header = () => {
 								legacyBehavior={false}
 								className="cursor-pointer"
 								rel="noopener noreferrer"
-								onClick={toggleMenu}
+								onClick={closeMenu}
 							>
 								Blog
 							</Link>
@@ -126,14 +130,21 @@ const Header = () => {
 
 						<div className="ml-10 mt-8 flex h-8 text-3xl">
 							<Link
-								href="/contact"
+								href="/archive"
 								legacyBehavior={false}
 								className="cursor-pointer"
 								rel="noopener noreferrer"
-								onClick={toggleMenu}
+								onClick={closeMenu}
 							>
-								Contact
+								Archive
 							</Link>
+						</div>
+
+						<div
+							className="ml-10 mt-8 flex h-8 text-3xl"
+							onClick={(event) => event.stopPropagation()}
+						>
+							<StationInfoDropdownMenu onNavigate={closeMenu} />
 						</div>
 
 						{/* Add more navigation links as needed */}
@@ -170,8 +181,8 @@ const Header = () => {
 								Home
 							</Link>
 
-							<Link href="/about" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
-								About
+							<Link href="/listen" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
+								Listen
 							</Link>
 
 							<Link href="/schedule" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
@@ -182,21 +193,17 @@ const Header = () => {
 								Charts
 							</Link>
 
-							<Link href="/archive" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
-								Archive
-							</Link>
-
 							<Link href="/blog" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
 								Blog
 							</Link>
 
-							<Link href="/contact" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
-								Contact
+							<Link href="/archive" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
+								Archive
 							</Link>
 
-							<Link href="/listen" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
-								Listen
-							</Link>
+							<div className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
+								<StationInfoDropdownMenu />
+							</div>
 
 						</div>
 					</div>
