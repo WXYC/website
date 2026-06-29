@@ -44,20 +44,20 @@ const Header = () => {
 			{/* MOBILE NAVBAR STARTS HERE */}
 			<div
 				ref={mobileNavRef}
-				className="fixed top-24 z-50 flex h-16 w-full flex-col bg-black/90 backdrop-blur-md lg:hidden "
+				className="pointer-events-none fixed left-0 top-16 z-50 flex h-10 w-full items-center justify-end bg-transparent lg:hidden"
 			>
-				<div className="flex flex-row items-center justify-between">
+				<div className="flex h-full flex-row items-center justify-end">
 					{/* Hamburger icon */}
 					<button
 						type="button"
 						onClick={toggleMenu}
-						className="hamburger-icon duration-450 h-full transition-all ease-in-out"
+						className="hamburger-icon duration-450 pointer-events-auto flex h-full w-16 items-center justify-center transition-all ease-in-out"
 						aria-label={isOpen ? 'Close main menu' : 'Open main menu'}
 					>
 						{isOpen ? (
-							<AiOutlineClose size={32} className="ml-4 mt-1 md:ml-6" aria-hidden="true" />
+							<AiOutlineClose size={32} className="mt-1" aria-hidden="true" />
 						) : (
-							<AiOutlineMenu size={32} className="ml-4 mt-1 md:ml-6" aria-hidden="true" />
+							<AiOutlineMenu size={32} className="mt-1" aria-hidden="true" />
 						)}
 					</button>
 				</div>
@@ -65,7 +65,7 @@ const Header = () => {
 				{/* Collapsible menu for mobile*/}
 				{isOpen && (
 					<ul
-						className="duration-450 h-screen w-screen flex-col justify-start bg-black/90 backdrop-blur-md transition-all ease-in-out md:gap-6"
+						className="duration-450 pointer-events-auto fixed left-0 top-[104px] flex h-[calc(100vh-104px)] w-screen flex-col justify-start bg-black/90 backdrop-blur-md transition-all ease-in-out md:gap-6"
 						onClick={closeMenu}
 					>
 						<div className="ml-10 mt-8 flex h-8 text-3xl">
@@ -104,7 +104,7 @@ const Header = () => {
 							</Link>
 						</div>
 
-						<div className="ml-10 my-8 flex h-8 text-3xl">
+						<div className="ml-10 mt-8 flex h-8 text-3xl">
 							<Link
 								href="/charts"
 								legacyBehavior={false}

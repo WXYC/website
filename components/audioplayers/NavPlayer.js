@@ -181,7 +181,38 @@ const NavPlayer = () => {
     const shouldScrollTicker = tickerDistance > 0 && !prefersReducedMotion;
 
     return (
-        <div className="fixed top-0 left-0 z-50 flex h-24 w-full flex-col items-stretch overflow-hidden border-b-2 border-[#e0ff05] bg-black lg:h-16 lg:flex-row lg:items-center">
+        <div className="fixed left-0 top-0 z-50 flex h-[104px] w-full flex-col items-stretch overflow-hidden border-b-2 border-[#e0ff05] bg-black lg:h-16 lg:flex-row lg:items-center">
+            {/* The rest of the bar — all the blank space around the ticker —
+                opens the /listen page, not just the text. */}
+            <Link href="/listen" legacyBehavior>
+                <a
+                    className="group order-1 mb-2 flex h-14 min-w-0 shrink-0 cursor-pointer items-center overflow-hidden transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:order-2 lg:mb-0 lg:h-full lg:flex-1"
+                    onClick={(event) => {
+                        event.currentTarget.blur();
+                    }}
+                >
+                    <div ref={tickerContainerRef} className="w-full overflow-hidden">
+                        <div
+                            className={`inline-block whitespace-nowrap ${
+                                shouldScrollTicker ? "animate-ticker-pingpong" : ""
+                            }`}
+                            style={{
+                                "--ticker-distance": `${tickerDistance}px`
+                            }}
+                        >
+                            <span
+                                ref={tickerTextRef}
+                                className="px-4 text-sm font-semibold tracking-widest text-[#e0ff05] group-hover:text-white group-hover:underline group-focus:text-white group-focus:underline md:px-8 md:text-base"
+                            >
+                                <span className="inline md:hidden">Now: </span>
+                                <span className="hidden md:inline">Currently Playing: </span>
+                                {currentTrack} &nbsp;&nbsp;&nbsp;&nbsp; DJ ON AIR: {nowPlaying.dj}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </Link>
+            
             {/* The whole left box toggles the stream: from the page's left edge,
                 across the label and waveform, up to the dividing border. */}
             <button
@@ -189,7 +220,7 @@ const NavPlayer = () => {
                 onClick={togglePlayPause}
                 aria-label={isPlaying ? 'Pause stream' : 'Play stream'}
                 title={isPlaying ? 'Pause stream' : 'Play stream'}
-                className="group flex h-10 w-full shrink-0 flex-row items-center justify-center gap-2 border-b border-[#e0ff05] px-4 transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-full lg:w-auto lg:justify-start lg:border-b-0 lg:border-r"
+                className="group order-2 flex h-10 w-fit max-w-[calc(100%-4rem)] shrink-0 flex-row items-center justify-center gap-2 px-4 transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:order-1 lg:h-full lg:w-auto lg:max-w-none lg:justify-start lg:border-r lg:border-[#e0ff05]"
             >
                 <span className="relative text-[#e0ff05] group-hover:text-yellow-200">
                     {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} />}
@@ -236,36 +267,6 @@ const NavPlayer = () => {
                 </span>
             </button>
 
-            {/* The rest of the bar — all the blank space around the ticker —
-                opens the /listen page, not just the text. */}
-            <Link href="/listen" legacyBehavior>
-                <a
-                    className="group flex h-14 min-w-0 flex-1 cursor-pointer items-center overflow-hidden transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-full"
-                    onClick={(event) => {
-                        event.currentTarget.blur();
-                    }}
-                >
-                    <div ref={tickerContainerRef} className="w-full overflow-hidden">
-                        <div
-                            className={`inline-block whitespace-nowrap ${
-                                shouldScrollTicker ? "animate-ticker-pingpong" : ""
-                            }`}
-                            style={{
-                                "--ticker-distance": `${tickerDistance}px`
-                            }}
-                        >
-                            <span
-                                ref={tickerTextRef}
-                                className="px-8 text-base font-semibold tracking-widest text-[#e0ff05] group-hover:text-white group-hover:underline group-focus:text-white group-focus:underline"
-                            >
-                                <span className="hidden md:inline">Currently Playing: </span>
-                                <span className="inline md:hidden">Now: </span>
-                                {currentTrack} &nbsp;&nbsp;&nbsp;&nbsp; DJ ON AIR: {nowPlaying.dj}
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </Link>
         </div>
     );
 };
