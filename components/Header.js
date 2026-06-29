@@ -44,7 +44,7 @@ const Header = () => {
 			{/* MOBILE NAVBAR STARTS HERE */}
 			<div
 				ref={mobileNavRef}
-				className="fixed top-10 z-50 flex h-16 w-full flex-col bg-black/90 backdrop-blur-md lg:hidden "
+				className="fixed top-24 z-50 flex h-16 w-full flex-col bg-black/90 backdrop-blur-md lg:hidden "
 			>
 				<div className="flex flex-row items-center justify-between">
 					{/* Hamburger icon */}

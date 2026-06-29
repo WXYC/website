@@ -181,7 +181,7 @@ const NavPlayer = () => {
     const shouldScrollTicker = tickerDistance > 0 && !prefersReducedMotion;
 
     return (
-        <div className="fixed top-0 left-0 z-50 flex h-16 w-full flex-row items-center overflow-hidden border-b-2 border-[#e0ff05] bg-black">
+        <div className="fixed top-0 left-0 z-50 flex h-24 w-full flex-col items-stretch overflow-hidden border-b-2 border-[#e0ff05] bg-black lg:h-16 lg:flex-row lg:items-center">
             {/* The whole left box toggles the stream: from the page's left edge,
                 across the label and waveform, up to the dividing border. */}
             <button
@@ -189,7 +189,7 @@ const NavPlayer = () => {
                 onClick={togglePlayPause}
                 aria-label={isPlaying ? 'Pause stream' : 'Play stream'}
                 title={isPlaying ? 'Pause stream' : 'Play stream'}
-                className="group flex h-full shrink-0 flex-row items-center gap-2 border-r border-[#e0ff05] px-4 transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                className="group flex h-10 w-full shrink-0 flex-row items-center justify-center gap-2 border-b border-[#e0ff05] px-4 transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-full lg:w-auto lg:justify-start lg:border-b-0 lg:border-r"
             >
                 <span className="relative text-[#e0ff05] group-hover:text-yellow-200">
                     {isPlaying ? <FaPause size={18} /> : <FaPlay size={18} />}
@@ -240,9 +240,7 @@ const NavPlayer = () => {
                 opens the /listen page, not just the text. */}
             <Link href="/listen" legacyBehavior>
                 <a
-                    className="group flex h-full min-w-0 flex-1 items-center overflow-hidden cursor-pointer transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-                    aria-label="Open listen page"
-                    title="Open listen page"
+                    className="group flex h-14 min-w-0 flex-1 cursor-pointer items-center overflow-hidden transition-colors duration-150 hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 lg:h-full"
                     onClick={(event) => {
                         event.currentTarget.blur();
                     }}
@@ -260,7 +258,9 @@ const NavPlayer = () => {
                                 ref={tickerTextRef}
                                 className="px-8 text-base font-semibold tracking-widest text-[#e0ff05] group-hover:text-white group-hover:underline group-focus:text-white group-focus:underline"
                             >
-                                <span className="hidden md:inline">Currently Playing: </span>{currentTrack} &nbsp;&nbsp;&nbsp;&nbsp; DJ ON AIR: {nowPlaying.dj}
+                                <span className="hidden md:inline">Currently Playing: </span>
+                                <span className="inline md:hidden">Now: </span>
+                                {currentTrack} &nbsp;&nbsp;&nbsp;&nbsp; DJ ON AIR: {nowPlaying.dj}
                             </span>
                         </div>
                     </div>

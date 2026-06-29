@@ -1,3 +1,5 @@
+// This component is the dropdown menu in the nav bar that contains different information about the station
+
 import React, {forwardRef} from 'react'
 import {Menu} from '@headlessui/react'
 import Link from 'next/link'
@@ -16,7 +18,6 @@ const MenuLink = forwardRef(({href, children, ...props}, ref) => (
 
 MenuLink.displayName = 'MenuLink'
 
-// the dropdown in the nav bar (under "Listen")
 const StationInfoDropdownMenu = ({onNavigate}) => {
     return (
         <div>
