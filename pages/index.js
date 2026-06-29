@@ -31,7 +31,7 @@ export default function Home(props) {
 
 	return (
 		<div>
-			<div data-tina-field={pageData?.page ? tinaField(pageData.page, 'homepageBanner') : undefined} className="pt-28 lg:pt-0 lg:px-16">
+			<div data-tina-field={pageData?.page ? tinaField(pageData.page, 'homepageBanner') : undefined} className="pt-5 lg:mt-0 lg:px-16">
 				{/* HomepageBanner is a component for adding a closeable banner announcement to the homepage. Toggle on or off in Components > HomepageBanner.js */}
 				<HomepageBanner columns={bannerColumns} aboveLogo={bannerAboveLogo} belowLogo={bannerBelowLogo} />
 			</div>
@@ -70,7 +70,7 @@ export default function Home(props) {
 		
 				</div>
 				<TodaySchedule schedule={schedule} />
-				<div className="flex flex-row justify-between gap-1 mt-4 w-full">
+				<div className="flex flex-row justify-center gap-1 mt-4 w-full">
 						<CDLink href="/blog" label="blog posts" image="/CD_1_Filler.jpg" />
 						<CDLink href="/schedule" label="schedule" image="/CD_2_Filler.jpg" />
 						<CDLink href="/about" label="about" image="/CD_3_Filler.jpg" />
@@ -78,13 +78,15 @@ export default function Home(props) {
 				
 			</div>
 
+			<div className="mt-6 flex w-full justify-center overflow-x-auto lg:px-0 [&>*]:w-[92vw] lg:[&>*]:w-[60vw]">
+				<ShowCalendar />
+			</div>
+
 			<div className="mx-auto flex w-full flex-col gap-4">
-<div className="mt-6">
-    <ShowCalendar />
-</div>
+
 
 			<div className="mx-auto flex w-5/6 flex-col gap-4">
-				<div className="-mt-5 flex w-full flex-col justify-center md:-mt-10 md:mr-10 lg:mt-5">
+				<div className="mt-5 flex w-full flex-col justify-center md:-mt-10 md:mr-10 lg:mt-5">
 					
 					
 
