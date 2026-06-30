@@ -4,7 +4,6 @@ import photo from '../images/logo.png'
 import Image from 'next/image'
 import {AiOutlineMenu, AiOutlineClose} from 'react-icons/ai'
 import {useAudio} from './AudioContext'
-import StationInfoDropdownMenu from "./StationInfoDropdownMenu"
 
 const Header = () => {
 	const {isPlaying, togglePlayPause} = useAudio()
@@ -140,11 +139,28 @@ const Header = () => {
 							</Link>
 						</div>
 
-						<div
-							className="ml-10 mt-8 flex h-8 text-3xl"
-							onClick={(event) => event.stopPropagation()}
-						>
-							<StationInfoDropdownMenu onNavigate={closeMenu} />
+						<div className="ml-10 mt-8 flex h-8 text-3xl">
+							<Link
+								href="/contact"
+								legacyBehavior={false}
+								className="cursor-pointer"
+								rel="noopener noreferrer"
+								onClick={closeMenu}
+							>
+								Contact
+							</Link>
+						</div>
+
+						<div className="ml-10 mt-8 flex h-8 text-3xl">
+							<Link
+								href="/about"
+								legacyBehavior={false}
+								className="cursor-pointer"
+								rel="noopener noreferrer"
+								onClick={closeMenu}
+							>
+								About
+							</Link>
 						</div>
 
 						{/* Add more navigation links as needed */}
@@ -201,9 +217,13 @@ const Header = () => {
 								Archive
 							</Link>
 
-							<div className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
-								<StationInfoDropdownMenu />
-							</div>
+							<Link href="/contact" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
+								Contact
+							</Link>
+
+							<Link href="/about" legacyBehavior={false} className="flex h-12 grow items-center justify-center text-base text-white hover:text-blue-300">
+								About
+							</Link>
 
 						</div>
 					</div>
