@@ -1,5 +1,5 @@
 // This component displays the current show and dj playing, plus a link to the
-// past-10-days playlist. Centered on mobile, left-aligned beside the vinyl
+// previous-shows archive. Centered on mobile, left-aligned beside the vinyl
 // player on desktop.
 
 import Link from "next/link";
@@ -30,11 +30,18 @@ export default function NowPlayingHeader({ currentPlaylist = {} }) {
                 )}
             </h1>
             <h4 className="text-xl text-gray-300 mt-1 break-words">
-                Show: {title}
+                Show:{" "}
+                {title ? (
+                    <Link href="/current/" legacyBehavior={false} className="underline hover:no-underline">
+                        {title}
+                    </Link>
+                ) : (
+                    title
+                )}
             </h4>
             <p className="mt-3">
-                <Link href="/listen/past-10-days/" legacyBehavior={false} className="underline hover:no-underline text-gray-300">
-                    Past 10 days
+                <Link href="/previous-shows/" legacyBehavior={false} className="underline hover:no-underline text-gray-300">
+                    Previous shows
                 </Link>
             </p>
         </div>
