@@ -3,6 +3,7 @@ import {client} from '../../tina/__generated__/client'
 import {TinaMarkdown} from 'tinacms/dist/rich-text'
 import Link from 'next/link'
 import ArchiveLayout from '../../components/ArchiveLayout'
+import CoverImage from '../../components/CoverImage'
 import {AiFillTag} from 'react-icons/ai'
 import Head from 'next/head'
 import {STATIC_FALLBACK} from '../../lib/staticPaths'
@@ -38,12 +39,12 @@ const EventPage = (props) => {
 						</p>
 						<p className="mb-5 text-xl">{displayDate}</p>
 
-						<img
-							className="my-2"
+						<CoverImage
 							src={data.archive.cover}
-							alt=""
+							credit={data.archive.coverCredit}
 							width="400"
 							height="400"
+							figureClassName="my-2"
 						/>
 
 						<article className="prose mt-3 text-white prose-a:text-slate-700 prose-strong:text-slate-700">
