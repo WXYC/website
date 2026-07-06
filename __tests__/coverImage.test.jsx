@@ -26,6 +26,13 @@ describe('CoverImage', () => {
 		expect(container.querySelector('figcaption')).toBeNull()
 	})
 
+	it('does not render a caption when credit is only whitespace', () => {
+		const {container} = render(
+			<CoverImage src="/uploads/show.jpg" credit="   " />
+		)
+		expect(container.querySelector('figcaption')).toBeNull()
+	})
+
 	it('applies passed className and width to the image', () => {
 		render(
 			<CoverImage

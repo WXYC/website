@@ -61,7 +61,7 @@ const PostPage = (props) => {
 					credit={data.blog.coverCredit}
 					width="650px"
 					className="max-h-[40rem] object-cover"
-					figureClassName="my-8 mb-20 flex flex-col items-center"
+					figureClassName="my-8 mb-20 flex w-full flex-col items-center"
 				/>
 
 				<article className="prose prose-lg bg-neutral-800 bg-opacity-70 px-5 py-2 text-white prose-h1:text-slate-500 prose-h2:text-slate-500 prose-h3:text-white prose-a:text-slate-700 prose-strong:text-slate-400 prose-em:italic prose-li:mb-1 lg:max-w-[60%]">
