@@ -3,6 +3,7 @@ import {client} from '../../tina/__generated__/client'
 import {TinaMarkdown} from 'tinacms/dist/rich-text'
 import Link from 'next/link'
 import BlogLayout from '../../components/BlogLayout'
+import CoverImage from '../../components/CoverImage'
 import {STATIC_FALLBACK} from '../../lib/staticPaths'
 import {fetchAllEdges, TINA_PAGE_SIZE} from '../../lib/tinaPagination'
 
@@ -55,11 +56,12 @@ const PostPage = (props) => {
 				<p className="my-9 text-lg italic lg:w-3/6 xl:w-3/5">
 					{data.blog.description}
 				</p>
-				<img
+				<CoverImage
 					src={data.blog.cover}
-					alt=""
+					credit={data.blog.coverCredit}
 					width="650px"
-					className="my-8 mb-20 max-h-[40rem] object-cover"
+					className="max-h-[40rem] object-cover"
+					figureClassName="my-8 mb-20 flex flex-col items-center"
 				/>
 
 				<article className="prose prose-lg bg-neutral-800 bg-opacity-70 px-5 py-2 text-white prose-h1:text-slate-500 prose-h2:text-slate-500 prose-h3:text-white prose-a:text-slate-700 prose-strong:text-slate-400 prose-em:italic prose-li:mb-1 lg:max-w-[60%]">

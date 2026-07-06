@@ -38,6 +38,13 @@ export default {
 			label: 'Cover Image',
 		},
 		{
+			type: 'string',
+			name: 'coverCredit',
+			label: 'Cover Photo Credit',
+			description:
+				'Photographer to credit beneath the cover image (e.g. "Jane Doe"). Leave blank for no credit.',
+		},
+		{
 			type: 'object',
 			list: true,
 			name: 'categories',
