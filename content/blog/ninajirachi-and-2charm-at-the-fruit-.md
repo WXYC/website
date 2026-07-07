@@ -1,7 +1,8 @@
 ---
 title: 'Ninajirachi and 2charm at The Fruit '
 author: 'By Sam Jump aka Xx_CoolSocc3r101_xX '
-cover: /uploads/nina%20cover%202.jpg
+cover: /uploads/Nina%20cover.jpg
+coverCredit: Billy Zammit
 categories:
   - category: content/category/show-review.md
 published: 2026-02-03T16:53:00.006Z
@@ -22,7 +23,7 @@ After the buzz and left by 2charm, Ninajirachi began her set at around 9:45 pm. 
 
 I Love My Computer maps Ninajirachi’s relationship with the internet in all its contradictions: the good, the bad, and the ugly. Opener “London Song” captures the good—online escapism as freedom. An experience mediated through a screen, the song suggests, is still better than no experience at all. It was, after all, the internet that first introduced Ninajirachi to electronic music, discovering the genre through a denim-dyeing tutorial in ninth grade—the same art form that now sustains her career.
 
-“F\*ck My Computer” shifts the tone toward the bad, exposing a growing dependency on digital tools and affirmation  “No one in the world knows me better”, Nina admits, a bittersweet realization as ultimately the computer is a machine, incapable of truly knowing her. The relationship feels toxic and one-sided, yet impossible to abandon; we are now unable to imagine life without these modern tools. 
+“F\*ck My Computer” shifts the tone toward the bad, exposing a growing dependency on digital tools and affirmation  “No one in the world knows me better”, Nina admits, a bittersweet realization as ultimately the computer is a machine, incapable of truly knowing her. The relationship feels toxic and one-sided, yet impossible to abandon; we are now unable to imagine life without these modern tools.
 
 “Infohazard” confronts the ugly. The track reckons with the internet’s capacity to expose users—often at a young age—to extreme violence, from sites like LiveLeak and beyond. Whether it was you or someone next to you on the bus, the internet enables—and at times forces—us to witness the cruelest corners of the world at the drop of a hat.
 
