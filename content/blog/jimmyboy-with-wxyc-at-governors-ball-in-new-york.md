@@ -8,9 +8,9 @@ published: 2026-06-07T03:27:13.884Z
 description: ' WXYC had the chance to interview Jimmyboy to learn more about the artist and upcoming projects'
 ---
 
-**WXYC:** Hey this is Julian with WXYC Chapel Hill im here with…
+**WXYC:** Hey this is Julian with WXYC Chapel Hill I'm here with…
 
-**Jimmyboy:** Jimmyboy whats up yall
+**Jimmyboy:** Jimmyboy whats up y'all
 
 **WXYC:** So, can you tell me a little bit about how you enjoyed the festival? How was your performance? I wasn't able to make it earlier. This is your first major festival, right?
 
