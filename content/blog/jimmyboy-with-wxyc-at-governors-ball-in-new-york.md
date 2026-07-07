@@ -2,6 +2,7 @@
 title: Jimmyboy with WXYC at Governors Ball in New York
 author: Julian Swart aka DJ Bluedog
 cover: /uploads/Jimmyboy-gov-ball.jpg
+coverCredit: Morgan Milardo
 categories:
   - category: content/category/artist-interview.md
 published: 2026-06-07T03:27:13.884Z
@@ -26,7 +27,7 @@ description: ' WXYC had the chance to interview Jimmyboy to learn more about the
 
 **WXYC:** So, how has that, being a student and also doing music, how does that influence what you're making and what you want to actually do? Like, how does being a student, grappling with college and everything,  but also doing stuff like this, how does it work in your life?
 
-**Jimmyboy: **It goes hand-in-hand  because, you know, I'm studying at Berklee Music School. Thanks to that, I got this gig, you know, with BPMI and everybody, and it just goes hand-in-hand because I'm going to be every single minute of the day making music. I'm always on my computer doing music, basically, or trying to book some shows outside of Berklee, you know.
+\*\*Jimmyboy: \*\*It goes hand-in-hand  because, you know, I'm studying at Berklee Music School. Thanks to that, I got this gig, you know, with BPMI and everybody, and it just goes hand-in-hand because I'm going to be every single minute of the day making music. I'm always on my computer doing music, basically, or trying to book some shows outside of Berklee, you know.
 
 So, it goes hand-in-hand. Berklee helps me out. I, you know, take advantage of that, helping, and doing things that I do, and it's my job, and I just go on.
 
