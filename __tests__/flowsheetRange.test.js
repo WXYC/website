@@ -2,6 +2,8 @@ import {describe, it, expect, vi} from 'vitest'
 import {
 	MAX_RANGE_MS,
 	UNATTRIBUTED_DJ_LABEL,
+	UNKNOWN_DJ_LABEL,
+	describeNonTrackEntry,
 	fetchFlowsheetRange,
 	formatShowTime,
 	groupRangeByDay,
@@ -256,16 +258,22 @@ describe('groupRangeByDay', () => {
 		expect(result.every((d) => d.shows.length === 0)).toBe(true)
 	})
 
-	it('falls back to the unattributed label when a show has no dj_name', () => {
+	it('labels a show with no dj_name distinctly from the unattributed block', () => {
+		// dj_name is nullable by contract, so a genuine show can arrive without a
+		// handle. That is a different fact from "these rows belong to no show".
 		const result = groupRangeByDay(
-			{shows: [show({id: 1, dj_name: null})], entries: [entry({show_id: 1})]},
+			{
+				shows: [show({id: 1, dj_name: null})],
+				entries: [entry({id: 1, show_id: 1}), entry({id: 2, show_id: null})],
+			},
 			WEEK,
 			7
 		)
 
-		expect(result.find((d) => d.date === '2026-08-03').shows[0].djName).toBe(
-			UNATTRIBUTED_DJ_LABEL
-		)
+		const monday = result.find((d) => d.date === '2026-08-03')
+		expect(monday.shows[0].djName).toBe(UNKNOWN_DJ_LABEL)
+		expect(monday.shows[1].djName).toBe(UNATTRIBUTED_DJ_LABEL)
+		expect(UNKNOWN_DJ_LABEL).not.toBe(UNATTRIBUTED_DJ_LABEL)
 	})
 
 	it('tolerates a missing or empty response body', () => {
@@ -392,5 +400,96 @@ describe('groupRangeByDay: delimiter handling', () => {
 		const monday = result.find((d) => d.date === '2026-08-03')
 		expect(monday.shows).toHaveLength(1)
 		expect(monday.shows[0].entries).toHaveLength(1)
+	})
+})
+
+describe('entry_type coverage', () => {
+	// api.yaml's FlowsheetEntryType enum, in full. An omission here is silent:
+	// the row simply never appears on the page.
+	const DECLARED = [
+		'track',
+		'show_start',
+		'show_end',
+		'dj_join',
+		'dj_leave',
+		'talkset',
+		'breakpoint',
+		'message',
+	]
+
+	it.each(DECLARED.filter((t) => !t.startsWith('show_')))(
+		'keeps %s, which is real air content',
+		(entryType) => {
+			const result = groupRangeByDay(
+				{
+					shows: [show({id: 1})],
+					entries: [entry({id: 1, show_id: 1, entry_type: entryType})],
+				},
+				WEEK,
+				7
+			)
+
+			expect(
+				result.find((d) => d.date === '2026-08-03').shows[0].entries
+			).toHaveLength(1)
+		}
+	)
+
+	it('keeps a guest DJ joining mid-set', () => {
+		// dj_join / dj_leave only occur when a guest DJ joins, so a single sampled
+		// day usually holds none while five sampled production weeks hold 25.
+		const result = groupRangeByDay(
+			{
+				shows: [show({id: 1})],
+				entries: [
+					entry({id: 1, show_id: 1}),
+					{
+						id: 2,
+						show_id: 1,
+						play_order: 2,
+						add_time: '2026-08-03T14:31:58.258Z',
+						entry_type: 'dj_join',
+						dj_name: 'DJ will',
+					},
+				],
+			},
+			WEEK,
+			7
+		)
+
+		const monday = result.find((d) => d.date === '2026-08-03')
+		expect(monday.shows[0].entries.map((e) => e.id)).toEqual([1, 2])
+	})
+})
+
+describe('describeNonTrackEntry', () => {
+	it.each([
+		['dj_join', 'DJ will', 'DJ will joined'],
+		['dj_leave', 'DJ will', 'DJ will left'],
+		['dj_join', null, 'DJ joined'],
+		['dj_leave', null, 'DJ left'],
+	])(
+		'renders a %s row from dj_name, which carries no message',
+		(entryType, djName, expected) => {
+			expect(
+				describeNonTrackEntry({
+					entry_type: entryType,
+					message: null,
+					dj_name: djName,
+				})
+			).toBe(expected)
+		}
+	)
+
+	it('prefers the message when there is one', () => {
+		expect(
+			describeNonTrackEntry({entry_type: 'talkset', message: 'TALKSET'})
+		).toBe('TALKSET')
+	})
+
+	it('falls back to a readable type name', () => {
+		expect(
+			describeNonTrackEntry({entry_type: 'some_future_type', message: null})
+		).toBe('some future type')
 	})
 })
