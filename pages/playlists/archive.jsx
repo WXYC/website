@@ -4,6 +4,7 @@ import {useRouter} from 'next/router'
 import {
 	EARLIEST_ARCHIVE_DATE,
 	addDays,
+	clampWeekToArchive,
 	easternToday,
 	formatCalendarDate,
 	startOfWeek,
@@ -15,6 +16,7 @@ import {
 	groupRangeByDay,
 	isTrack,
 } from '../../lib/flowsheetRange'
+import {getCachedWeek, setCachedWeek} from '../../lib/weekCache'
 
 /**
  * Public historical playlist archive — the successor to
@@ -32,8 +34,13 @@ import {
 
 const DAYS_PER_WEEK = 7
 
-/** Query-string week parameter, validated. Anything else falls back to today. */
-function weekFromQuery(value) {
+/**
+ * Query-string week parameter, validated and clamped to the archive's extent.
+ *
+ * Returns null for anything that is not a real calendar date, so the caller can
+ * fall back to the current week.
+ */
+function weekFromQuery(value, today) {
 	if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
 		return null
 	}
@@ -48,7 +55,7 @@ function weekFromQuery(value) {
 	) {
 		return null
 	}
-	return startOfWeek(value)
+	return clampWeekToArchive(value, today)
 }
 
 function EntryRow({entry}) {
@@ -98,6 +105,13 @@ function EntryRow({entry}) {
  * still searchable by the browser's find, and still assertable in tests — while
  * the browser skips laying it out.
  *
+ * Note what that does and does not buy: layout is skipped, but the rows are
+ * still constructed, so the week's ~14,000 DOM nodes are still built on mount.
+ * Deferring construction until first open would remove that too, at the cost of
+ * browser find and of the straightforward assertions below. If this page ever
+ * feels slow on a mid-tier phone, that is the next thing to try — the question
+ * is not settled by this comment.
+ *
  * It also happens to be the shape of the page this replaces: `radioWeek` showed
  * the week's schedule and drilled into `radioShow?radioShowID=…` for a playlist.
  * Here the drill-in costs no navigation and no second request.
@@ -143,14 +157,19 @@ function ShowBlock({show}) {
 	)
 }
 
-function DayBlock({day}) {
+function DayBlock({day, isFuture}) {
 	return (
 		<div className="mb-10">
 			<h2 className="mb-3 border-b border-white/20 pb-1 text-2xl">
 				{formatCalendarDate(day.date)}
 			</h2>
 			{day.shows.length === 0 ? (
-				<p className="text-white/50">No playlists recorded for this day.</p>
+				// A day that has not happened yet is not a gap in the archive, and
+				// saying "no playlists recorded" for it reads as lost data. Most of
+				// the current week's landing view is otherwise made of those.
+				<p className="text-white/50">
+					{isFuture ? 'Not yet aired.' : 'No playlists recorded for this day.'}
+				</p>
 			) : (
 				day.shows.map((show, index) => (
 					<ShowBlock key={show.id ?? `unattributed-${index}`} show={show} />
@@ -165,7 +184,14 @@ const ArchivePlaylists = () => {
 	const today = useMemo(() => easternToday(), [])
 	const currentWeek = useMemo(() => startOfWeek(today), [today])
 
-	const [week, setWeek] = useState(currentWeek)
+	// Null until the router has resolved the query string. Initialising this to
+	// `currentWeek` instead would make "we have not read the URL yet" and "the
+	// URL asked for this week" the same value — and since both effects below run
+	// in the same commit once the router hydrates, the fetch would go out for the
+	// current week before the week-reading effect's state update lands. That is a
+	// wasted half-megabyte on every shared link, and gating the fetch on
+	// `router.isReady` alone does not prevent it.
+	const [week, setWeek] = useState(null)
 	const [days, setDays] = useState(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState(null)
@@ -179,17 +205,29 @@ const ArchivePlaylists = () => {
 	// then rather than during initialisation.
 	useEffect(() => {
 		if (!router.isReady) return
-		setWeek(weekFromQuery(router.query.week) ?? currentWeek)
-	}, [router.isReady, router.query.week, currentWeek])
+		setWeek(weekFromQuery(router.query.week, today) ?? currentWeek)
+	}, [router.isReady, router.query.week, currentWeek, today])
 
 	useEffect(() => {
+		if (week === null) return
+
+		const cached = getCachedWeek(week)
+		if (cached) {
+			setDays(cached)
+			setError(null)
+			setIsLoading(false)
+			return
+		}
+
 		const controller = new AbortController()
 		setIsLoading(true)
 		setError(null)
 
 		fetchFlowsheetRange(week, DAYS_PER_WEEK, {signal: controller.signal})
 			.then((range) => {
-				setDays(groupRangeByDay(range, week, DAYS_PER_WEEK))
+				const grouped = groupRangeByDay(range, week, DAYS_PER_WEEK)
+				setCachedWeek(week, grouped, currentWeek)
+				setDays(grouped)
 				setIsLoading(false)
 			})
 			.catch((err) => {
@@ -200,7 +238,7 @@ const ArchivePlaylists = () => {
 			})
 
 		return () => controller.abort()
-	}, [week, reloadToken])
+	}, [week, reloadToken, currentWeek])
 
 	const goToWeek = useCallback(
 		(nextWeek) => {
@@ -212,13 +250,17 @@ const ArchivePlaylists = () => {
 		[router]
 	)
 
-	const previousWeek = addDays(week, -DAYS_PER_WEEK)
-	const nextWeek = addDays(week, DAYS_PER_WEEK)
+	// Standing in for the week until the router resolves one, so the controls can
+	// render disabled rather than absent.
+	const navWeek = week ?? currentWeek
+	const previousWeek = addDays(navWeek, -DAYS_PER_WEEK)
+	const nextWeek = addDays(navWeek, DAYS_PER_WEEK)
 	// The window is a fixed 7 days, so it can never exceed the endpoint's 8-day
 	// ceiling. What it can do is run off the ends of the archive, which is what
 	// these bound.
-	const canGoBack = previousWeek >= startOfWeek(EARLIEST_ARCHIVE_DATE)
-	const canGoForward = nextWeek <= currentWeek
+	const canGoBack =
+		week !== null && previousWeek >= startOfWeek(EARLIEST_ARCHIVE_DATE)
+	const canGoForward = week !== null && nextWeek <= currentWeek
 
 	const totalTracks = useMemo(
 		() =>
@@ -264,11 +306,11 @@ const ArchivePlaylists = () => {
 						<span className="sr-only">Jump to a date</span>
 						<input
 							type="date"
-							value={week}
+							value={navWeek}
 							min={EARLIEST_ARCHIVE_DATE}
 							max={today}
 							onChange={(event) => {
-								const picked = weekFromQuery(event.target.value)
+								const picked = weekFromQuery(event.target.value, today)
 								if (picked) goToWeek(picked)
 							}}
 							className="rounded border border-white/30 bg-transparent px-2 py-1"
@@ -284,14 +326,16 @@ const ArchivePlaylists = () => {
 					</button>
 				</div>
 
-				<h2 className="mb-6 text-xl text-white/80">
-					Week of {formatCalendarDate(week, {weekday: undefined})}
-					{!isLoading && !error ? (
-						<span className="ml-2 text-base text-white/50">
-							{totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
-						</span>
-					) : null}
-				</h2>
+				{week !== null ? (
+					<h2 className="mb-6 text-xl text-white/80">
+						Week of {formatCalendarDate(week, {weekday: undefined})}
+						{!isLoading && !error ? (
+							<span className="ml-2 text-base text-white/50">
+								{totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
+							</span>
+						) : null}
+					</h2>
+				) : null}
 
 				{isLoading ? (
 					<p role="status">Loading playlists…</p>
@@ -307,9 +351,15 @@ const ArchivePlaylists = () => {
 						</button>
 					</div>
 				) : days && days.every((day) => day.shows.length === 0) ? (
-					<p>No playlists were recorded this week.</p>
+					<p>
+						{week >= currentWeek
+							? 'Nothing has aired yet this week.'
+							: 'No playlists were recorded this week.'}
+					</p>
 				) : (
-					(days ?? []).map((day) => <DayBlock key={day.date} day={day} />)
+					(days ?? []).map((day) => (
+						<DayBlock key={day.date} day={day} isFuture={day.date > today} />
+					))
 				)}
 			</div>
 		</>

@@ -1,11 +1,13 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
+import {render, screen, fireEvent, waitFor} from '@testing-library/react'
+import {createMockFetch, createTestLifecycle, testData} from './test-utils'
+import {clearWeekCache} from '../lib/weekCache'
 import {
-	render,
-	screen,
-	cleanup,
-	fireEvent,
-	waitFor,
-} from '@testing-library/react'
+	addDays,
+	easternMidnightEpoch,
+	easternToday,
+	startOfWeek,
+} from '../lib/easternTime'
 
 const push = vi.fn()
 let routerQuery = {}
@@ -25,33 +27,10 @@ vi.mock('next/head', () => ({
 
 const ArchivePlaylists = (await import('../pages/playlists/archive')).default
 
-function track(overrides = {}) {
-	return {
-		id: 100,
-		show_id: 1,
-		play_order: 1,
-		add_time: '2026-08-03T14:05:00.000Z', // Monday 10:05 AM ET
-		entry_type: 'track',
-		artist_name: 'Juana Molina',
-		track_title: 'la paradoja',
-		album_title: 'DOGA',
-		record_label: 'Sonamos',
-		request_flag: false,
-		...overrides,
-	}
-}
+const track = testData.flowsheetTrack
 
 const RANGE = {
-	shows: [
-		{
-			id: 1,
-			dj_name: 'DJ Biscuit',
-			show_name: null,
-			specialty_id: null,
-			start_time: '2026-08-03T14:00:00.000Z',
-			end_time: '2026-08-03T17:00:00.000Z',
-		},
-	],
+	shows: [testData.flowsheetShow()],
 	entries: [
 		{
 			id: 99,
@@ -82,24 +61,22 @@ const RANGE = {
 	],
 }
 
-function mockFetchOnce(body, {ok = true, status = 200} = {}) {
-	global.fetch = vi.fn().mockResolvedValue({
-		ok,
-		status,
-		json: () => Promise.resolve(body),
-	})
+function mockFetchOnce(body, options) {
+	global.fetch = createMockFetch(body, options)
 	return global.fetch
 }
 
+const lifecycle = createTestLifecycle()
+
 beforeEach(() => {
-	vi.clearAllMocks()
+	lifecycle.beforeEach()
 	routerQuery = {week: '2026-08-03'}
 	routerIsReady = true
+	// The week cache outlives an unmount by design, so it also outlives a test.
+	clearWeekCache()
 })
 
-afterEach(() => {
-	cleanup()
-})
+afterEach(lifecycle.afterEach)
 
 describe('Playlist archive page', () => {
 	it('shows a loading state before the fetch resolves', () => {
@@ -274,9 +251,110 @@ describe('Playlist archive page', () => {
 
 		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
 		const url = new URL(fetchMock.mock.calls[0][0])
-		expect(Number(url.searchParams.get('start'))).toBeLessThanOrEqual(
-			Date.now()
+		expect(Number(url.searchParams.get('start'))).toBe(
+			easternMidnightEpoch(startOfWeek(easternToday()))
 		)
+	})
+
+	it.each([
+		['before the archive begins', '1970-01-05', '2004-11-01'],
+		['a partially-typed year', '0202-08-10', '2004-11-01'],
+	])(
+		'clamps a week %s to the archive rather than querying for it',
+		async (_label, week, expectedDate) => {
+			// `<input type="date">` fires onChange on each keystroke of a typed year,
+			// so 0202 is a value a visitor produces just by editing the field, and
+			// ?week= accepts anything at all. Neither should reach the backend.
+			routerQuery = {week}
+			const fetchMock = mockFetchOnce({shows: [], entries: []})
+			render(<ArchivePlaylists />)
+
+			await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+			const url = new URL(fetchMock.mock.calls[0][0])
+			expect(Number(url.searchParams.get('start'))).toBe(
+				easternMidnightEpoch(startOfWeek(expectedDate))
+			)
+		}
+	)
+
+	it('does not fetch until the router has resolved the query string', async () => {
+		// A statically exported page renders once with an empty query string. If
+		// that render fetches, every deep link costs two full weeks of data.
+		routerIsReady = false
+		routerQuery = {}
+		const fetchMock = mockFetchOnce({shows: [], entries: []})
+		const {rerender} = render(<ArchivePlaylists />)
+
+		expect(fetchMock).not.toHaveBeenCalled()
+		expect(screen.getByRole('status')).toBeDefined()
+
+		routerIsReady = true
+		routerQuery = {week: '2026-07-06'}
+		rerender(<ArchivePlaylists />)
+
+		await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+		const url = new URL(fetchMock.mock.calls[0][0])
+		expect(Number(url.searchParams.get('start'))).toBe(
+			easternMidnightEpoch('2026-07-06')
+		)
+	})
+
+	it('serves a past week it has already fetched from memory', async () => {
+		// A week is half a megabyte gzipped and the endpoint sends no
+		// Cache-Control, so paging away and back must not re-download it.
+		const fetchMock = mockFetchOnce(RANGE)
+		const {unmount} = render(<ArchivePlaylists />)
+		await screen.findByText('DJ Biscuit')
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+
+		unmount()
+		render(<ArchivePlaylists />)
+
+		await screen.findByText('DJ Biscuit')
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+	})
+
+	it('refetches the current week rather than serving a stale copy', async () => {
+		// The week in progress is still being written to as shows air.
+		const monday = startOfWeek(easternToday())
+		routerQuery = {week: monday}
+		const fetchMock = mockFetchOnce({shows: [], entries: []})
+		const {unmount} = render(<ArchivePlaylists />)
+		await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+
+		unmount()
+		render(<ArchivePlaylists />)
+
+		await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+	})
+
+	it('does not describe days that have not aired yet as missing', async () => {
+		// The current week's landing view is otherwise several days captioned as
+		// though the archive had lost them.
+		const monday = startOfWeek(easternToday())
+		const dates = Array.from({length: 7}, (_, i) => addDays(monday, i))
+		const elapsed = dates.filter((date) => date <= easternToday())
+
+		routerQuery = {week: monday}
+		mockFetchOnce({
+			shows: [
+				testData.flowsheetShow({
+					start_time: `${monday}T14:00:00.000Z`,
+					end_time: `${monday}T17:00:00.000Z`,
+				}),
+			],
+			entries: [testData.flowsheetTrack({add_time: `${monday}T14:05:00.000Z`})],
+		})
+		render(<ArchivePlaylists />)
+
+		await screen.findByText('DJ Biscuit')
+		expect(screen.queryAllByText('Not yet aired.')).toHaveLength(
+			dates.length - elapsed.length
+		)
+		// Every elapsed day but Monday, which has the show.
+		expect(
+			screen.queryAllByText('No playlists recorded for this day.')
+		).toHaveLength(elapsed.length - 1)
 	})
 
 	it('puts the week in the URL when navigating, so a week is linkable', async () => {
@@ -307,16 +385,18 @@ describe('Playlist archive page', () => {
 		)
 	})
 
-	it('requests a 7-day window and never more', async () => {
+	it('requests exactly the Eastern week it is showing', async () => {
 		const fetchMock = mockFetchOnce({shows: [], entries: []})
 		render(<ArchivePlaylists />)
 
 		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
 		const url = new URL(fetchMock.mock.calls[0][0])
-		const span =
-			Number(url.searchParams.get('end')) -
-			Number(url.searchParams.get('start'))
-		expect(span).toBeLessThanOrEqual(8 * 24 * 60 * 60 * 1000)
+		expect(Number(url.searchParams.get('start'))).toBe(
+			easternMidnightEpoch('2026-08-03')
+		)
+		expect(Number(url.searchParams.get('end'))).toBe(
+			easternMidnightEpoch('2026-08-10')
+		)
 	})
 
 	it('sends no credentials', async () => {

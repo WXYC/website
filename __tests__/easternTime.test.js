@@ -1,5 +1,7 @@
 import {describe, it, expect} from 'vitest'
 import {
+	EARLIEST_ARCHIVE_DATE,
+	clampWeekToArchive,
 	addDays,
 	easternDateOf,
 	easternMidnightEpoch,
@@ -126,5 +128,32 @@ describe('formatCalendarDate', () => {
 		expect(formatCalendarDate('2026-08-05', {weekday: undefined})).toBe(
 			'August 5, 2026'
 		)
+	})
+})
+
+describe('clampWeekToArchive', () => {
+	const TODAY = '2026-08-10' // a Monday
+
+	it('snaps a date inside the archive to its Monday', () => {
+		expect(clampWeekToArchive('2026-08-05', TODAY)).toBe('2026-08-03')
+	})
+
+	it.each([
+		['before the archive begins', '1970-01-05'],
+		// `<input type="date">` reports each keystroke of a typed year, so editing
+		// the field to 2026 emits 0002, 0020 and 0202 along the way.
+		['a partially-typed year', '0202-08-10'],
+	])('clamps %s to the first archived week', (_label, date) => {
+		expect(clampWeekToArchive(date, TODAY)).toBe(
+			startOfWeek(EARLIEST_ARCHIVE_DATE)
+		)
+	})
+
+	it('clamps a future date to the current week', () => {
+		expect(clampWeekToArchive('2099-01-01', TODAY)).toBe('2026-08-10')
+	})
+
+	it('leaves the current week alone', () => {
+		expect(clampWeekToArchive(TODAY, TODAY)).toBe('2026-08-10')
 	})
 })
