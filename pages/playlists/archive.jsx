@@ -9,6 +9,7 @@ import {
 	startOfWeek,
 } from '../../lib/easternTime'
 import {
+	describeNonTrackEntry,
 	fetchFlowsheetRange,
 	formatShowTime,
 	groupRangeByDay,
@@ -52,7 +53,7 @@ function weekFromQuery(value) {
 
 function EntryRow({entry}) {
 	if (!isTrack(entry)) {
-		const message = entry.message || entry.entry_type.replace('_', ' ')
+		const message = describeNonTrackEntry(entry)
 		return (
 			<tr>
 				<td
