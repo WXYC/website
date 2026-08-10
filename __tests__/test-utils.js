@@ -120,4 +120,21 @@ export const testData = {
 		request_flag: false,
 		...overrides,
 	}),
+
+	/**
+	 * Creates a `GET /flowsheet?page=&limit=` response envelope, as the live
+	 * playlist page (`pages/playlist.jsx`) consumes it. Distinct from the range
+	 * envelope above: this endpoint returns one flat `entries` array (already
+	 * newest-first) plus pagination metadata and the currently on-air DJ,
+	 * rather than a separate `shows` array.
+	 */
+	flowsheetEnvelope: (entries = [], overrides = {}) => ({
+		entries,
+		total: entries.length,
+		page: 0,
+		limit: 50,
+		totalPages: entries.length > 0 ? 1 : 0,
+		on_air: null,
+		...overrides,
+	}),
 }
