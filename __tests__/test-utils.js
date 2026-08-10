@@ -87,4 +87,37 @@ export const testData = {
 			...overrides.node,
 		},
 	}),
+
+	/**
+	 * Creates a show row as `GET /flowsheet/range` returns it.
+	 *
+	 * Defaults to a Monday-morning show in the week of 2026-08-03, which is the
+	 * week the playlist-archive tests are written around.
+	 */
+	flowsheetShow: (overrides = {}) => ({
+		id: 1,
+		dj_name: 'DJ Biscuit',
+		show_name: null,
+		specialty_id: null,
+		start_time: '2026-08-03T14:00:00.000Z', // 10 AM ET Monday
+		end_time: '2026-08-03T17:00:00.000Z',
+		...overrides,
+	}),
+
+	/**
+	 * Creates a played-track entry row as `GET /flowsheet/range` returns it.
+	 */
+	flowsheetTrack: (overrides = {}) => ({
+		id: 100,
+		show_id: 1,
+		play_order: 1,
+		add_time: '2026-08-03T14:05:00.000Z',
+		entry_type: 'track',
+		artist_name: 'Juana Molina',
+		track_title: 'la paradoja',
+		album_title: 'DOGA',
+		record_label: 'Sonamos',
+		request_flag: false,
+		...overrides,
+	}),
 }

@@ -10,37 +10,12 @@ import {
 	isTrack,
 } from '../lib/flowsheetRange'
 import {easternMidnightEpoch} from '../lib/easternTime'
-import {createMockFetch} from './test-utils'
+import {createMockFetch, testData} from './test-utils'
 
 const WEEK = '2026-08-03' // Monday
 
-function show(overrides = {}) {
-	return {
-		id: 1,
-		dj_name: 'DJ Biscuit',
-		show_name: null,
-		specialty_id: null,
-		start_time: '2026-08-03T14:00:00.000Z', // 10 AM ET Monday
-		end_time: '2026-08-03T17:00:00.000Z',
-		...overrides,
-	}
-}
-
-function entry(overrides = {}) {
-	return {
-		id: 100,
-		show_id: 1,
-		play_order: 1,
-		add_time: '2026-08-03T14:05:00.000Z',
-		entry_type: 'track',
-		artist_name: 'Juana Molina',
-		track_title: 'la paradoja',
-		album_title: 'DOGA',
-		record_label: 'Sonamos',
-		request_flag: false,
-		...overrides,
-	}
-}
+const show = testData.flowsheetShow
+const entry = testData.flowsheetTrack
 
 describe('fetchFlowsheetRange', () => {
 	it('requests a half-open Eastern window in epoch milliseconds', async () => {
@@ -202,9 +177,9 @@ describe('groupRangeByDay', () => {
 	})
 
 	it('routes an entry whose show is absent from the window to the same block', () => {
-		// The endpoint selects shows by overlap and does not treat a null
-		// end_time as open-ended, so a show that started before the window and
-		// never signed off is excluded while its entries are not.
+		// Defence only: `getShowsInTimeWindow` selects every show an in-window
+		// entry references, so a correct Backend cannot produce this. Kept so a
+		// contract regression loses no playlist history.
 		const result = groupRangeByDay(
 			{
 				shows: [show({id: 1})],
@@ -218,6 +193,96 @@ describe('groupRangeByDay', () => {
 		expect(
 			monday.shows.find((s) => s.id === null).entries.map((e) => e.id)
 		).toEqual([2])
+	})
+
+	it('orders a show by play_order rather than by when rows arrived', () => {
+		// A DJ who forgets the 1 PM and 2 PM breakpoints and enters them both at
+		// 2:54 PM produces exactly this: play_order 2 and 3 arriving after
+		// play_order 18. Production has 88 such inversions across 36 of the 54
+		// shows in a sampled week.
+		const result = groupRangeByDay(
+			{
+				shows: [show({id: 1})],
+				entries: [
+					entry({id: 1, play_order: 18, add_time: '2026-08-03T18:54:26.000Z'}),
+					entry({
+						id: 2,
+						play_order: 2,
+						entry_type: 'breakpoint',
+						message: '--- 1:00 PM BREAKPOINT ---',
+						add_time: '2026-08-03T18:54:38.000Z',
+					}),
+					entry({
+						id: 3,
+						play_order: 3,
+						entry_type: 'breakpoint',
+						message: '--- 2:00 PM BREAKPOINT ---',
+						add_time: '2026-08-03T18:54:44.000Z',
+					}),
+					entry({id: 4, play_order: 19, add_time: '2026-08-03T19:02:49.000Z'}),
+				],
+			},
+			WEEK,
+			7
+		)
+
+		const monday = result.find((d) => d.date === '2026-08-03')
+		expect(monday.shows[0].entries.map((e) => e.id)).toEqual([2, 3, 1, 4])
+	})
+
+	it('files a show that started outside the window by the day its entries aired', () => {
+		// Production case: a breakpoint filed against show 72379, whose start_time
+		// is a week and a half after the entry's add_time. Filing by start date is
+		// impossible, and filing everything on the window's first day renders the
+		// show on a date it did not air, labelled with times from another one.
+		const result = groupRangeByDay(
+			{
+				shows: [
+					show({id: 1}),
+					show({
+						id: 72379,
+						dj_name: 'Aubrey Hearst',
+						start_time: '2026-08-19T23:00:32.000Z',
+						end_time: '2026-08-20T00:58:03.000Z',
+					}),
+				],
+				entries: [
+					entry({id: 1, show_id: 1}),
+					entry({
+						id: 2,
+						show_id: 72379,
+						entry_type: 'breakpoint',
+						message: '--- 7:00 PM BREAKPOINT ---',
+						add_time: '2026-08-05T23:00:00.000Z', // Wed 7 PM ET
+					}),
+				],
+			},
+			WEEK,
+			7
+		)
+
+		const byDate = Object.fromEntries(result.map((d) => [d.date, d.shows]))
+		expect(byDate['2026-08-05'].map((s) => s.id)).toEqual([72379])
+		expect(byDate['2026-08-03'].map((s) => s.id)).toEqual([1])
+	})
+
+	it('orders a day by when each block first went to air', () => {
+		// An unattributed run is built after the shows are, so appending it would
+		// put an 8 AM entry below a show that signed on at 11 PM.
+		const result = groupRangeByDay(
+			{
+				shows: [show({id: 1, start_time: '2026-08-04T03:00:00.000Z'})], // Mon 11 PM ET
+				entries: [
+					entry({id: 1, show_id: 1, add_time: '2026-08-04T03:05:00.000Z'}),
+					entry({id: 2, show_id: null, add_time: '2026-08-03T12:00:00.000Z'}), // Mon 8 AM ET
+				],
+			},
+			WEEK,
+			7
+		)
+
+		const monday = result.find((d) => d.date === '2026-08-03')
+		expect(monday.shows.map((s) => s.id)).toEqual([null, 1])
 	})
 
 	it('keeps unattributed runs on different days separate', () => {
