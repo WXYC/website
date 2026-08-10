@@ -145,4 +145,21 @@ export const testData = {
 		on_air: null,
 		...overrides,
 	}),
+
+	/**
+	 * Creates a search-result row as `GET /flowsheet/search` returns it.
+	 *
+	 * Defaults mirror the production example in WXYC/website#212's spec.
+	 */
+	flowsheetSearchResult: (overrides = {}) => ({
+		id: 5292849,
+		play_date: '2026-07-21 15:47:47.654+00',
+		artist_name: 'Juana Molina',
+		track_title: 'Quien? (Suite)',
+		album_title: 'un dia',
+		record_label: 'Domino',
+		show_id: 1950477,
+		dj_name: 'Unknown DJ',
+		...overrides,
+	}),
 }
