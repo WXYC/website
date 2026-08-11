@@ -191,8 +191,6 @@ const LivePlaylist = () => {
 	}, [])
 
 	useEffect(() => {
-		load()
-
 		// The interval is started/stopped rather than left running while the tab
 		// is hidden: the response is ~51 KB with `Cache-Control: no-cache`, and
 		// browsers already throttle a background tab's timers to about once a
@@ -220,7 +218,13 @@ const LivePlaylist = () => {
 			}
 		}
 
-		startInterval()
+		// Consulted at mount, not only on a later transition: `visibilitychange`
+		// never fires for a tab that starts hidden (e.g. opened with a cmd-click)
+		// and is never focused, so without this check such a tab would fetch on
+		// mount and then poll indefinitely with nobody looking at it. Routing
+		// through the same handler that responds to a transition means "start
+		// hidden" and "become hidden" are one code path, not two.
+		handleVisibilityChange()
 		document.addEventListener('visibilitychange', handleVisibilityChange)
 
 		return () => {

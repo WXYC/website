@@ -725,5 +725,33 @@ describe('Live playlist page', () => {
 			await advanceOneInterval()
 			expect(fetchMock).toHaveBeenCalledTimes(3)
 		})
+
+		it('never fetches when the tab starts hidden and is never made visible', async () => {
+			// `visibilityState` is pinned to 'hidden' before the component even
+			// mounts, simulating a tab opened in the background (e.g. cmd-click)
+			// that is never focused. `visibilitychange` only fires on a
+			// transition, so a gate that consults `document.visibilityState`
+			// solely from inside that handler never engages here: it would fetch
+			// once on mount and then once per interval tick forever, exactly the
+			// traffic the gating exists to prevent.
+			vi.useFakeTimers()
+			setVisibility('hidden')
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				json: async () => envelope([track()]),
+			})
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			expect(fetchMock).toHaveBeenCalledTimes(0)
+
+			await act(async () => {
+				vi.advanceTimersByTime(REFRESH_INTERVAL_MS * 3)
+				await Promise.resolve()
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(0)
+		})
 	})
 })
