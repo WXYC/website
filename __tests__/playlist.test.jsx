@@ -542,6 +542,133 @@ describe('Live playlist page', () => {
 		})
 	})
 
+	describe('loading state across a superseded first load (regression)', () => {
+		// Regression coverage for a bug introduced by the in-flight-guard fix:
+		// the `finally` that cleared `isLoading` gated on the request's own
+		// controller still being the current one. Every superseding call aborts
+		// the previous controller before its own fetch resolves, so the first
+		// load's `finally` always saw a stale controller and skipped clearing
+		// `isLoading` — and the replacement never set it either, since it only
+		// cleared loading for calls that had requested the spinner. Once stuck,
+		// no later tick recovers: the page is pinned on "Loading the playlist…"
+		// forever even though fresh data has arrived.
+
+		const originalDescriptor = Object.getOwnPropertyDescriptor(
+			Document.prototype,
+			'visibilityState'
+		)
+
+		afterEach(() => {
+			if (originalDescriptor) {
+				Object.defineProperty(document, 'visibilityState', originalDescriptor)
+			} else {
+				delete document.visibilityState
+			}
+		})
+
+		function setVisibility(state) {
+			Object.defineProperty(document, 'visibilityState', {
+				configurable: true,
+				get: () => state,
+			})
+			document.dispatchEvent(new Event('visibilitychange'))
+		}
+
+		it('clears the loading state when the 60s interval supersedes a still-pending first load', async () => {
+			vi.useFakeTimers()
+			let resolveFirst
+			const firstResponse = new Promise((resolve) => {
+				resolveFirst = resolve
+			})
+			const fetchMock = vi
+				.fn()
+				.mockImplementationOnce(() => firstResponse)
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () => envelope([track()]),
+				})
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+			expect(document.body.textContent).toContain('Loading the playlist')
+
+			// The interval fires while the first fetch is still unsettled.
+			await advanceOneInterval()
+
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+			expect(document.body.textContent).not.toContain('Loading the playlist')
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+
+			// The slow first fetch finally resolves, late and superseded. It must
+			// not resurrect the loading state or clobber the newer data.
+			await act(async () => {
+				resolveFirst({
+					ok: true,
+					status: 200,
+					json: async () =>
+						envelope([track({id: 2, artist_name: 'Someone Else'})]),
+				})
+				await Promise.resolve()
+				await Promise.resolve()
+			})
+			expect(document.body.textContent).not.toContain('Loading the playlist')
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+		})
+
+		it('clears the loading state when a visibility flip supersedes a still-pending first load', async () => {
+			let resolveFirst
+			const firstResponse = new Promise((resolve) => {
+				resolveFirst = resolve
+			})
+			const fetchMock = vi
+				.fn()
+				.mockImplementationOnce(() => firstResponse)
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () => envelope([track()]),
+				})
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+			expect(document.body.textContent).toContain('Loading the playlist')
+
+			// A hidden -> visible flip while the first fetch is still unsettled
+			// triggers a superseding catch-up fetch, same as the interval case.
+			await act(async () => {
+				setVisibility('hidden')
+				await Promise.resolve()
+			})
+			await act(async () => {
+				setVisibility('visible')
+				await Promise.resolve()
+				await Promise.resolve()
+			})
+
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+			expect(document.body.textContent).not.toContain('Loading the playlist')
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+
+			await act(async () => {
+				resolveFirst({
+					ok: true,
+					status: 200,
+					json: async () =>
+						envelope([track({id: 2, artist_name: 'Someone Else'})]),
+				})
+				await Promise.resolve()
+				await Promise.resolve()
+			})
+			expect(document.body.textContent).not.toContain('Loading the playlist')
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+		})
+	})
+
 	describe('visibility gating', () => {
 		const originalDescriptor = Object.getOwnPropertyDescriptor(
 			Document.prototype,
