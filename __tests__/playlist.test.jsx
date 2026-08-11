@@ -255,4 +255,122 @@ describe('Live playlist page', () => {
 
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
+
+	describe('air-order sorting', () => {
+		it('renders entries by the DJ-stated play_order, not by the order the endpoint returned them in', async () => {
+			// Simulates a retroactive insert: the endpoint's own order (insertion
+			// order, i.e. desc(id)) is neither already correct nor its exact
+			// reverse, so this catches both "no sort" and "sort, then reverse"
+			// implementations, not just one of them.
+			mockFetchOnce(
+				envelope([
+					track({
+						id: 500,
+						show_id: 42,
+						play_order: 2,
+						artist_name: 'Artist B',
+					}),
+					track({
+						id: 499,
+						show_id: 42,
+						play_order: 4,
+						artist_name: 'Artist D',
+					}),
+					track({
+						id: 498,
+						show_id: 42,
+						play_order: 1,
+						artist_name: 'Artist A',
+					}),
+					track({
+						id: 497,
+						show_id: 42,
+						play_order: 3,
+						artist_name: 'Artist C',
+					}),
+				])
+			)
+			const {container} = render(<LivePlaylist />)
+			await flushPromises()
+
+			const text = container.textContent
+			const positions = ['Artist D', 'Artist C', 'Artist B', 'Artist A'].map(
+				(name) => text.indexOf(name)
+			)
+			expect(positions.every((position) => position !== -1)).toBe(true)
+			expect(positions).toEqual([...positions].sort((a, b) => a - b))
+		})
+
+		it('breaks a play_order collision on id, newest first, rather than falling back to arrival order', async () => {
+			// Two rows can legitimately share one play_order — the tubafrenzy
+			// webhook and the dj-site live-insert path assign it independently
+			// with no per-show UNIQUE constraint. Fetch/array order here is
+			// deliberately the opposite of the expected id-desc tie-break, so a
+			// comparator that dropped the id tie-break (falling back to
+			// `Array.prototype.sort`'s stability, i.e. arrival order) would
+			// render this the wrong way round.
+			mockFetchOnce(
+				envelope([
+					track({
+						id: 601,
+						show_id: 7,
+						play_order: 5,
+						artist_name: 'Older Tie',
+					}),
+					track({
+						id: 602,
+						show_id: 7,
+						play_order: 5,
+						artist_name: 'Newer Tie',
+					}),
+				])
+			)
+			const {container} = render(<LivePlaylist />)
+			await flushPromises()
+
+			const text = container.textContent
+			expect(text.indexOf('Newer Tie')).toBeLessThan(text.indexOf('Older Tie'))
+		})
+
+		it('renders an entry whose show_id is null without crashing or producing NaN', async () => {
+			mockFetchOnce(
+				envelope([
+					track({id: 900, show_id: null, artist_name: 'Unattributed Artist'}),
+				])
+			)
+			const {container} = render(<LivePlaylist />)
+			await flushPromises()
+
+			expect(screen.getByText('Unattributed Artist')).toBeDefined()
+			expect(container.textContent).not.toContain('NaN')
+		})
+	})
+
+	describe('error message curation', () => {
+		it('shows a generic message for a network failure, not the raw browser error', async () => {
+			global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const alert = await screen.findByRole('alert')
+			expect(alert.textContent).toBe('Could not load the playlist.')
+			expect(alert.textContent).not.toContain('Failed to fetch')
+		})
+
+		it('shows a generic message when the response body is not valid JSON', async () => {
+			global.fetch = vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				json: vi
+					.fn()
+					.mockRejectedValue(new SyntaxError("Unexpected token '<'")),
+			})
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const alert = await screen.findByRole('alert')
+			expect(alert.textContent).toBe('Could not load the playlist.')
+			expect(alert.textContent).not.toContain('Unexpected token')
+		})
+	})
 })

@@ -1,6 +1,11 @@
 import React, {useEffect, useState} from 'react'
 import Head from 'next/head'
-import {API_BASE, describeNonTrackEntry, isTrack} from '../lib/flowsheetRange'
+import {
+	API_BASE,
+	compareEntriesByAirOrderDesc,
+	describeNonTrackEntry,
+	isTrack,
+} from '../lib/flowsheetRange'
 
 /**
  * Live playlist — a public, unauthenticated view of the most recent flowsheet
@@ -11,11 +16,12 @@ import {API_BASE, describeNonTrackEntry, isTrack} from '../lib/flowsheetRange'
  * Data source: Backend-Service `GET /flowsheet?page=0&limit=50`. This is a
  * different endpoint from the range-based historical archive
  * (`pages/playlists/archive.jsx`, `GET /flowsheet/range`): it returns one flat
- * `entries` array, already newest-first, plus pagination metadata and the
- * currently on-air DJ — there is no separate `shows` array and so no grouping
- * step here. Track/non-track discrimination (`isTrack`, `describeNonTrackEntry`)
- * is reused from `lib/flowsheetRange.js` rather than re-derived, since the
- * `entry_type` discriminated union is identical across both endpoints.
+ * `entries` array plus pagination metadata and the currently on-air DJ — there
+ * is no separate `shows` array and so no grouping step here. Track/non-track
+ * discrimination (`isTrack`, `describeNonTrackEntry`) and air-order sorting
+ * (`compareEntriesByAirOrderDesc`) are reused from `lib/flowsheetRange.js`
+ * rather than re-derived, since the `entry_type` discriminated union and the
+ * `play_order`-over-arrival-order rule are identical across both endpoints.
  *
  * File is `.jsx` rather than `.js` so vitest's esbuild pipeline parses the JSX
  * in it directly — see `pages/playlists/archive.jsx` for the same convention.
@@ -34,13 +40,25 @@ const PAGE_LIMIT = 50
 export const REFRESH_INTERVAL_MS = 60000
 
 /**
+ * Marks a message as curated copy from {@link fetchRecentFlowsheet} itself,
+ * as opposed to a raw message bubbling up from `fetch()` or `response.json()`.
+ * A network failure, a CORS rejection, or a non-JSON body all reject with a
+ * browser-authored `Error` whose `message` is technical ("Failed to fetch",
+ * `Unexpected token '<'...`) and unfit for a public error state. Only a
+ * `FlowsheetFetchError` message is safe to render verbatim; every other
+ * rejection collapses to a generic fallback — see the `catch` in `load`
+ * below.
+ */
+class FlowsheetFetchError extends Error {}
+
+/**
  * Fetch the most recent page of the flowsheet.
  *
  * @param {object} [options]
  * @param {AbortSignal} [options.signal]
  * @param {typeof fetch} [options.fetchImpl] Injectable fetch, for tests.
  * @returns {Promise<{entries: Array, total: number, page: number, limit: number, totalPages: number, on_air: ?{dj_name: ?string}}>}
- * @throws {Error} On a non-OK response.
+ * @throws {FlowsheetFetchError} On a non-OK response.
  */
 async function fetchRecentFlowsheet(options = {}) {
 	const {signal, fetchImpl = fetch} = options
@@ -57,7 +75,9 @@ async function fetchRecentFlowsheet(options = {}) {
 	)
 
 	if (!response.ok) {
-		throw new Error(`Could not load the playlist (${response.status}).`)
+		throw new FlowsheetFetchError(
+			`Could not load the playlist (${response.status}).`
+		)
 	}
 
 	return response.json()
@@ -115,7 +135,10 @@ const LivePlaylist = () => {
 			if (showSpinner) setIsLoading(true)
 			try {
 				const data = await fetchRecentFlowsheet({signal: controller.signal})
-				setEntries(data?.entries ?? [])
+				const sortedEntries = [...(data?.entries ?? [])].sort(
+					compareEntriesByAirOrderDesc
+				)
+				setEntries(sortedEntries)
 				setOnAirDjName(data?.on_air?.dj_name ?? null)
 				setError(null)
 			} catch (err) {
@@ -124,7 +147,11 @@ const LivePlaylist = () => {
 				// screen rather than replacing it with an error — the table is
 				// still true, just up to a minute stale. Only surface the error
 				// state when there is nothing else to show yet.
-				setError(err.message || 'Could not load the playlist.')
+				setError(
+					err instanceof FlowsheetFetchError
+						? err.message
+						: 'Could not load the playlist.'
+				)
 			} finally {
 				if (showSpinner) setIsLoading(false)
 			}
