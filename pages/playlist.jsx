@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useRef, useState} from 'react'
 import Head from 'next/head'
 import {
 	API_BASE,
@@ -83,6 +83,11 @@ async function fetchRecentFlowsheet(options = {}) {
 	return response.json()
 }
 
+/** An instant as a local `HH:MM` clock time, for the staleness notice. */
+function formatClockTime(date) {
+	return date.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})
+}
+
 function PlaylistRow({entry}) {
 	if (!isTrack(entry)) {
 		return (
@@ -124,50 +129,99 @@ const LivePlaylist = () => {
 	const [onAirDjName, setOnAirDjName] = useState(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState(null)
+	// Set on every successful fetch; drives the "Last updated HH:MM" staleness
+	// notice when a later poll fails and the last-good playlist stays on screen.
+	const [lastUpdatedAt, setLastUpdatedAt] = useState(null)
+
+	// Holds the in-flight request's controller so a new poll can abort a still-
+	// pending older one, and so a response can check it is still the current
+	// request before applying itself. Without this, a poll that takes longer
+	// than the 60s interval can resolve after a faster later poll and overwrite
+	// fresh data with stale — a documented backend-wedge pattern.
+	const abortControllerRef = useRef(null)
+
+	const load = useCallback(async ({showSpinner}) => {
+		abortControllerRef.current?.abort()
+		const controller = new AbortController()
+		abortControllerRef.current = controller
+
+		if (showSpinner) setIsLoading(true)
+		try {
+			const data = await fetchRecentFlowsheet({signal: controller.signal})
+			// A superseded poll's fetch can still resolve after the one that
+			// replaced it. Only apply a response while its request is still the
+			// current one.
+			if (abortControllerRef.current !== controller) return
+			const sortedEntries = [...(data?.entries ?? [])].sort(
+				compareEntriesByAirOrderDesc
+			)
+			setEntries(sortedEntries)
+			setOnAirDjName(data?.on_air?.dj_name ?? null)
+			setError(null)
+			setLastUpdatedAt(new Date())
+		} catch (err) {
+			if (err.name === 'AbortError') return
+			if (abortControllerRef.current !== controller) return
+			// A background poll that fails leaves the last good playlist on
+			// screen rather than replacing it with an error — the table is
+			// still true, just up to a minute stale. Only the fully-blocking
+			// error state (nothing loaded yet) replaces the page; a stale-data
+			// poll failure instead shows a "Last updated" notice — see the
+			// render below.
+			setError(
+				err instanceof FlowsheetFetchError
+					? err.message
+					: 'Could not load the playlist.'
+			)
+		} finally {
+			if (showSpinner && abortControllerRef.current === controller) {
+				setIsLoading(false)
+			}
+		}
+	}, [])
 
 	useEffect(() => {
-		const controller = new AbortController()
+		load({showSpinner: true})
 
-		// `showSpinner` is false on the interval's background polls: a
-		// once-a-minute refresh should update the table in place, not flash the
-		// whole page back to a loading state around it.
-		const load = async ({showSpinner}) => {
-			if (showSpinner) setIsLoading(true)
-			try {
-				const data = await fetchRecentFlowsheet({signal: controller.signal})
-				const sortedEntries = [...(data?.entries ?? [])].sort(
-					compareEntriesByAirOrderDesc
-				)
-				setEntries(sortedEntries)
-				setOnAirDjName(data?.on_air?.dj_name ?? null)
-				setError(null)
-			} catch (err) {
-				if (err.name === 'AbortError') return
-				// A background poll that fails leaves the last good playlist on
-				// screen rather than replacing it with an error — the table is
-				// still true, just up to a minute stale. Only surface the error
-				// state when there is nothing else to show yet.
-				setError(
-					err instanceof FlowsheetFetchError
-						? err.message
-						: 'Could not load the playlist.'
-				)
-			} finally {
-				if (showSpinner) setIsLoading(false)
+		// The interval is started/stopped rather than left running while the tab
+		// is hidden: the response is ~51 KB with `Cache-Control: no-cache`, and
+		// browsers already throttle a background tab's timers to about once a
+		// minute — exactly this cadence, so backgrounding alone buys no relief.
+		// A tab left open for a workday would otherwise still issue ~1,440
+		// requests. Visibility gating stops them outright and catches the page
+		// up with one fetch when the tab is shown again.
+		let intervalId = null
+		const startInterval = () => {
+			if (intervalId !== null) return
+			intervalId = setInterval(
+				() => load({showSpinner: false}),
+				REFRESH_INTERVAL_MS
+			)
+		}
+		const stopInterval = () => {
+			if (intervalId === null) return
+			clearInterval(intervalId)
+			intervalId = null
+		}
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'hidden') {
+				stopInterval()
+			} else {
+				load({showSpinner: false})
+				startInterval()
 			}
 		}
 
-		load({showSpinner: true})
-		const intervalId = setInterval(
-			() => load({showSpinner: false}),
-			REFRESH_INTERVAL_MS
-		)
+		startInterval()
+		document.addEventListener('visibilitychange', handleVisibilityChange)
 
 		return () => {
-			controller.abort()
-			clearInterval(intervalId)
+			document.removeEventListener('visibilitychange', handleVisibilityChange)
+			stopInterval()
+			abortControllerRef.current?.abort()
 		}
-	}, [])
+	}, [load])
 
 	return (
 		<>
@@ -195,27 +249,51 @@ const LivePlaylist = () => {
 					<div role="alert">
 						<p>{error}</p>
 					</div>
-				) : entries && entries.length === 0 ? (
-					<p>Nothing has aired recently.</p>
 				) : (
-					<div className="overflow-x-auto">
-						<table className="w-full text-left text-sm">
-							<thead className="sr-only">
-								<tr>
-									<th>Rotation</th>
-									<th>Artist</th>
-									<th>Song</th>
-									<th>Release</th>
-									<th>Label</th>
-								</tr>
-							</thead>
-							<tbody>
-								{(entries ?? []).map((entry) => (
-									<PlaylistRow key={entry.id} entry={entry} />
-								))}
-							</tbody>
-						</table>
-					</div>
+					<>
+						{error && entries !== null ? (
+							<div
+								role="status"
+								className="mb-4 flex flex-wrap items-center gap-3 border border-white/20 bg-white/5 px-3 py-2 text-sm text-white/70"
+							>
+								<p>
+									Last updated{' '}
+									{lastUpdatedAt ? formatClockTime(lastUpdatedAt) : '—'} —
+									couldn&rsquo;t refresh.
+								</p>
+								<button
+									type="button"
+									onClick={() => load({showSpinner: false})}
+									className="rounded border border-white/30 px-3 py-1"
+								>
+									Retry
+								</button>
+							</div>
+						) : null}
+
+						{entries && entries.length === 0 ? (
+							<p>Nothing has aired recently.</p>
+						) : (
+							<div className="overflow-x-auto">
+								<table className="w-full text-left text-sm">
+									<thead className="sr-only">
+										<tr>
+											<th>Rotation</th>
+											<th>Artist</th>
+											<th>Song</th>
+											<th>Release</th>
+											<th>Label</th>
+										</tr>
+									</thead>
+									<tbody>
+										{(entries ?? []).map((entry) => (
+											<PlaylistRow key={entry.id} entry={entry} />
+										))}
+									</tbody>
+								</table>
+							</div>
+						)}
+					</>
 				)}
 			</div>
 		</>
