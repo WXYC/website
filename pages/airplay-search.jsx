@@ -2,8 +2,12 @@ import React, {useEffect, useState} from 'react'
 import Head from 'next/head'
 import {
 	DEFAULT_PAGE_SIZE,
+	canGoToNextPage,
 	fetchFlowsheetSearch,
 	formatPlayDate,
+	formatSearchTotal,
+	hasEmptyFieldFilter,
+	isAtDepthLimit,
 } from '../lib/flowsheetSearch'
 
 /**
@@ -51,6 +55,10 @@ const AirplaySearch = () => {
 	// `pages/playlists/archive.jsx` for the same trap in the week picker.
 	const [search, setSearch] = useState(INITIAL_SEARCH)
 
+	// Last successful response. Deliberately not cleared when a later fetch
+	// fails — see the `error` branch below — so a transient failure while
+	// paging does not strand the listener on a blank page, and does not
+	// unmount the pager out from under them.
 	const [data, setData] = useState(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState(null)
@@ -83,9 +91,8 @@ const AirplaySearch = () => {
 				setIsLoading(false)
 			})
 			.catch((err) => {
-				if (err.name === 'AbortError') return
-				setError(err.message || 'Could not search airplay records.')
-				setData(null)
+				if (err?.name === 'AbortError') return
+				setError(err?.message || 'Could not search airplay records.')
 				setIsLoading(false)
 			})
 
@@ -94,9 +101,35 @@ const AirplaySearch = () => {
 
 	const results = data?.results ?? []
 	const totalPages = data?.totalPages ?? 0
+	// Reached by paging into a page the backend can no longer back up: its
+	// count query can itself time out and fall back to an offset-derived
+	// estimate, which can re-enable Next past the real end of the results. A
+	// zero-result page beyond the first is that condition, not "nothing has
+	// ever aired" — the empty state below says so, and the pager stays
+	// mounted so Previous is always reachable.
+	const pastEnd = results.length === 0 && search.page > 0
 	const canGoBack = search.page > 0
-	const canGoForward = search.page + 1 < totalPages
+	const canGoForward = canGoToNextPage(search, totalPages)
+	const atDepthLimit = isAtDepthLimit(search, totalPages)
+	// Whether there is anything worth showing pagination controls for. Keyed
+	// off `search.page > 0` as well as `results.length` so a listener who
+	// pages onto an empty page (see `pastEnd`) still has a Previous button.
+	const showPager = data !== null && (results.length > 0 || search.page > 0)
 	const goToPage = (page) => setSearch((prev) => ({...prev, page}))
+	const emptyFieldFilter = hasEmptyFieldFilter(search.q)
+
+	const errorBanner = error ? (
+		<div role="alert" className="mb-4">
+			<p className="mb-2">{error}</p>
+			<button
+				type="button"
+				onClick={() => setReloadToken((n) => n + 1)}
+				className="rounded border border-white/30 px-3 py-1"
+			>
+				Retry
+			</button>
+		</div>
+	) : null
 
 	return (
 		<>
@@ -115,19 +148,31 @@ const AirplaySearch = () => {
 					recent airplay.
 				</p>
 				<p className="mb-6 text-sm text-white/50">
-					Tip: narrow a search by field, e.g.{' '}
+					Tip: narrow a search by field —{' '}
+					<code className="text-white/70">artist:</code>,{' '}
+					<code className="text-white/70">song:</code>,{' '}
+					<code className="text-white/70">album:</code>,{' '}
+					<code className="text-white/70">label:</code>,{' '}
+					<code className="text-white/70">dj:</code>,{' '}
+					<code className="text-white/70">date:</code>, or{' '}
+					<code className="text-white/70">dateRange:</code>, e.g.{' '}
 					<code className="text-white/70">
 						artist:foo AND album:&quot;bar&quot;
-					</code>{' '}
-					— a colon in a plain search is read as that syntax, so a literal colon
-					in a title may need quoting.
+					</code>
+					. Any other colon in your search is read literally, not as syntax.
 				</p>
+
+				{emptyFieldFilter ? (
+					<p className="mb-2 text-sm text-white/70">
+						One of your field filters has no value after the colon, so it was
+						ignored — add a value or remove it.
+					</p>
+				) : null}
 
 				<label className="mb-6 block">
 					<span className="sr-only">Search airplay records</span>
 					<input
 						type="search"
-						role="searchbox"
 						value={query}
 						onChange={(event) => setQuery(event.target.value)}
 						placeholder="Search artist, track, album, or label…"
@@ -139,25 +184,9 @@ const AirplaySearch = () => {
 					<p role="status">
 						{search.q ? 'Searching…' : 'Loading recent airplay…'}
 					</p>
-				) : error ? (
-					<div role="alert">
-						<p className="mb-2">{error}</p>
-						<button
-							type="button"
-							onClick={() => setReloadToken((n) => n + 1)}
-							className="rounded border border-white/30 px-3 py-1"
-						>
-							Retry
-						</button>
-					</div>
-				) : results.length === 0 ? (
-					<p>
-						{search.q
-							? `No airplay found for “${search.q}”.`
-							: 'No airplay has been recorded yet.'}
-					</p>
-				) : (
+				) : results.length > 0 ? (
 					<>
+						{errorBanner}
 						<div className="overflow-x-auto">
 							<table className="w-full text-left text-sm">
 								<thead>
@@ -177,33 +206,52 @@ const AirplaySearch = () => {
 								</tbody>
 							</table>
 						</div>
-
-						<div className="mt-6 flex flex-wrap items-center gap-3">
-							<button
-								type="button"
-								onClick={() => goToPage(search.page - 1)}
-								disabled={!canGoBack}
-								className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
-							>
-								← Previous
-							</button>
-							<span className="text-white/60">
-								Page {totalPages === 0 ? 0 : search.page + 1} of {totalPages}
-								{typeof data?.total === 'number'
-									? ` (${data.total} total plays)`
-									: null}
-							</span>
-							<button
-								type="button"
-								onClick={() => goToPage(search.page + 1)}
-								disabled={!canGoForward}
-								className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
-							>
-								Next →
-							</button>
-						</div>
 					</>
+				) : error ? (
+					errorBanner
+				) : (
+					<p>
+						{pastEnd
+							? 'No airplay on this page — you may have paged past the end of the results. Go back for more.'
+							: search.q
+								? `No airplay found for “${search.q}”.`
+								: 'No airplay has been recorded yet.'}
+					</p>
 				)}
+
+				{showPager ? (
+					<div className="mt-6 flex flex-wrap items-center gap-3">
+						<button
+							type="button"
+							onClick={() => goToPage(search.page - 1)}
+							disabled={!canGoBack}
+							className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							← Previous
+						</button>
+						<span className="text-white/60">
+							Page {search.page + 1} of {totalPages}
+							{typeof data?.total === 'number'
+								? ` (${formatSearchTotal(data.total)} total plays)`
+								: null}
+						</span>
+						<button
+							type="button"
+							onClick={() => goToPage(search.page + 1)}
+							disabled={!canGoForward}
+							className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							Next →
+						</button>
+					</div>
+				) : null}
+
+				{atDepthLimit ? (
+					<p className="mt-2 text-sm text-white/50">
+						Showing as deep as this search can safely go. Narrow your search to
+						see more specific results.
+					</p>
+				) : null}
 			</div>
 		</>
 	)

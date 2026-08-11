@@ -61,6 +61,46 @@ describe('Airplay search page', () => {
 		expect(screen.getByText('Unknown DJ')).toBeDefined()
 	})
 
+	it('renders matching rows for a typed query, not just the default landing view', async () => {
+		const fetchMock = mockFetchOnce({
+			results: [],
+			total: 0,
+			page: 0,
+			totalPages: 0,
+		})
+		render(<AirplaySearch />)
+		await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+
+		mockFetchOnce({
+			results: [
+				result({id: 99, artist_name: 'Stereolab', track_title: 'Percolator'}),
+			],
+			total: 1,
+			page: 0,
+			totalPages: 1,
+		})
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: {value: 'stereolab'},
+		})
+
+		expect(
+			await screen.findByText('Stereolab', {}, {timeout: 2000})
+		).toBeDefined()
+		expect(screen.getByText('Percolator')).toBeDefined()
+	})
+
+	it('shows the sentinel-aware total rather than the raw capped count', async () => {
+		mockFetchOnce({
+			results: [result()],
+			total: 10001,
+			page: 0,
+			totalPages: 401,
+		})
+		render(<AirplaySearch />)
+
+		expect(await screen.findByText(/10,000\+/)).toBeDefined()
+	})
+
 	it('renders a no-results message for a query with no matches, not a blank table', async () => {
 		mockFetchOnce({results: [], total: 0, page: 0, totalPages: 0})
 		render(<AirplaySearch />)
@@ -79,13 +119,42 @@ describe('Airplay search page', () => {
 		expect(screen.queryByRole('table')).toBeNull()
 	})
 
-	it('renders a 400 as guidance about the query rather than a blank table', async () => {
-		mockFetchOnce(null, {ok: false, status: 400})
+	it('preserves the last good results and pager when a later fetch fails, rather than wiping the page', async () => {
+		mockFetchOnce({
+			results: [result()],
+			total: 50,
+			page: 0,
+			totalPages: 2,
+		})
 		render(<AirplaySearch />)
+		await screen.findByText('Juana Molina')
+
+		mockFetchOnce(null, {ok: false, status: 503})
+		fireEvent.click(screen.getByRole('button', {name: /Next/}))
 
 		const alert = await screen.findByRole('alert')
-		expect(alert.textContent.toLowerCase()).toContain('query')
-		expect(screen.queryByRole('table')).toBeNull()
+		expect(alert.textContent).toContain('503')
+		// The stale row and the pager survive the failed request rather than
+		// being wiped by it.
+		expect(screen.getByText('Juana Molina')).toBeDefined()
+		expect(screen.getByRole('button', {name: /Previous/})).toBeDefined()
+	})
+
+	it('keeps the pager mounted, with Previous reachable, when paging lands on an empty page', async () => {
+		mockFetchOnce({
+			results: [result()],
+			total: 50,
+			page: 0,
+			totalPages: 3,
+		})
+		render(<AirplaySearch />)
+		await screen.findByText('Juana Molina')
+
+		mockFetchOnce({results: [], total: 50, page: 1, totalPages: 3})
+		fireEvent.click(screen.getByRole('button', {name: /Next/}))
+
+		await screen.findByText(/paged past the end/i)
+		expect(screen.getByRole('button', {name: /Previous/}).disabled).toBe(false)
 	})
 
 	it('debounces the search input rather than firing a request per keystroke', async () => {
@@ -184,11 +253,61 @@ describe('Airplay search page', () => {
 		expect(fetchMock.mock.calls[0][1].credentials).toBe('omit')
 	})
 
-	it('surfaces field-qualified search syntax rather than letting a colon silently confuse results', async () => {
-		mockFetchOnce({results: [], total: 0, page: 0, totalPages: 0})
-		render(<AirplaySearch />)
+	describe('field-syntax guidance', () => {
+		it('names the recognized field prefixes in the static tip', async () => {
+			const fetchMock = mockFetchOnce({
+				results: [],
+				total: 0,
+				page: 0,
+				totalPages: 0,
+			})
+			render(<AirplaySearch />)
+			await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
 
-		expect(screen.getByText(/artist:/)).toBeDefined()
-		await screen.findByText(/no airplay/i)
+			expect(screen.getByText('album:')).toBeDefined()
+			expect(screen.getByText('dateRange:')).toBeDefined()
+		})
+
+		it('warns when a field prefix is sent with no value, rather than silently searching everything', async () => {
+			const fetchMock = mockFetchOnce({
+				results: [],
+				total: 0,
+				page: 0,
+				totalPages: 0,
+			})
+			render(<AirplaySearch />)
+			await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+
+			mockFetchOnce({results: [], total: 0, page: 0, totalPages: 0})
+			fireEvent.change(screen.getByRole('searchbox'), {
+				target: {value: 'artist:'},
+			})
+
+			expect(
+				await screen.findByText(
+					/no value after the colon/i,
+					{},
+					{timeout: 2000}
+				)
+			).toBeDefined()
+		})
+
+		it('does not warn when a colon is a literal, non-prefix character', async () => {
+			const fetchMock = mockFetchOnce({
+				results: [result()],
+				total: 31,
+				page: 0,
+				totalPages: 2,
+			})
+			render(<AirplaySearch />)
+			await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+
+			fireEvent.change(screen.getByRole('searchbox'), {
+				target: {value: 'Emperor: Lift Your Skinny Fists'},
+			})
+
+			await screen.findByText('Juana Molina', {}, {timeout: 2000})
+			expect(screen.queryByText(/no value after the colon/i)).toBeNull()
+		})
 	})
 })
