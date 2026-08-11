@@ -90,6 +90,37 @@ describe('Live playlist page', () => {
 		expect(screen.getByText(/nothing.*aired/i)).toBeDefined()
 	})
 
+	it('renders a response missing its entries array as an error, not a false empty state', async () => {
+		// `data?.entries ?? []` would render "Nothing has aired recently" for
+		// this response — a confident lie about a live radio station. The
+		// endpoint and its own spec already disagree about this envelope's
+		// shape (api.yaml documents a bare `type: array` for `GET /flowsheet`
+		// today), so a shape regression here has to be loud, not a quiet blank.
+		mockFetchOnce({
+			total: 2634069,
+			page: 0,
+			limit: 50,
+			totalPages: 52682,
+			on_air: null,
+		})
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		const alert = await screen.findByRole('alert')
+		expect(alert).toBeDefined()
+		expect(screen.queryByText(/nothing.*aired/i)).toBeNull()
+	})
+
+	it('renders a non-array entries value as an error, not a false empty state', async () => {
+		mockFetchOnce(envelope('not-an-array'))
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		const alert = await screen.findByRole('alert')
+		expect(alert).toBeDefined()
+		expect(screen.queryByText(/nothing.*aired/i)).toBeNull()
+	})
+
 	it('renders a non-track entry type without an undefined cell or a key warning', async () => {
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -212,6 +243,30 @@ describe('Live playlist page', () => {
 		await flushPromises()
 
 		expect(screen.getByText(/DJ OVNI/)).toBeDefined()
+	})
+
+	it('reports Auto DJ when on_air is confirmed automation (explicit null), not the generic tagline', async () => {
+		// api.yaml makes this a deliberate three-way distinction: an object
+		// names a live DJ, JSON `null` confirms automation, and an absent key
+		// means unknown. `data?.on_air?.dj_name ?? null` collapses the middle
+		// case into the same rendering as "unknown", so during automation the
+		// page would show the generic tagline instead of naming Auto DJ.
+		mockFetchOnce(envelope([track()], {on_air: null}))
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		expect(screen.getByText(/Auto DJ/)).toBeDefined()
+		expect(screen.queryByText(/most recent songs on WXYC/i)).toBeNull()
+	})
+
+	it('shows the generic tagline when on_air is absent rather than claiming automation', async () => {
+		const {entries} = envelope([track()])
+		mockFetchOnce({entries, total: 1, page: 0, limit: 50, totalPages: 1})
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		expect(screen.getByText(/most recent songs on WXYC/i)).toBeDefined()
+		expect(screen.queryByText(/Auto DJ/)).toBeNull()
 	})
 
 	it('sends no credentials', async () => {

@@ -126,7 +126,12 @@ const LivePlaylist = () => {
 	// null until the first fetch resolves, so "no data yet" and "fetched an
 	// empty page" are distinguishable.
 	const [entries, setEntries] = useState(null)
-	const [onAirDjName, setOnAirDjName] = useState(null)
+	// `undefined` until the first fetch resolves and reports a value, matching
+	// the API's own three-way `on_air` contract: an object names a live DJ,
+	// `null` means the station is confirmed on automation, and an absent key
+	// (mirrored here as `undefined`, both before the first response and after
+	// one that omits the field) means unknown.
+	const [onAir, setOnAir] = useState(undefined)
 	const [error, setError] = useState(null)
 	// Set on every successful fetch; drives the "Last updated HH:MM" staleness
 	// notice when a later poll fails and the last-good playlist stays on screen.
@@ -162,15 +167,23 @@ const LivePlaylist = () => {
 
 		try {
 			const data = await fetchRecentFlowsheet({signal: controller.signal})
+			if (!Array.isArray(data?.entries)) {
+				// A response missing its `entries` array (or carrying a non-array
+				// value for it) is a shape regression, not an empty playlist. Left
+				// as `data?.entries ?? []`, this would render "Nothing has aired
+				// recently" — a confident lie about a live radio station — instead
+				// of the loud error state a contract break deserves.
+				throw new FlowsheetFetchError(
+					'Could not load the playlist (unexpected response shape).'
+				)
+			}
 			// A superseded poll's fetch can still resolve after the one that
 			// replaced it. Only apply a response while its request is still the
 			// current one.
 			if (abortControllerRef.current !== controller) return
-			const sortedEntries = [...(data?.entries ?? [])].sort(
-				compareEntriesByAirOrderDesc
-			)
+			const sortedEntries = [...data.entries].sort(compareEntriesByAirOrderDesc)
 			setEntries(sortedEntries)
-			setOnAirDjName(data?.on_air?.dj_name ?? null)
+			setOnAir(data.on_air)
 			setError(null)
 			setLastUpdatedAt(new Date())
 		} catch (err) {
@@ -246,9 +259,16 @@ const LivePlaylist = () => {
 
 			<div className="mx-auto w-full px-4 pb-16 sm:w-5/6">
 				<h1 className="kallisto mb-2 text-5xl">Live Playlist</h1>
-				{onAirDjName ? (
+				{onAir === null ? (
+					// Explicit JSON `null`, not an absent key: the backend is
+					// confirming the station is on automation, not merely silent
+					// about it. See the `onAir` state comment above.
 					<p className="mb-6 text-white/70">
-						On the air now: <span className="text-white">{onAirDjName}</span>
+						On the air now: <span className="text-white">Auto DJ</span>
+					</p>
+				) : onAir?.dj_name ? (
+					<p className="mb-6 text-white/70">
+						On the air now: <span className="text-white">{onAir.dj_name}</span>
 					</p>
 				) : (
 					<p className="mb-6 text-white/70">The most recent songs on WXYC.</p>
