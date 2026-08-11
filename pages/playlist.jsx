@@ -127,7 +127,6 @@ const LivePlaylist = () => {
 	// empty page" are distinguishable.
 	const [entries, setEntries] = useState(null)
 	const [onAirDjName, setOnAirDjName] = useState(null)
-	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState(null)
 	// Set on every successful fetch; drives the "Last updated HH:MM" staleness
 	// notice when a later poll fails and the last-good playlist stays on screen.
@@ -140,12 +139,27 @@ const LivePlaylist = () => {
 	// fresh data with stale — a documented backend-wedge pattern.
 	const abortControllerRef = useRef(null)
 
-	const load = useCallback(async ({showSpinner}) => {
+	// There is no separate `isLoading` state to track: "loading" is simply
+	// "no outcome yet", i.e. neither a successful response nor an error has
+	// landed for the current request line. Deriving it this way — rather than
+	// toggling a boolean from `load` — means it can never depend on which
+	// controller a given call happened to hold. An earlier version tied
+	// clearing it to `showSpinner && abortControllerRef.current === controller`
+	// inside `load`'s `finally`; every superseding call aborts the previous
+	// controller before its own fetch resolves, so the superseded call's
+	// `finally` always saw a stale controller and skipped clearing it, and the
+	// superseding call (spinner-less, by design) never set it either — the
+	// page stuck on "Loading the playlist…" forever even after fresh data
+	// arrived. `entries`/`error` are only ever written by the request that is
+	// still current at the time it settles (see the guard in `load` below), so
+	// deriving from them is automatically immune to the same bug class.
+	const isLoading = entries === null && error === null
+
+	const load = useCallback(async () => {
 		abortControllerRef.current?.abort()
 		const controller = new AbortController()
 		abortControllerRef.current = controller
 
-		if (showSpinner) setIsLoading(true)
 		try {
 			const data = await fetchRecentFlowsheet({signal: controller.signal})
 			// A superseded poll's fetch can still resolve after the one that
@@ -160,7 +174,7 @@ const LivePlaylist = () => {
 			setError(null)
 			setLastUpdatedAt(new Date())
 		} catch (err) {
-			if (err.name === 'AbortError') return
+			if (err?.name === 'AbortError') return
 			if (abortControllerRef.current !== controller) return
 			// A background poll that fails leaves the last good playlist on
 			// screen rather than replacing it with an error — the table is
@@ -173,15 +187,11 @@ const LivePlaylist = () => {
 					? err.message
 					: 'Could not load the playlist.'
 			)
-		} finally {
-			if (showSpinner && abortControllerRef.current === controller) {
-				setIsLoading(false)
-			}
 		}
 	}, [])
 
 	useEffect(() => {
-		load({showSpinner: true})
+		load()
 
 		// The interval is started/stopped rather than left running while the tab
 		// is hidden: the response is ~51 KB with `Cache-Control: no-cache`, and
@@ -193,10 +203,7 @@ const LivePlaylist = () => {
 		let intervalId = null
 		const startInterval = () => {
 			if (intervalId !== null) return
-			intervalId = setInterval(
-				() => load({showSpinner: false}),
-				REFRESH_INTERVAL_MS
-			)
+			intervalId = setInterval(() => load(), REFRESH_INTERVAL_MS)
 		}
 		const stopInterval = () => {
 			if (intervalId === null) return
@@ -208,7 +215,7 @@ const LivePlaylist = () => {
 			if (document.visibilityState === 'hidden') {
 				stopInterval()
 			} else {
-				load({showSpinner: false})
+				load()
 				startInterval()
 			}
 		}
@@ -263,7 +270,7 @@ const LivePlaylist = () => {
 								</p>
 								<button
 									type="button"
-									onClick={() => load({showSpinner: false})}
+									onClick={() => load()}
 									className="rounded border border-white/30 px-3 py-1"
 								>
 									Retry
