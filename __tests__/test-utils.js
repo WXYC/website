@@ -127,13 +127,21 @@ export const testData = {
 	 * envelope above: this endpoint returns one flat `entries` array (already
 	 * newest-first) plus pagination metadata and the currently on-air DJ,
 	 * rather than a separate `shows` array.
+	 *
+	 * `total` and `totalPages` default to representative production magnitudes
+	 * (2,634,069 rows / 52,682 pages at `limit=50`, verified against the live
+	 * endpoint 2026-08-08) rather than to `entries.length`. `total` is the
+	 * flowsheet's grand total, not the size of the page being returned, and a
+	 * default that quietly equated the two would hide a caller bug in any test
+	 * that actually reads pagination metadata. Override both explicitly when a
+	 * test cares about them.
 	 */
 	flowsheetEnvelope: (entries = [], overrides = {}) => ({
 		entries,
-		total: entries.length,
+		total: 2634069,
 		page: 0,
 		limit: 50,
-		totalPages: entries.length > 0 ? 1 : 0,
+		totalPages: 52682,
 		on_air: null,
 		...overrides,
 	}),
