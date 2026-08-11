@@ -3,6 +3,7 @@ import {
 	MAX_RANGE_MS,
 	UNATTRIBUTED_DJ_LABEL,
 	UNKNOWN_DJ_LABEL,
+	compareEntriesByAirOrderDesc,
 	describeNonTrackEntry,
 	fetchFlowsheetRange,
 	formatShowTime,
@@ -556,5 +557,65 @@ describe('describeNonTrackEntry', () => {
 		expect(
 			describeNonTrackEntry({entry_type: 'some_future_type', message: null})
 		).toBe('some future type')
+	})
+})
+
+describe('compareEntriesByAirOrderDesc', () => {
+	it('sorts the most recent show first', () => {
+		const older = {show_id: 1, play_order: 1, id: 1}
+		const newer = {show_id: 2, play_order: 1, id: 2}
+		expect([older, newer].sort(compareEntriesByAirOrderDesc)).toEqual([
+			newer,
+			older,
+		])
+	})
+
+	it('within a show, sorts by play_order — the DJ-stated air order — descending', () => {
+		const earlier = {show_id: 1, play_order: 1, id: 10}
+		const later = {show_id: 1, play_order: 2, id: 11}
+		expect([earlier, later].sort(compareEntriesByAirOrderDesc)).toEqual([
+			later,
+			earlier,
+		])
+	})
+
+	it('breaks a play_order collision on id, newest first', () => {
+		// play_order collisions are real: the tubafrenzy webhook and the
+		// dj-site live-insert path assign it independently and there is no
+		// per-show UNIQUE constraint, so two rows can legitimately share one
+		// number. Backend's own `getEntriesByShow` breaks the same tie on
+		// `desc(id)`.
+		const insertedFirst = {show_id: 1, play_order: 5, id: 100}
+		const insertedSecond = {show_id: 1, play_order: 5, id: 101}
+		expect(
+			[insertedFirst, insertedSecond].sort(compareEntriesByAirOrderDesc)
+		).toEqual([insertedSecond, insertedFirst])
+	})
+
+	it('does not rely on Array.prototype.sort stability for a play_order collision', () => {
+		// A comparator that omitted the id tie-break and returned 0 for a
+		// collision would depend on sort stability to preserve arrival order —
+		// which is exactly the ordering a play_order sort exists to override.
+		// Feeding the collided pair in through both possible arrival orders and
+		// requiring the same output either way catches that regression.
+		const a = {show_id: 1, play_order: 5, id: 100}
+		const b = {show_id: 1, play_order: 5, id: 101}
+		expect([a, b].sort(compareEntriesByAirOrderDesc)).toEqual([b, a])
+		expect([b, a].sort(compareEntriesByAirOrderDesc)).toEqual([b, a])
+	})
+
+	it('treats a null show_id as sorting after any real show, without producing NaN', () => {
+		const unattributed = {show_id: null, play_order: 1, id: 1}
+		const attributed = {show_id: 1, play_order: 1, id: 2}
+		expect(
+			[unattributed, attributed].sort(compareEntriesByAirOrderDesc)
+		).toEqual([attributed, unattributed])
+	})
+
+	it('compares two null-show_id rows to a real number rather than NaN', () => {
+		const a = {show_id: null, play_order: 2, id: 1}
+		const b = {show_id: null, play_order: 1, id: 2}
+		expect(Number.isNaN(compareEntriesByAirOrderDesc(a, b))).toBe(false)
+		expect([a, b].sort(compareEntriesByAirOrderDesc)).toEqual([a, b])
 	})
 })
