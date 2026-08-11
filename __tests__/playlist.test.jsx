@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {render, screen, act} from '@testing-library/react'
+import {render, screen, act, fireEvent} from '@testing-library/react'
 import {createMockFetch, createTestLifecycle, testData} from './test-utils'
 
 vi.mock('next/head', () => ({
@@ -21,6 +21,15 @@ function mockFetchOnce(body, options) {
 /** Flushes the microtask queue so a resolved fetch's `.then` chain settles. */
 async function flushPromises() {
 	await act(async () => {
+		await Promise.resolve()
+		await Promise.resolve()
+	})
+}
+
+/** Advances fake timers by one refresh interval and lets pending work settle. */
+async function advanceOneInterval() {
+	await act(async () => {
+		vi.advanceTimersByTime(REFRESH_INTERVAL_MS)
 		await Promise.resolve()
 		await Promise.resolve()
 	})
@@ -223,11 +232,7 @@ describe('Live playlist page', () => {
 		await flushPromises()
 		expect(screen.getByText('Juana Molina')).toBeDefined()
 
-		await act(async () => {
-			vi.advanceTimersByTime(REFRESH_INTERVAL_MS)
-			await Promise.resolve()
-			await Promise.resolve()
-		})
+		await advanceOneInterval()
 
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 		expect(screen.getByText('Chuquimamani-Condori')).toBeDefined()
@@ -371,6 +376,197 @@ describe('Live playlist page', () => {
 			const alert = await screen.findByRole('alert')
 			expect(alert.textContent).toBe('Could not load the playlist.')
 			expect(alert.textContent).not.toContain('Unexpected token')
+		})
+	})
+
+	describe('background poll failures', () => {
+		it('keeps the last good playlist on screen when a background poll fails', async () => {
+			vi.useFakeTimers()
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () => envelope([track()]),
+				})
+				.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+
+			await advanceOneInterval()
+
+			// The failed background poll must not have wiped the table: the
+			// last successfully fetched playlist is still true, just stale.
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+		})
+
+		it('shows a staleness notice and a retry affordance once a background poll fails', async () => {
+			vi.useFakeTimers()
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () => envelope([track()]),
+				})
+				.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			await advanceOneInterval()
+
+			expect(screen.getByText(/couldn.t refresh/i)).toBeDefined()
+			expect(screen.getByRole('button', {name: /retry/i})).toBeDefined()
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+		})
+
+		it('re-fetches when the Retry button is clicked, clearing the staleness notice on success', async () => {
+			vi.useFakeTimers()
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () => envelope([track()]),
+				})
+				.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () =>
+						envelope([track({id: 321, artist_name: 'Jessica Pratt'})]),
+				})
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			await advanceOneInterval()
+
+			const retryButton = screen.getByRole('button', {name: /retry/i})
+			await act(async () => {
+				fireEvent.click(retryButton)
+				await Promise.resolve()
+				await Promise.resolve()
+			})
+
+			expect(fetchMock).toHaveBeenCalledTimes(3)
+			expect(screen.getByText('Jessica Pratt')).toBeDefined()
+			expect(screen.queryByRole('button', {name: /retry/i})).toBeNull()
+		})
+	})
+
+	describe('overlapping polls', () => {
+		it('does not let a slow, superseded poll response overwrite a fresher one', async () => {
+			vi.useFakeTimers()
+			let resolveSlowPoll
+			const slowPollResponse = new Promise((resolve) => {
+				resolveSlowPoll = resolve
+			})
+
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () => envelope([track()]),
+				})
+				.mockReturnValueOnce(slowPollResponse)
+				.mockResolvedValueOnce({
+					ok: true,
+					status: 200,
+					json: async () =>
+						envelope([track({id: 777, artist_name: 'Chuquimamani-Condori'})]),
+				})
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+
+			// First background poll fires and is left pending (the slow one).
+			await advanceOneInterval()
+			// Second background poll fires and resolves before the first does.
+			await advanceOneInterval()
+
+			expect(screen.getByText('Chuquimamani-Condori')).toBeDefined()
+
+			// The slow, now-superseded poll finally resolves.
+			await act(async () => {
+				resolveSlowPoll({
+					ok: true,
+					status: 200,
+					json: async () =>
+						envelope([track({id: 555, artist_name: 'Jessica Pratt'})]),
+				})
+				await Promise.resolve()
+				await Promise.resolve()
+			})
+
+			expect(screen.getByText('Chuquimamani-Condori')).toBeDefined()
+			expect(screen.queryByText('Jessica Pratt')).toBeNull()
+		})
+	})
+
+	describe('visibility gating', () => {
+		const originalDescriptor = Object.getOwnPropertyDescriptor(
+			Document.prototype,
+			'visibilityState'
+		)
+
+		afterEach(() => {
+			if (originalDescriptor) {
+				Object.defineProperty(document, 'visibilityState', originalDescriptor)
+			} else {
+				delete document.visibilityState
+			}
+		})
+
+		function setVisibility(state) {
+			Object.defineProperty(document, 'visibilityState', {
+				configurable: true,
+				get: () => state,
+			})
+			document.dispatchEvent(new Event('visibilitychange'))
+		}
+
+		it('stops polling while the tab is hidden and refetches once when it becomes visible again', async () => {
+			vi.useFakeTimers()
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				status: 200,
+				json: async () => envelope([track()]),
+			})
+			global.fetch = fetchMock
+
+			render(<LivePlaylist />)
+			await flushPromises()
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+
+			await act(async () => {
+				setVisibility('hidden')
+				await Promise.resolve()
+			})
+
+			await act(async () => {
+				vi.advanceTimersByTime(REFRESH_INTERVAL_MS * 3)
+				await Promise.resolve()
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(1)
+
+			await act(async () => {
+				setVisibility('visible')
+				await Promise.resolve()
+				await Promise.resolve()
+			})
+			expect(fetchMock).toHaveBeenCalledTimes(2)
+
+			await advanceOneInterval()
+			expect(fetchMock).toHaveBeenCalledTimes(3)
 		})
 	})
 })
