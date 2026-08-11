@@ -109,8 +109,13 @@ describe('Live playlist page', () => {
 		render(<LivePlaylist />)
 		await flushPromises()
 
-		expect(screen.getByText('TALKSET')).toBeDefined()
-		expect(screen.queryByText('undefined')).toBeNull()
+		// A cell that renders `undefined` or `null` produces no text node at
+		// all in React, never the literal string "undefined" — so the only
+		// assertion that can actually catch a blank separator row is that its
+		// content is non-empty, not that a literal "undefined" is absent.
+		const separatorRow = screen.getByText('TALKSET').closest('tr')
+		expect(separatorRow.textContent.trim()).not.toBe('')
+
 		const keyWarning = consoleError.mock.calls.some((call) =>
 			call.some((arg) => typeof arg === 'string' && arg.includes('key'))
 		)
@@ -122,27 +127,43 @@ describe('Live playlist page', () => {
 	it('handles every non-track entry type the backend can send', async () => {
 		mockFetchOnce(
 			envelope([
-				track({id: 210, play_order: 6}),
+				track({id: 310, play_order: 8}),
 				{
-					id: 209,
+					id: 309,
 					show_id: 1,
-					play_order: 5,
+					play_order: 7,
 					add_time: '2026-08-10T23:01:20.191Z',
 					entry_type: 'show_end',
 					dj_name: 'DJ Decent',
 					timestamp: '8/10/2026, 7:01:20 PM',
 				},
 				{
-					id: 208,
+					id: 308,
 					show_id: 1,
-					play_order: 4,
+					play_order: 6,
+					add_time: '2026-08-10T23:01:00.000Z',
+					entry_type: 'dj_leave',
+					dj_name: 'DJ Guest',
+				},
+				{
+					id: 307,
+					show_id: 1,
+					play_order: 5,
 					add_time: '2026-08-10T23:01:17.402Z',
 					entry_type: 'breakpoint',
 					message: '--- 7:00 PM BREAKPOINT ---',
 					radio_hour: '2026-08-10T23:00:00.000Z',
 				},
 				{
-					id: 207,
+					id: 306,
+					show_id: 1,
+					play_order: 4,
+					add_time: '2026-08-10T22:58:00.000Z',
+					entry_type: 'message',
+					message: 'Technical difficulties, back shortly',
+				},
+				{
+					id: 305,
 					show_id: 1,
 					play_order: 3,
 					add_time: '2026-08-10T22:57:31.357Z',
@@ -150,7 +171,7 @@ describe('Live playlist page', () => {
 					message: 'TALKSET',
 				},
 				{
-					id: 206,
+					id: 304,
 					show_id: 1,
 					play_order: 2,
 					add_time: '2026-08-10T22:39:10.563Z',
@@ -159,7 +180,7 @@ describe('Live playlist page', () => {
 					timestamp: '8/10/2026, 6:39:10 PM',
 				},
 				{
-					id: 205,
+					id: 303,
 					show_id: 1,
 					play_order: 1,
 					add_time: '2026-08-10T22:35:00.000Z',
@@ -171,9 +192,18 @@ describe('Live playlist page', () => {
 		render(<LivePlaylist />)
 		await flushPromises()
 
-		expect(screen.getByText('TALKSET')).toBeDefined()
-		expect(screen.getByText('--- 7:00 PM BREAKPOINT ---')).toBeDefined()
+		// show_start / show_end carry no `message`, so they render from the
+		// `entry_type` fallback — this is the assertion the pre-existing test
+		// omitted, leaving an empty-string regression undetected.
+		expect(screen.getByText(/show start/i)).toBeDefined()
+		expect(screen.getByText(/show end/i)).toBeDefined()
 		expect(screen.getByText(/DJ Guest joined/)).toBeDefined()
+		expect(screen.getByText(/DJ Guest left/)).toBeDefined()
+		expect(screen.getByText('--- 7:00 PM BREAKPOINT ---')).toBeDefined()
+		expect(
+			screen.getByText('Technical difficulties, back shortly')
+		).toBeDefined()
+		expect(screen.getByText('TALKSET')).toBeDefined()
 	})
 
 	it('shows who is currently on the air', async () => {
