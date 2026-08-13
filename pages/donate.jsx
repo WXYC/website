@@ -20,7 +20,7 @@ const Donate = () => {
 			<div className="mx-auto w-full px-4 pb-16 sm:w-5/6">
 				<h1 className="kallisto mb-6 text-5xl">Donate</h1>
 
-				<div className="prose prose-lg max-w-none text-white">
+				<div className="prose prose-lg text-white">
 					<p>
 						WXYC 89.3 FM has been Chapel Hill&apos;s student-run, freeform radio
 						station since 1977, powered by student DJs and listener support.
@@ -43,7 +43,9 @@ const Donate = () => {
 						one another, in matching type size, directly above the future
 						payment area — the federal safe-harbor placement for a
 						non-deductibility statement. Keep them adjacent if this section is
-						ever reordered.
+						ever reordered; inserting the payment embed between them, or
+						shrinking the disclosure's type, breaks the safe harbor.
+						`__tests__/donatePage.test.jsx` pins both properties.
 					*/}
 					<p>
 						Please consider making a gift to Student Educational Broadcasting,
