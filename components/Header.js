@@ -104,8 +104,9 @@ const Header = () => {
 									<div className="mb-2 flex w-full text-nowrap text-white">
 										<Menu.Item>
 											<Link
-												href="http://www.wxyc.info/playlists/recent"
-												target="_blank"
+												href="/playlist"
+												legacyBehavior={false}
+												onClick={toggleMenu}
 											>
 												Live playlist
 											</Link>

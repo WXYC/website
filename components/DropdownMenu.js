@@ -45,12 +45,7 @@ const DropdownMenu = () => {
 					</div>
 					<div className="text-medium flex w-full items-center justify-center rounded-md px-4 py-2  text-white hover:text-blue-300">
 						<Menu.Item>
-							<Link
-								href="http://www.wxyc.info/playlists/recent"
-								target="_blank"
-								legacyBehavior={false}
-							>
-								{/* Until new flowsheet is deployed: <Link href="/playlist" legacyBehavior={false}> */}
+							<Link href="/playlist" legacyBehavior={false}>
 								Live playlist
 							</Link>
 						</Menu.Item>
