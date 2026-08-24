@@ -1,6 +1,8 @@
 ---
 title: WXYC is hiring DJs for Fall 2026!
 cover: /uploads/WXYC-(1).png
+categories:
+  - category: content/category/event.md
 published: 2026-08-24T13:36:42.605Z
 description: WXYC is hiring DJs for Fall 2026!
 ---
@@ -11,4 +13,4 @@ Signup for an interview: [https://www.signupgenius.com/go/10C054FACAE2CABFFC43-6
 
 Fill out an application: [https://docs.google.com/forms/d/e/1FAIpQLSehjMAaHOoDLKUTItmzLOFV9kg28bhabNGByw3urfOuutVzmg/viewform?usp=header](https://docs.google.com/forms/d/e/1FAIpQLSehjMAaHOoDLKUTItmzLOFV9kg28bhabNGByw3urfOuutVzmg/viewform?usp=header)
 
-*Only UNC students (undergraduate, graduate, professional) and faculty are eligible to apply*. 
+*Only UNC students (undergraduate, graduate, professional) and faculty are eligible to apply*.
