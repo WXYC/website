@@ -10,11 +10,14 @@
  * does not accept, and the third link site is TinaCMS-managed `.mdx` content that
  * no component test would ever cover.
  *
- * `wxyc.info/playlists/searchPlaylists` is the one cutover page with no
- * successor: `/airplay-search` was pulled, so nothing here links to a
- * replacement. That is a deliberate gap, not an oversight in this inventory --
- * do not "repair" it by pointing a link back at wxyc.info, which the first
- * assertion below forbids and which goes dark at the cutover regardless.
+ * `searchPlaylists` and `radioWeek` are the two cutover pages left with no
+ * successor: `/airplay-search` and `/playlists/archive` were both pulled over
+ * the historical-DJ-name exposure (see the commit that removed them), so
+ * nothing here links to a replacement for either. That is a deliberate gap,
+ * not an oversight in this inventory -- do not "repair" it by pointing a link
+ * back at wxyc.info, which the first assertion below forbids and which goes
+ * dark at the cutover regardless. `/playlist` is unaffected: it serves only
+ * the most recent entries, all written after the write-path fix.
  *
  * Prose mentions of wxyc.info are allowed on purpose. The successor pages each
  * carry a docblock naming the page they replace, and README.md does the same;
@@ -96,11 +99,6 @@ describe('wxyc.info link cutover', () => {
 	it.each([
 		['components/Header.js', '/playlist', 'wxyc.info/playlists/recent'],
 		['components/DropdownMenu.js', '/playlist', 'wxyc.info/playlists/recent'],
-		[
-			'content/page/programming.mdx',
-			'/playlists/archive',
-			'wxyc.info/playlists/radioWeek',
-		],
 	])('%s links to %s in place of %s', (file, route) => {
 		const targets = linkTargets(
 			fs.readFileSync(path.join(ROOT, file), 'utf8')
@@ -108,10 +106,7 @@ describe('wxyc.info link cutover', () => {
 		expect(targets).toContain(route)
 	})
 
-	it.each([['/playlist'], ['/playlists/archive']])(
-		'%s resolves to a page that exists',
-		(route) => {
-			expect(resolvePage(route)).not.toBeNull()
-		}
-	)
+	it.each([['/playlist']])('%s resolves to a page that exists', (route) => {
+		expect(resolvePage(route)).not.toBeNull()
+	})
 })

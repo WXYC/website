@@ -9,18 +9,6 @@
 <img width="1146" alt="image" src="https://github.com/haowens/website/assets/69762131/75c67f8a-f69b-4d54-934d-ce528c9c6964">
 <p>[the development of this site is brought to you by the easily accessible assortment of photos of Adrianne Lenker that live on my desktop]</p>
 
-<h3>Playlist archive (<code>/playlists/archive</code>)</h3>
-<p>Public, week-at-a-time browse of every show WXYC has logged, back to at least November 2004. Successor to <code>wxyc.info/playlists/radioWeek</code>, which goes dark at the 2026-08-31 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
-<ul>
-<li><b>Data source</b>: Backend-Service <code>GET /flowsheet/range?start=&amp;end=</code> (epoch milliseconds, half-open <code>[start, end)</code>, 8-day ceiling). Contract lives in <code>wxyc-shared/api.yaml</code>. Override the origin at build time with <code>NEXT_PUBLIC_WXYC_API_URL</code>; it defaults to <code>https://api.wxyc.org</code>.</li>
-<li><b>Client-side only.</b> This site is a static export, so there is no SSR and no <code>getStaticPaths</code> over a 2.6-million-row table. The week lives in <code>?week=YYYY-MM-DD</code> (always a Monday) so a week is linkable, and the fetch happens after hydration.</li>
-<li><b>Weeks and days are Eastern</b>, not UTC and not browser-local &mdash; see <code>lib/easternTime.js</code>. Day and week bounds are computed by calendar arithmetic rather than by adding fixed millisecond offsets, because the spring-forward week is 167 hours and the fall-back week is 169.</li>
-<li><b>Playlists are collapsed by default.</b> A week is 2,300&ndash;2,800 entries and 470&ndash;640&nbsp;KB gzipped, so each show is a <code>&lt;details&gt;</code>: the schedule is always visible and the rows only get laid out when opened. Note that the rows are still <i>built</i> &mdash; <code>&lt;details&gt;</code> skips layout, not DOM construction. Deferring construction to first open is the next lever if the page ever feels slow on a phone.</li>
-<li><b>Entries are ordered by <code>play_order</code>, not by arrival.</b> The endpoint returns rows in <code>add_time</code> order, and the two disagree whenever a DJ enters a row after the fact &mdash; 88 times across 36 of the 54 shows in a sampled production week. Ordering by arrival strands retroactively-added hour breakpoints in the middle of a later hour.</li>
-<li><b>Past weeks are cached in memory</b> (<code>lib/weekCache.js</code>). The endpoint sends no <code>Cache-Control</code>, so without this every Previous/Next click and every browser Back re-downloads half a megabyte. The week in progress is deliberately never cached.</li>
-<li><b>The requested week is clamped</b> to <code>[2004-11-01, current week]</code>. <code>?week=</code> accepts anything, and <code>&lt;input type="date"&gt;</code> reports every keystroke of a typed year (editing to 2026 emits 0002, 0020, 0202 first), so without a clamp each of those becomes a live range query against a 2.6-million-row table.</li>
-</ul>
-
 <h3>Live playlist (<code>/playlist</code>)</h3>
 <p>Public view of the most recent flowsheet entries, refreshing while the tab stays open. Successor to <code>wxyc.info/playlists/recent</code>, which goes dark at the 2026-08-31 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
 <ul>
