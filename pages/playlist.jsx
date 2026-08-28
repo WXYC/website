@@ -10,7 +10,7 @@ import {
 /**
  * Live playlist — a public, unauthenticated view of the most recent flowsheet
  * entries, refreshing while the tab stays open. Successor to
- * `wxyc.info/playlists/recent`, which goes dark at the 2026-08-31 tubafrenzy
+ * `wxyc.info/playlists/recent`, which goes dark at the 2026-09-07 tubafrenzy
  * cutover (WXYC/wiki#93).
  *
  * Data source: Backend-Service `GET /flowsheet?page=0&limit=50`. This is a

@@ -2,7 +2,7 @@
  * Turndown guard for the wxyc.info -> wxyc.org link cutover (WXYC/website#214).
  *
  * tubafrenzy — which serves every `wxyc.info/playlists/*` page — goes dark at the
- * 2026-08-31 cutover (WXYC/wiki#93). After that date any surviving link into
+ * 2026-09-07 cutover (WXYC/wiki#93). After that date any surviving link into
  * wxyc.info is a dead link for a listener, so the repo must not carry one.
  *
  * Deliberately a source-level check rather than a render test: `Header.js` and
