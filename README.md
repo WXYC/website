@@ -10,7 +10,7 @@
 <p>[the development of this site is brought to you by the easily accessible assortment of photos of Adrianne Lenker that live on my desktop]</p>
 
 <h3>Live playlist (<code>/playlist</code>)</h3>
-<p>Public view of the most recent flowsheet entries, refreshing while the tab stays open. Successor to <code>wxyc.info/playlists/recent</code>, which goes dark at the 2026-08-31 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
+<p>Public view of the most recent flowsheet entries, refreshing while the tab stays open. Successor to <code>wxyc.info/playlists/recent</code>, which goes dark at the 2026-09-07 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
 <ul>
 <li><b>Data source</b>: Backend-Service <code>GET /flowsheet?page=0&amp;limit=50</code>. Distinct from the archive's <code>/flowsheet/range</code>: this endpoint returns one flat <code>entries</code> array plus pagination metadata and the currently on-air DJ, rather than a separate <code>shows</code> array, so there is no grouping step. Contract lives in <code>wxyc-shared/api.yaml</code>. Override the origin at build time with <code>NEXT_PUBLIC_WXYC_API_URL</code>; it defaults to <code>https://api.wxyc.org</code>.</li>
 <li><b>Client-side only</b>, for the same reason as the archive: a static export has no SSR and no server to poll from, so the fetch happens in the browser, on an interval, for as long as the tab stays open.</li>
