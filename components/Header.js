@@ -240,6 +240,18 @@ const Header = () => {
 							</Link>
 						</div>
 
+						<div className="ml-10 mt-8 flex h-8 text-3xl">
+							<Link
+								href="/donate"
+								legacyBehavior={false}
+								className="cursor-pointer"
+								rel="noopener noreferrer"
+								onClick={toggleMenu}
+							>
+								Donate
+							</Link>
+						</div>
+
 						<div className="mb-10 ml-10 mt-8 flex h-8 text-3xl">
 							<Link
 								href="https://merch.wxyc.org/"
@@ -332,6 +344,14 @@ const Header = () => {
 								<a className="flex h-12 grow items-center justify-center">
 									<p className="cursor-pointer text-base no-underline hover:text-blue-300">
 										Contact
+									</p>
+								</a>
+							</Link>
+
+							<Link href="/donate" legacyBehavior>
+								<a className="flex h-12 grow items-center justify-center">
+									<p className="cursor-pointer text-base no-underline hover:text-blue-300">
+										Donate
 									</p>
 								</a>
 							</Link>
