@@ -9,6 +9,18 @@
 <img width="1146" alt="image" src="https://github.com/haowens/website/assets/69762131/75c67f8a-f69b-4d54-934d-ce528c9c6964">
 <p>[the development of this site is brought to you by the easily accessible assortment of photos of Adrianne Lenker that live on my desktop]</p>
 
+<h3>Playlist archive (<code>/playlists/archive</code>)</h3>
+<p>Public, week-at-a-time browse of every show WXYC has logged, back to at least November 2004. Successor to <code>wxyc.info/playlists/radioWeek</code>, which went dark at the 2026-09-07 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
+<ul>
+<li><b>Data source</b>: Backend-Service <code>GET /flowsheet/range?start=&amp;end=</code> (epoch milliseconds, half-open <code>[start, end)</code>, 8-day ceiling). Contract lives in <code>wxyc-shared/api.yaml</code>. Override the origin at build time with <code>NEXT_PUBLIC_WXYC_API_URL</code>; it defaults to <code>https://api.wxyc.org</code>.</li>
+<li><b>Client-side only.</b> This site is a static export, so there is no SSR and no <code>getStaticPaths</code> over a 2.6-million-row table. The week lives in <code>?week=YYYY-MM-DD</code> (always a Monday) so a week is linkable, and the fetch happens after hydration.</li>
+<li><b>Weeks and days are Eastern</b>, not UTC and not browser-local &mdash; see <code>lib/easternTime.js</code>. Day and week bounds are computed by calendar arithmetic rather than by adding fixed millisecond offsets, because the spring-forward week is 167 hours and the fall-back week is 169.</li>
+<li><b>Playlists are collapsed by default.</b> A week is 2,300&ndash;2,800 entries and 470&ndash;640&nbsp;KB gzipped, so each show is a <code>&lt;details&gt;</code>: the schedule is always visible and the rows only get laid out when opened. Note that the rows are still <i>built</i> &mdash; <code>&lt;details&gt;</code> skips layout, not DOM construction. Deferring construction to first open is the next lever if the page ever feels slow on a phone.</li>
+<li><b>Entries are ordered by <code>play_order</code>, not by arrival.</b> The endpoint returns rows in <code>add_time</code> order, and the two disagree whenever a DJ enters a row after the fact &mdash; 88 times across 36 of the 54 shows in a sampled production week. Ordering by arrival strands retroactively-added hour breakpoints in the middle of a later hour.</li>
+<li><b>Past weeks are cached in memory</b> (<code>lib/weekCache.js</code>). The endpoint sends no <code>Cache-Control</code>, so without this every Previous/Next click and every browser Back re-downloads half a megabyte. The week in progress is deliberately never cached.</li>
+<li><b>The requested week is clamped</b> to <code>[2004-11-01, current week]</code>. <code>?week=</code> accepts anything, and <code>&lt;input type="date"&gt;</code> reports every keystroke of a typed year (editing to 2026 emits 0002, 0020, 0202 first), so without a clamp each of those becomes a live range query against a 2.6-million-row table.</li>
+</ul>
+
 <h3>Live playlist (<code>/playlist</code>)</h3>
 <p>Public view of the most recent flowsheet entries, refreshing while the tab stays open. Successor to <code>wxyc.info/playlists/recent</code>, which goes dark at the 2026-09-07 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
 <ul>
@@ -18,6 +30,15 @@
 <li><b>A failed poll keeps the last good playlist on screen</b> rather than replacing it with an error: the table is still true, just stale. A "Last updated HH:MM &mdash; couldn't refresh" notice and a Retry button appear alongside it so the page is never silently frozen; only a failure on the very first load (nothing to show yet) replaces the page with a full error state.</li>
 <li><b>Polling pauses while the tab is hidden</b> — checked both at mount and on every subsequent visibility change, so a tab opened directly in the background never fetches at all until it is actually shown — and catches up with one fetch when it becomes visible again, rather than continuing to poll a tab nobody is looking at. The response is ~51&nbsp;KB with <code>Cache-Control: no-cache</code>, and a tab left open for a workday would otherwise issue roughly 1,440 requests for ~73&nbsp;MB.</li>
 <li>Each poll aborts any still-in-flight one before starting, so a slow earlier response landing after a faster later one cannot overwrite fresher data with stale.</li>
+</ul>
+
+<h3>Airplay search (<code>/airplay-search</code>)</h3>
+<p>Public search over WXYC's full airplay history, back to at least November 2004. Successor to <code>wxyc.info/playlists/searchPlaylists</code>, which went dark at the 2026-09-07 tubafrenzy cutover (<a href="https://github.com/WXYC/wiki/issues/93">WXYC/wiki#93</a>).</p>
+<ul>
+<li><b>Data source</b>: Backend-Service <code>GET /flowsheet/search?q=&amp;page=&amp;limit=</code>. Contract lives in <code>wxyc-shared/api.yaml</code>. An empty or omitted <code>q</code> is a supported request, not an edge case &mdash; it is what makes the backend serve its most-recent-tracks default, which is this page's landing view. Same <code>NEXT_PUBLIC_WXYC_API_URL</code> build-time override as the archive page.</li>
+<li><b>Client-side only</b>, for the same reason as the archive page: this site is a static export, so there is no SSR to fetch behind. The query and page number live in component state rather than the URL.</li>
+<li><b><code>total</code> is a capped sentinel, not a count.</b> The backend's <code>COUNT_CAP</code> is 10000; any query matching more rows &mdash; including the empty-query landing view, against the ~2.6-million-row table &mdash; comes back with <code>total</code> pinned at exactly 10001. Render it raw and the default state of the page prints a false number to every visitor. <code>formatSearchTotal</code> shows anything past the cap as an open-ended <code>10,000+</code> instead.</li>
+<li><b>Reachable pages are clamped well short of where the endpoint actually fails</b> (<code>MAX_REACHABLE_PAGE</code>, currently 99). Deep <code>OFFSET</code> pages on this endpoint approach and can exceed the backend's 5-second statement timeout, and the page where that happens is not a fixed number &mdash; it moves with database load, so no constant can safely sit right at the edge. The clamp is set at roughly a quarter of the smallest offset ever observed to survive, trading away some reachable depth for headroom against that drift, rather than being tuned close to a boundary that has already been seen to move. The actual fix is switching to the endpoint's cursor-paging mode, which is O(limit) instead of O(page&nbsp;&times;&nbsp;limit) and has no such cliff; raising this constant instead of making that switch just moves the same failure further out.</li>
 </ul>
 
 <h3>DNS &amp; hosting (do not "fix" the Pages domain warning)</h3>
