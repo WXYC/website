@@ -1,5 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import Head from 'next/head'
+import {formatNumericDate} from '../lib/easternTime'
 import {
 	API_BASE,
 	compareEntriesByAirOrderDesc,
@@ -156,12 +157,28 @@ function MarkerKey() {
 	)
 }
 
+/**
+ * Columns in the table below, so the separator rows' `colSpan` and the
+ * `sr-only` header cannot drift apart from the cells they describe.
+ */
+const COLUMNS = ['Rotation', 'Artist', 'Song', 'Release', 'Label', 'Date']
+
 function PlaylistRow({entry}) {
 	if (!isTrack(entry)) {
 		return (
 			<tr>
+				{/* Still spanning every column, date included. A separator row is
+				    read as a band, and cutting a date cell out of the left edge of
+				    it would reopen exactly the gap #243 closed. Two of these rows
+				    carry their timing in their own text — a sign-on names its
+				    clock time (#241), a breakpoint names its hour — and two do
+				    not: `dj_join` and `dj_leave` render as "{name} joined" /
+				    "{name} left" and say nothing about when. That is a real gap,
+				    not a claim that none exists; it is left open rather than
+				    reopening the band for the two rarest row types on the
+				    page. */}
 				<td
-					colSpan={5}
+					colSpan={COLUMNS.length}
 					className="bg-white/10 px-3 py-1 text-center text-xs tracking-wide text-white/70"
 				>
 					{describeNonTrackEntry(entry)}
@@ -179,6 +196,18 @@ function PlaylistRow({entry}) {
 			<td className="px-3 py-1.5">{entry.track_title}</td>
 			<td className="px-3 py-1.5 text-white/70">{entry.album_title}</td>
 			<td className="px-3 py-1.5 text-white/70">{entry.record_label}</td>
+			{/* Last rather than first, so the marks keep the leading column the
+			    key above the list points at. Not claimed to match
+			    `/airplay-search`: that page puts its `Played` column fifth of
+			    six, left-aligned, as a long "July 21, 2026, 11:47 AM" — a
+			    different position, alignment and format, answering a slightly
+			    different question. `formatNumericDate` returns the empty string
+			    for an unusable `add_time`, which renders as an empty cell — the
+			    honest rendering of "we don't know", and better than a dash the
+			    reader has to decode. */}
+			<td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums text-white/70">
+				{formatNumericDate(entry.add_time)}
+			</td>
 		</tr>
 	)
 }
@@ -374,11 +403,9 @@ const LivePlaylist = () => {
 										<table className="w-full text-left text-sm">
 											<thead className="sr-only">
 												<tr>
-													<th>Rotation</th>
-													<th>Artist</th>
-													<th>Song</th>
-													<th>Release</th>
-													<th>Label</th>
+													{COLUMNS.map((column) => (
+														<th key={column}>{column}</th>
+													))}
 												</tr>
 											</thead>
 											<tbody>

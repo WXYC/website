@@ -65,6 +65,52 @@ describe('Live playlist page', () => {
 		expect(screen.getByText('Sonamos')).toBeDefined()
 	})
 
+	it('dates every track row on the station clock, not the reader’s', async () => {
+		// 14:05 UTC is 10:05 AM in Chapel Hill on the 3rd. The test runs in
+		// whatever zone the machine is in, so a row dated by the reader's
+		// clock would drift and this assertion would catch it.
+		mockFetchOnce(envelope([track({add_time: '2026-08-03T14:05:00.000Z'})]))
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		const row = screen.getByText('Juana Molina').closest('tr')
+		expect(row.textContent).toContain('08/03/2026')
+	})
+
+	it('leaves the date cell empty rather than printing a placeholder when add_time is unusable', async () => {
+		mockFetchOnce(envelope([track({add_time: null})]))
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		const row = screen.getByText('Juana Molina').closest('tr')
+		const cells = [...row.querySelectorAll('td')]
+		expect(cells).toHaveLength(6)
+		expect(cells.at(-1).textContent).toBe('')
+	})
+
+	it('keeps a separator row spanning the full width of the widened table', async () => {
+		mockFetchOnce(
+			envelope([
+				track({id: 200, play_order: 2}),
+				{
+					id: 199,
+					show_id: 1,
+					play_order: 1,
+					add_time: '2026-08-03T13:00:00.000Z',
+					entry_type: 'talkset',
+					message: 'TALKSET',
+				},
+			])
+		)
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		// The band is what makes these rows read as structure (#243); a
+		// colSpan left behind at 5 would silently open a gap in it.
+		const cell = screen.getByText('TALKSET').closest('td')
+		expect(cell.getAttribute('colspan')).toBe('6')
+	})
+
 	it('marks a requested track', async () => {
 		mockFetchOnce(envelope([track({request_flag: true})]))
 		render(<LivePlaylist />)
