@@ -134,6 +134,19 @@ describe('Playlist archive page', () => {
 		)
 	})
 
+	it('paints the separator row a fill that reads as a band', async () => {
+		// Asserted from the DOM rather than from the page source: the
+		// source-level guard in `playlistContrast.test.js` sees only that the
+		// page paints a fill somewhere, not that this row still carries one.
+		render(<ArchivePlaylists />)
+
+		const cell = (await screen.findByText('TALKSET')).closest('td')
+		const fill = cell.className.match(/bg-white\/(\d+)/)
+
+		expect(fill).not.toBeNull()
+		expect(Number(fill[1]) / 100).toBeGreaterThanOrEqual(0.1)
+	})
+
 	it('renders talksets and breakpoints as separators rather than blank rows', async () => {
 		mockFetchOnce(RANGE)
 		render(<ArchivePlaylists />)

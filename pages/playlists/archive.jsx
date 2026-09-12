@@ -133,7 +133,7 @@ function EntryRow({entry}) {
 			<tr>
 				<td
 					colSpan={5}
-					className="bg-white/5 px-3 py-1 text-center text-xs uppercase tracking-wide text-white/50"
+					className="bg-white/10 px-3 py-1 text-center text-xs tracking-wide text-white/70"
 				>
 					{message}
 				</td>

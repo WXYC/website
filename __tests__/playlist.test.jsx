@@ -122,6 +122,36 @@ describe('Live playlist page', () => {
 		expect(screen.queryByText(/nothing.*aired/i)).toBeNull()
 	})
 
+	it('paints the separator row a fill that reads as a band', async () => {
+		// The source-level guard in `playlistContrast.test.js` can only see
+		// that the page paints *a* fill somewhere — it cannot see whether the
+		// fill is still on this row. Delete the class here and that guard
+		// stays green, and on this page especially, because the stale-data
+		// banner paints the same `bg-white/10` and keeps a match alive. So
+		// the row asserts for itself, from the DOM it actually renders.
+		mockFetchOnce(
+			envelope([
+				track({id: 200, play_order: 2}),
+				{
+					id: 199,
+					show_id: 1,
+					play_order: 1,
+					add_time: '2026-08-10T22:57:31.357Z',
+					entry_type: 'talkset',
+					message: 'TALKSET',
+				},
+			])
+		)
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		const cell = screen.getByText('TALKSET').closest('td')
+		const fill = cell.className.match(/bg-white\/(\d+)/)
+
+		expect(fill).not.toBeNull()
+		expect(Number(fill[1]) / 100).toBeGreaterThanOrEqual(0.1)
+	})
+
 	it('renders a non-track entry type without an undefined cell or a key warning', async () => {
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
