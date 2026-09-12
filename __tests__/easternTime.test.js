@@ -8,6 +8,7 @@ import {
 	easternToday,
 	formatCalendarDate,
 	formatEasternTime,
+	formatNumericDate,
 	startOfWeek,
 } from '../lib/easternTime'
 
@@ -106,6 +107,23 @@ describe('easternDateOf', () => {
 
 	it('returns null for an unparseable timestamp', () => {
 		expect(easternDateOf('not a timestamp')).toBeNull()
+	})
+})
+
+describe('formatNumericDate', () => {
+	it.each([
+		// Late evening Eastern, already the next day in UTC — the case that
+		// separates the station's calendar from the reader's.
+		['2026-08-06T03:06:41.391Z', '08/05/2026'],
+		['2026-01-02T12:00:00.000Z', '01/02/2026'],
+		// Zero-padded to a fixed width so a column of them stays a column.
+		['2026-11-09T17:00:00.000Z', '11/09/2026'],
+	])('renders %s as %s on the station clock', (instant, expected) => {
+		expect(formatNumericDate(instant)).toBe(expected)
+	})
+
+	it('returns the empty string for an unparseable timestamp', () => {
+		expect(formatNumericDate(undefined)).toBe('')
 	})
 })
 
