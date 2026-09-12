@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { usePrefersReducedMotion } from '../lib/usePrefersReducedMotion'
 
 const vertexShaderSource = `#version 300 es
 in vec2 a_position;
@@ -180,6 +181,10 @@ export default function LavaLiteBackground({
     const animationRef = useRef(null)
     const lastFrameTimeRef = useRef(0)
     const [isSupported, setIsSupported] = useState(true)
+    // A reader who has asked their OS to reduce motion gets one static frame
+    // instead of the loop: the background keeps the station's identity, it
+    // just stops moving behind the type. WXYC/website#234.
+    const prefersReducedMotion = usePrefersReducedMotion()
 
     useEffect(() => {
         // Skip if we already determined WebGL isn't supported
@@ -277,8 +282,30 @@ export default function LavaLiteBackground({
                 gl.viewport(0, 0, width, height)
             }
 
+            const drawFrame = () => {
+                if (isCleanedUp) return
+
+                const time = ((performance.now() - startTime) / 1000) * speed
+
+                gl.uniform2f(resolutionLocation, canvas.width, canvas.height)
+                gl.uniform1f(timeLocation, time)
+                gl.uniform1f(brightnessLocation, brightness)
+                gl.uniform1f(noiseScaleLocation, noiseScale)
+                gl.uniform3f(noiseOffsetLocation, noiseOffset[0], noiseOffset[1], noiseOffset[2])
+
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+            }
+
+            const handleResize = () => {
+                resize()
+                // Setting canvas.width clears the drawing buffer. The loop
+                // repaints it on the next frame; a frozen background has no
+                // next frame, so it would be left blank until reload.
+                if (prefersReducedMotion) drawFrame()
+            }
+
             resize()
-            window.addEventListener('resize', resize)
+            window.addEventListener('resize', handleResize)
 
             const frameInterval = 1000 / 60 // 30 fps
 
@@ -292,35 +319,38 @@ export default function LavaLiteBackground({
                 }
                 lastFrameTimeRef.current = timestamp
 
-                const time = ((performance.now() - startTime) / 1000) * speed
-
-                gl.uniform2f(resolutionLocation, canvas.width, canvas.height)
-                gl.uniform1f(timeLocation, time)
-                gl.uniform1f(brightnessLocation, brightness)
-                gl.uniform1f(noiseScaleLocation, noiseScale)
-                gl.uniform3f(noiseOffsetLocation, noiseOffset[0], noiseOffset[1], noiseOffset[2])
-
-                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+                drawFrame()
 
                 animationRef.current = requestAnimationFrame(render)
             }
 
-            animationRef.current = requestAnimationFrame(render)
+            if (prefersReducedMotion) {
+                drawFrame()
+            } else {
+                animationRef.current = requestAnimationFrame(render)
+            }
 
             return () => {
                 isCleanedUp = true
-                window.removeEventListener('resize', resize)
+                window.removeEventListener('resize', handleResize)
                 if (animationRef.current) {
                     cancelAnimationFrame(animationRef.current)
                     animationRef.current = null
                 }
+                // This effect re-runs whenever the reader toggles reduced
+                // motion, and each run builds a fresh program, buffer and
+                // 4 MB noise texture. Release them rather than leaving one
+                // set stranded per toggle.
+                gl.deleteTexture(noiseTex)
+                gl.deleteBuffer(positionBuffer)
+                gl.deleteProgram(program)
             }
         } catch (error) {
             console.warn('WebGL initialization failed:', error)
             setIsSupported(false)
             return
         }
-    }, [brightness, speed, noiseScale, noiseOffset, isSupported])
+    }, [brightness, speed, noiseScale, noiseOffset, isSupported, prefersReducedMotion])
 
     // Render black background if WebGL isn't supported
     if (!isSupported) {
