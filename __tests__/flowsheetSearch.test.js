@@ -244,17 +244,17 @@ describe('normalizePgTimestamp', () => {
 })
 
 describe('formatPlayDate', () => {
-	it('renders a Postgres timestamptz string as a readable Eastern date and time', () => {
+	it('renders a Postgres timestamptz string as a numeric Eastern date and time', () => {
 		// 15:47:47 UTC on 2026-07-21 is Eastern Daylight Time (UTC-4): 11:47 AM.
 		expect(formatPlayDate('2026-07-21 15:47:47.654+00')).toBe(
-			'July 21, 2026, 11:47 AM'
+			'07/21/2026, 11:47 AM'
 		)
 	})
 
 	it('accounts for the Eastern/UTC day boundary', () => {
 		// 02:15 UTC on 2026-01-02 is 9:15 PM Eastern Standard Time the day before.
 		expect(formatPlayDate('2026-01-02 02:15:00+00')).toBe(
-			'January 1, 2026, 9:15 PM'
+			'01/01/2026, 9:15 PM'
 		)
 	})
 

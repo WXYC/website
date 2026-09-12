@@ -216,6 +216,47 @@ function PlaylistRow({entry}) {
 }
 
 /**
+ * Search box that hands off to `/airplay-search` instead of searching here.
+ *
+ * A box on this page that filtered the rows already on screen would look like
+ * it searched WXYC's airplay and quietly search fifty rows instead — the more
+ * damaging of the two ways to get this wrong. Handing the query off keeps one
+ * search implementation, and everything `lib/flowsheetSearch.js` has learned
+ * about field-filter syntax, the capped `total` sentinel and the paging-depth
+ * cliff applies to a search started from here, for free.
+ *
+ * An empty submit does nothing rather than navigating to an empty search: the
+ * listener pressed Enter in a box they had not filled in, which is not a
+ * request to leave the page.
+ */
+function SearchHandoff({onSearch}) {
+	const [term, setTerm] = useState('')
+
+	return (
+		<form
+			role="search"
+			className="mb-6"
+			onSubmit={(event) => {
+				event.preventDefault()
+				const trimmed = term.trim()
+				if (trimmed) onSearch(trimmed)
+			}}
+		>
+			<label>
+				<span className="sr-only">Search WXYC airplay</span>
+				<input
+					type="search"
+					value={term}
+					onChange={(event) => setTerm(event.target.value)}
+					placeholder="Search everything WXYC has played…"
+					className="w-full rounded border border-white/30 bg-transparent px-3 py-2 sm:w-2/3"
+				/>
+			</label>
+		</form>
+	)
+}
+
+/**
  * Step between the rolling landing view and one set at a time.
  *
  * The two halves are labelled differently on purpose, because they are not
@@ -325,6 +366,23 @@ const LivePlaylist = () => {
 		if (!router.isReady) return
 		setSetPage(setPageFromQuery(router.query.set))
 	}, [router.isReady, router.query.set])
+
+	const search = useCallback(
+		(term) => {
+			// `encodeURIComponent` leaves a space as %20, and the search page
+			// expects the `+` form. What guarantees the two surfaces mint the
+			// same URL for the same query is that they use this same
+			// expression, not that it matches any standard encoder: it differs
+			// from `URLSearchParams` for `'`, `!`, `(`, `)` and `~`, so
+			// "Sinead O'Connor" encodes differently under the two schemes.
+			// Both round-trip, and both pages agree, because there is one
+			// expression. Change it in one place only and they stop agreeing.
+			router.push(
+				`/airplay-search?q=${encodeURIComponent(term).replace(/%20/g, '+')}`
+			)
+		},
+		[router]
+	)
 
 	const goToSet = useCallback(
 		(nextSet) => {
@@ -584,6 +642,8 @@ const LivePlaylist = () => {
 					    with the failure. Holding still across loading, error and
 					    empty also stops them jumping as a set loads. */}
 					<SetNav page={setPage} onGo={goToSet} />
+
+					<SearchHandoff onSearch={search} />
 
 					{isLoading ? (
 						<p role="status">

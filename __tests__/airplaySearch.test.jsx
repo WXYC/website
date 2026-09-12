@@ -2,6 +2,19 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {render, screen, fireEvent, waitFor} from '@testing-library/react'
 import {createMockFetch, createTestLifecycle, testData} from './test-utils'
 
+const replace = vi.fn()
+let routerQuery = {}
+let routerIsReady = true
+
+vi.mock('next/router', () => ({
+	useRouter: () => ({
+		isReady: routerIsReady,
+		query: routerQuery,
+		replace,
+		pathname: '/airplay-search',
+	}),
+}))
+
 vi.mock('next/head', () => ({
 	default: ({children}) => <>{children}</>,
 }))
@@ -17,7 +30,12 @@ function mockFetchOnce(body, options) {
 
 const lifecycle = createTestLifecycle()
 
-beforeEach(lifecycle.beforeEach)
+beforeEach(() => {
+	lifecycle.beforeEach()
+	replace.mockClear()
+	routerQuery = {}
+	routerIsReady = true
+})
 afterEach(lifecycle.afterEach)
 
 describe('Airplay search page', () => {
@@ -26,6 +44,87 @@ describe('Airplay search page', () => {
 		render(<AirplaySearch />)
 
 		expect(screen.getByRole('status')).toBeDefined()
+	})
+
+	it('runs the query a link arrives with', async () => {
+		// Until now the query lived only in component state, so a search could
+		// be performed but never handed to anyone. A shared result set is the
+		// whole point of the box.
+		routerQuery = {q: 'artist:Stereolab'}
+		const fetchMock = mockFetchOnce({
+			results: [result()],
+			total: 1,
+			page: 0,
+			totalPages: 1,
+		})
+		render(<AirplaySearch />)
+
+		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+		const url = new URL(fetchMock.mock.calls[0][0])
+		expect(url.searchParams.get('q')).toBe('artist:Stereolab')
+		expect(screen.getByRole('searchbox')).toHaveProperty(
+			'value',
+			'artist:Stereolab'
+		)
+	})
+
+	it('waits for the router before searching, so a shared link is not overwritten by the default view', async () => {
+		routerIsReady = false
+		routerQuery = {q: 'Stereolab'}
+		const fetchMock = mockFetchOnce({
+			results: [],
+			total: 0,
+			page: 0,
+			totalPages: 0,
+		})
+		render(<AirplaySearch />)
+		await new Promise((resolve) => setTimeout(resolve, 0))
+
+		expect(fetchMock).not.toHaveBeenCalled()
+	})
+
+	it('puts the query in the URL so the result set can be linked', async () => {
+		const fetchMock = mockFetchOnce({
+			results: [result()],
+			total: 1,
+			page: 0,
+			totalPages: 1,
+		})
+		render(<AirplaySearch />)
+		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+
+		fireEvent.change(screen.getByRole('searchbox'), {
+			target: {value: 'Jessica Pratt'},
+		})
+		await waitFor(() =>
+			// `replace`, not `push`: the box is a live filter, and one history
+			// entry per settled keystroke would make Back mean "delete the last
+			// few characters" several times over.
+			expect(replace).toHaveBeenCalledWith(
+				'/airplay-search?q=Jessica+Pratt',
+				undefined,
+				{shallow: true}
+			)
+		)
+	})
+
+	it('clears the query out of the URL rather than leaving ?q= behind', async () => {
+		routerQuery = {q: 'Stereolab'}
+		const fetchMock = mockFetchOnce({
+			results: [result()],
+			total: 1,
+			page: 0,
+			totalPages: 1,
+		})
+		render(<AirplaySearch />)
+		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+
+		fireEvent.change(screen.getByRole('searchbox'), {target: {value: ''}})
+		await waitFor(() =>
+			expect(replace).toHaveBeenCalledWith('/airplay-search', undefined, {
+				shallow: true,
+			})
+		)
 	})
 
 	it('loads the recent-tracks default for an empty query, with no q param', async () => {
@@ -57,7 +156,7 @@ describe('Airplay search page', () => {
 		expect(screen.getByText('Quien? (Suite)')).toBeDefined()
 		expect(screen.getByText('un dia')).toBeDefined()
 		expect(screen.getByText('Domino')).toBeDefined()
-		expect(screen.getByText('July 21, 2026, 11:47 AM')).toBeDefined()
+		expect(screen.getByText('07/21/2026, 11:47 AM')).toBeDefined()
 		expect(screen.getByText('Unknown DJ')).toBeDefined()
 	})
 

@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import Head from 'next/head'
+import {useRouter} from 'next/router'
 import {
 	DEFAULT_PAGE_SIZE,
 	canGoToNextPage,
@@ -16,12 +17,21 @@ import ReadableSurface from '../components/ReadableSurface'
  * `wxyc.info/playlists/searchPlaylists`, which dies at the 2026-08-31
  * tubafrenzy cutover.
  *
- * Client-side only: this site is a static export, so the query and the
- * results live entirely in component state rather than a route or an SSR
- * prop. The search box is debounced so a listener typing a query does not
- * fire one request per keystroke against a public API, and an empty query is
- * a real, supported state — the backend serves its most-recent-tracks
- * default for it, which becomes this page's landing view.
+ * Client-side only: this site is a static export, so the results live
+ * entirely in component state rather than in an SSR prop. The query itself is
+ * in the URL as `?q=`, which is what makes a result set something a listener
+ * can send to somebody — including from the live playlist page, whose search
+ * box is a link into this one rather than a second search client. The search
+ * box is debounced so a listener typing does not fire one request per
+ * keystroke against a public API, and an empty query is a real, supported
+ * state — the backend serves its most-recent-tracks default for it, which
+ * becomes this page's landing view.
+ *
+ * The page number is deliberately *not* in the URL. A query is a durable
+ * thing to address; a page of one is not, given `MAX_REACHABLE_PAGE` and the
+ * fact that the depth at which this endpoint starts failing moves with
+ * database load (see `lib/flowsheetSearch.js`). A link to page 380 of a broad
+ * search is a link that works until it doesn't.
  */
 
 /** How long to wait after the last keystroke before searching. */
@@ -44,7 +54,25 @@ function SearchResultRow({row}) {
 
 const INITIAL_SEARCH = {q: '', page: 0}
 
+/** `?q=` as a plain string; anything else reads as no query. */
+function queryFromRouter(value) {
+	return typeof value === 'string' ? value : ''
+}
+
 const AirplaySearch = () => {
+	const router = useRouter()
+
+	// False until the router has resolved the query string, which on a static
+	// export is empty on the first render and populated after hydration. The
+	// fetch waits for it: starting on the landing view and correcting once
+	// `?q=` arrives would spend a request on the wrong result set for every
+	// shared link, and briefly show the wrong answer.
+	//
+	// A boolean rather than the null sentinel the archive and playlist pages
+	// use for the same job, because there is nothing to hold: those pages read
+	// a value out of the URL, and this one seeds two pieces of state and is
+	// then only asked whether it has run.
+	const [isQueryResolved, setIsQueryResolved] = useState(false)
 	// Raw input value, updated on every keystroke.
 	const [query, setQuery] = useState('')
 	// The query actually searched for and the page within it, held as one
@@ -67,6 +95,31 @@ const AirplaySearch = () => {
 	// no-op from React's point of view, since neither dependency changed.
 	const [reloadToken, setReloadToken] = useState(0)
 
+	// Read `?q=` once the router is ready. Seeds both the box and the search,
+	// so an arriving link runs its query rather than showing it unsearched.
+	useEffect(() => {
+		if (!router.isReady) return
+		const incoming = queryFromRouter(router.query.q)
+		setQuery(incoming)
+		setSearch((prev) =>
+			prev.q === incoming.trim() ? prev : {q: incoming.trim(), page: 0}
+		)
+		setIsQueryResolved(true)
+		// Deliberately not keyed on `router.query.q`: this seeds from the URL,
+		// and the effect below writes back to it. Re-running on every write
+		// would make the two chase each other, and would also clobber what the
+		// listener had typed since.
+		//
+		// What makes that safe is a precondition, not an invariant: nothing
+		// navigates within this route except the write below. `router.replace`
+		// is the only navigation call on the page — no `push`, no `<Link>`, no
+		// `href` — so the only `?q=` this page ever has to read is the one it
+		// arrived with. Add a "related searches" link, a nav item carrying a
+		// query, or switch that `replace` to a `push`, and this effect will not
+		// re-read the URL: the box will silently disagree with the address bar.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [router.isReady])
+
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			const trimmed = query.trim()
@@ -78,7 +131,31 @@ const AirplaySearch = () => {
 		return () => clearTimeout(timer)
 	}, [query])
 
+	// Reflect the settled query in the URL so the result set can be linked.
+	// `replace` rather than `push`: the box is a live filter, and one history
+	// entry per settled keystroke would make Back mean "delete the last few
+	// characters" over and over instead of leaving the page.
 	useEffect(() => {
+		if (!isQueryResolved) return
+		const current = queryFromRouter(router.query.q)
+		if (current === search.q) return
+		router.replace(
+			search.q
+				? `/airplay-search?q=${encodeURIComponent(search.q).replace(
+						/%20/g,
+						'+'
+					)}`
+				: '/airplay-search',
+			undefined,
+			{shallow: true}
+		)
+		// `router` is excluded on purpose: Next hands back a new object on every
+		// navigation, so including it would re-run this on its own write.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [search.q, isQueryResolved])
+
+	useEffect(() => {
+		if (!isQueryResolved) return
 		const controller = new AbortController()
 		setIsLoading(true)
 		setError(null)
@@ -98,7 +175,7 @@ const AirplaySearch = () => {
 			})
 
 		return () => controller.abort()
-	}, [search, reloadToken])
+	}, [search, reloadToken, isQueryResolved])
 
 	const results = data?.results ?? []
 	const totalPages = data?.totalPages ?? 0
