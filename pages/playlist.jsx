@@ -6,6 +6,7 @@ import {
 	describeNonTrackEntry,
 	isTrack,
 } from '../lib/flowsheetRange'
+import ReadableSurface from '../components/ReadableSurface'
 
 /**
  * Live playlist — a public, unauthenticated view of the most recent flowsheet
@@ -258,74 +259,77 @@ const LivePlaylist = () => {
 			</Head>
 
 			<div className="mx-auto w-full px-4 pb-16 sm:w-5/6">
-				<h1 className="kallisto mb-2 text-5xl">Live Playlist</h1>
-				{onAir === null ? (
-					// Explicit JSON `null`, not an absent key: the backend is
-					// confirming the station is on automation, not merely silent
-					// about it. See the `onAir` state comment above.
-					<p className="mb-6 text-white/70">
-						On the air now: <span className="text-white">Auto DJ</span>
-					</p>
-				) : onAir?.dj_name ? (
-					<p className="mb-6 text-white/70">
-						On the air now: <span className="text-white">{onAir.dj_name}</span>
-					</p>
-				) : (
-					<p className="mb-6 text-white/70">The most recent songs on WXYC.</p>
-				)}
+				<ReadableSurface>
+					<h1 className="kallisto mb-2 text-5xl">Live Playlist</h1>
+					{onAir === null ? (
+						// Explicit JSON `null`, not an absent key: the backend is
+						// confirming the station is on automation, not merely silent
+						// about it. See the `onAir` state comment above.
+						<p className="mb-6 text-white/70">
+							On the air now: <span className="text-white">Auto DJ</span>
+						</p>
+					) : onAir?.dj_name ? (
+						<p className="mb-6 text-white/70">
+							On the air now:{' '}
+							<span className="text-white">{onAir.dj_name}</span>
+						</p>
+					) : (
+						<p className="mb-6 text-white/70">The most recent songs on WXYC.</p>
+					)}
 
-				{isLoading ? (
-					<p role="status">Loading the playlist…</p>
-				) : error && entries === null ? (
-					<div role="alert">
-						<p>{error}</p>
-					</div>
-				) : (
-					<>
-						{error && entries !== null ? (
-							<div
-								role="status"
-								className="mb-4 flex flex-wrap items-center gap-3 border border-white/20 bg-white/5 px-3 py-2 text-sm text-white/70"
-							>
-								<p>
-									Last updated{' '}
-									{lastUpdatedAt ? formatClockTime(lastUpdatedAt) : '—'} —
-									couldn&rsquo;t refresh.
-								</p>
-								<button
-									type="button"
-									onClick={() => load()}
-									className="rounded border border-white/30 px-3 py-1"
+					{isLoading ? (
+						<p role="status">Loading the playlist…</p>
+					) : error && entries === null ? (
+						<div role="alert">
+							<p>{error}</p>
+						</div>
+					) : (
+						<>
+							{error && entries !== null ? (
+								<div
+									role="status"
+									className="mb-4 flex flex-wrap items-center gap-3 border border-white/20 bg-white/5 px-3 py-2 text-sm text-white/70"
 								>
-									Retry
-								</button>
-							</div>
-						) : null}
+									<p>
+										Last updated{' '}
+										{lastUpdatedAt ? formatClockTime(lastUpdatedAt) : '—'} —
+										couldn&rsquo;t refresh.
+									</p>
+									<button
+										type="button"
+										onClick={() => load()}
+										className="rounded border border-white/30 px-3 py-1"
+									>
+										Retry
+									</button>
+								</div>
+							) : null}
 
-						{entries && entries.length === 0 ? (
-							<p>Nothing has aired recently.</p>
-						) : (
-							<div className="overflow-x-auto">
-								<table className="w-full text-left text-sm">
-									<thead className="sr-only">
-										<tr>
-											<th>Rotation</th>
-											<th>Artist</th>
-											<th>Song</th>
-											<th>Release</th>
-											<th>Label</th>
-										</tr>
-									</thead>
-									<tbody>
-										{(entries ?? []).map((entry) => (
-											<PlaylistRow key={entry.id} entry={entry} />
-										))}
-									</tbody>
-								</table>
-							</div>
-						)}
-					</>
-				)}
+							{entries && entries.length === 0 ? (
+								<p>Nothing has aired recently.</p>
+							) : (
+								<div className="overflow-x-auto">
+									<table className="w-full text-left text-sm">
+										<thead className="sr-only">
+											<tr>
+												<th>Rotation</th>
+												<th>Artist</th>
+												<th>Song</th>
+												<th>Release</th>
+												<th>Label</th>
+											</tr>
+										</thead>
+										<tbody>
+											{(entries ?? []).map((entry) => (
+												<PlaylistRow key={entry.id} entry={entry} />
+											))}
+										</tbody>
+									</table>
+								</div>
+							)}
+						</>
+					)}
+				</ReadableSurface>
 			</div>
 		</>
 	)

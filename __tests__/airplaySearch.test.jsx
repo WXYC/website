@@ -310,4 +310,17 @@ describe('Airplay search page', () => {
 			expect(screen.queryByText(/no value after the colon/i)).toBeNull()
 		})
 	})
+
+	it('sits the results table on an opaque surface, not directly on the animated background', async () => {
+		// Text over the moving background has no stable contrast ratio, so some
+		// frames fall below legible. The surface makes contrast a constant
+		// instead — see WXYC/website#234.
+		mockFetchOnce({results: [result()], total: 1, page: 0, totalPages: 1})
+		render(<AirplaySearch />)
+		await screen.findByText('Juana Molina')
+
+		expect(
+			screen.getByRole('table').closest('[data-readable-surface]')
+		).not.toBeNull()
+	})
 })

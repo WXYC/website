@@ -406,4 +406,15 @@ describe('Playlist archive page', () => {
 		await waitFor(() => expect(fetchMock).toHaveBeenCalled())
 		expect(fetchMock.mock.calls[0][1].credentials).toBe('omit')
 	})
+
+	it('sits the archived playlists on an opaque surface, not directly on the animated background', async () => {
+		// Text over the moving background has no stable contrast ratio, so some
+		// frames fall below legible. The surface makes contrast a constant
+		// instead — see WXYC/website#234.
+		mockFetchOnce(RANGE)
+		render(<ArchivePlaylists />)
+
+		const artist = await screen.findByText('Juana Molina')
+		expect(artist.closest('[data-readable-surface]')).not.toBeNull()
+	})
 })

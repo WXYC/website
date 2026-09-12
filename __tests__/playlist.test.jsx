@@ -809,4 +809,17 @@ describe('Live playlist page', () => {
 			expect(fetchMock).toHaveBeenCalledTimes(0)
 		})
 	})
+
+	it('sits the playlist on an opaque surface, not directly on the animated background', async () => {
+		// Text over the moving background has no stable contrast ratio, so some
+		// frames fall below legible. The surface makes contrast a constant
+		// instead — see WXYC/website#234.
+		mockFetchOnce(envelope([track()]))
+		render(<LivePlaylist />)
+		await flushPromises()
+
+		expect(
+			screen.getByRole('table').closest('[data-readable-surface]')
+		).not.toBeNull()
+	})
 })

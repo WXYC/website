@@ -9,6 +9,7 @@ import {
 	hasEmptyFieldFilter,
 	isAtDepthLimit,
 } from '../lib/flowsheetSearch'
+import ReadableSurface from '../components/ReadableSurface'
 
 /**
  * Public airplay-search page — the successor to
@@ -142,116 +143,118 @@ const AirplaySearch = () => {
 			</Head>
 
 			<div className="mx-auto w-full px-4 pb-16 sm:w-5/6">
-				<h1 className="kallisto mb-2 text-5xl">Airplay Search</h1>
-				<p className="mb-2 text-white/70">
-					Search everything WXYC has played. Leave the box empty for the most
-					recent airplay.
-				</p>
-				<p className="mb-6 text-sm text-white/50">
-					Tip: narrow a search by field —{' '}
-					<code className="text-white/70">artist:</code>,{' '}
-					<code className="text-white/70">song:</code>,{' '}
-					<code className="text-white/70">album:</code>,{' '}
-					<code className="text-white/70">label:</code>,{' '}
-					<code className="text-white/70">dj:</code>,{' '}
-					<code className="text-white/70">date:</code>, or{' '}
-					<code className="text-white/70">dateRange:</code>, e.g.{' '}
-					<code className="text-white/70">
-						artist:foo AND album:&quot;bar&quot;
-					</code>
-					. Any other colon in your search is read literally, not as syntax.
-				</p>
-
-				{emptyFieldFilter ? (
-					<p className="mb-2 text-sm text-white/70">
-						One of your field filters has no value after the colon, so it was
-						ignored — add a value or remove it.
+				<ReadableSurface>
+					<h1 className="kallisto mb-2 text-5xl">Airplay Search</h1>
+					<p className="mb-2 text-white/70">
+						Search everything WXYC has played. Leave the box empty for the most
+						recent airplay.
 					</p>
-				) : null}
-
-				<label className="mb-6 block">
-					<span className="sr-only">Search airplay records</span>
-					<input
-						type="search"
-						value={query}
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder="Search artist, track, album, or label…"
-						className="w-full rounded border border-white/30 bg-transparent px-3 py-2 sm:w-2/3"
-					/>
-				</label>
-
-				{isLoading ? (
-					<p role="status">
-						{search.q ? 'Searching…' : 'Loading recent airplay…'}
+					<p className="mb-6 text-sm text-white/50">
+						Tip: narrow a search by field —{' '}
+						<code className="text-white/70">artist:</code>,{' '}
+						<code className="text-white/70">song:</code>,{' '}
+						<code className="text-white/70">album:</code>,{' '}
+						<code className="text-white/70">label:</code>,{' '}
+						<code className="text-white/70">dj:</code>,{' '}
+						<code className="text-white/70">date:</code>, or{' '}
+						<code className="text-white/70">dateRange:</code>, e.g.{' '}
+						<code className="text-white/70">
+							artist:foo AND album:&quot;bar&quot;
+						</code>
+						. Any other colon in your search is read literally, not as syntax.
 					</p>
-				) : results.length > 0 ? (
-					<>
-						{errorBanner}
-						<div className="overflow-x-auto">
-							<table className="w-full text-left text-sm">
-								<thead>
-									<tr className="border-b border-white/20 text-white/60">
-										<th className="px-3 py-1.5 font-normal">Artist</th>
-										<th className="px-3 py-1.5 font-normal">Track</th>
-										<th className="px-3 py-1.5 font-normal">Album</th>
-										<th className="px-3 py-1.5 font-normal">Label</th>
-										<th className="px-3 py-1.5 font-normal">Played</th>
-										<th className="px-3 py-1.5 font-normal">DJ</th>
-									</tr>
-								</thead>
-								<tbody>
-									{results.map((row) => (
-										<SearchResultRow key={row.id} row={row} />
-									))}
-								</tbody>
-							</table>
+
+					{emptyFieldFilter ? (
+						<p className="mb-2 text-sm text-white/70">
+							One of your field filters has no value after the colon, so it was
+							ignored — add a value or remove it.
+						</p>
+					) : null}
+
+					<label className="mb-6 block">
+						<span className="sr-only">Search airplay records</span>
+						<input
+							type="search"
+							value={query}
+							onChange={(event) => setQuery(event.target.value)}
+							placeholder="Search artist, track, album, or label…"
+							className="w-full rounded border border-white/30 bg-transparent px-3 py-2 sm:w-2/3"
+						/>
+					</label>
+
+					{isLoading ? (
+						<p role="status">
+							{search.q ? 'Searching…' : 'Loading recent airplay…'}
+						</p>
+					) : results.length > 0 ? (
+						<>
+							{errorBanner}
+							<div className="overflow-x-auto">
+								<table className="w-full text-left text-sm">
+									<thead>
+										<tr className="border-b border-white/20 text-white/60">
+											<th className="px-3 py-1.5 font-normal">Artist</th>
+											<th className="px-3 py-1.5 font-normal">Track</th>
+											<th className="px-3 py-1.5 font-normal">Album</th>
+											<th className="px-3 py-1.5 font-normal">Label</th>
+											<th className="px-3 py-1.5 font-normal">Played</th>
+											<th className="px-3 py-1.5 font-normal">DJ</th>
+										</tr>
+									</thead>
+									<tbody>
+										{results.map((row) => (
+											<SearchResultRow key={row.id} row={row} />
+										))}
+									</tbody>
+								</table>
+							</div>
+						</>
+					) : error ? (
+						errorBanner
+					) : (
+						<p>
+							{pastEnd
+								? 'No airplay on this page — you may have paged past the end of the results. Go back for more.'
+								: search.q
+									? `No airplay found for “${search.q}”.`
+									: 'No airplay has been recorded yet.'}
+						</p>
+					)}
+
+					{showPager ? (
+						<div className="mt-6 flex flex-wrap items-center gap-3">
+							<button
+								type="button"
+								onClick={() => goToPage(search.page - 1)}
+								disabled={!canGoBack}
+								className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								← Previous
+							</button>
+							<span className="text-white/60">
+								Page {search.page + 1} of {totalPages}
+								{typeof data?.total === 'number'
+									? ` (${formatSearchTotal(data.total)} total plays)`
+									: null}
+							</span>
+							<button
+								type="button"
+								onClick={() => goToPage(search.page + 1)}
+								disabled={!canGoForward}
+								className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+							>
+								Next →
+							</button>
 						</div>
-					</>
-				) : error ? (
-					errorBanner
-				) : (
-					<p>
-						{pastEnd
-							? 'No airplay on this page — you may have paged past the end of the results. Go back for more.'
-							: search.q
-								? `No airplay found for “${search.q}”.`
-								: 'No airplay has been recorded yet.'}
-					</p>
-				)}
+					) : null}
 
-				{showPager ? (
-					<div className="mt-6 flex flex-wrap items-center gap-3">
-						<button
-							type="button"
-							onClick={() => goToPage(search.page - 1)}
-							disabled={!canGoBack}
-							className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
-						>
-							← Previous
-						</button>
-						<span className="text-white/60">
-							Page {search.page + 1} of {totalPages}
-							{typeof data?.total === 'number'
-								? ` (${formatSearchTotal(data.total)} total plays)`
-								: null}
-						</span>
-						<button
-							type="button"
-							onClick={() => goToPage(search.page + 1)}
-							disabled={!canGoForward}
-							className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
-						>
-							Next →
-						</button>
-					</div>
-				) : null}
-
-				{atDepthLimit ? (
-					<p className="mt-2 text-sm text-white/50">
-						Showing as deep as this search can safely go. Narrow your search to
-						see more specific results.
-					</p>
-				) : null}
+					{atDepthLimit ? (
+						<p className="mt-2 text-sm text-white/50">
+							Showing as deep as this search can safely go. Narrow your search
+							to see more specific results.
+						</p>
+					) : null}
+				</ReadableSurface>
 			</div>
 		</>
 	)
