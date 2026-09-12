@@ -224,11 +224,15 @@ describe('Live playlist page', () => {
 		render(<LivePlaylist />)
 		await flushPromises()
 
-		// show_start / show_end carry no `message`, so they render from the
-		// `entry_type` fallback — this is the assertion the pre-existing test
-		// omitted, leaving an empty-string regression undetected.
-		expect(screen.getByText(/show start/i)).toBeDefined()
-		expect(screen.getByText(/show end/i)).toBeDefined()
+		// show_start / show_end carry no `message` — they name the DJ in
+		// `dj_name`, and are labelled from it rather than from the wire token.
+		// Asserting the wording, not merely that the row is non-empty: the
+		// fallback these used to reach printed a legible-looking "show start"
+		// and so would have survived an emptiness check.
+		expect(screen.getByText('DJ Decent signed on at 6:39 PM')).toBeDefined()
+		expect(screen.getByText('DJ Decent signed off at 7:01 PM')).toBeDefined()
+		expect(screen.queryByText(/show start/i)).toBeNull()
+		expect(screen.queryByText(/show end/i)).toBeNull()
 		expect(screen.getByText(/DJ Guest joined/)).toBeDefined()
 		expect(screen.getByText(/DJ Guest left/)).toBeDefined()
 		expect(screen.getByText('--- 7:00 PM BREAKPOINT ---')).toBeDefined()

@@ -547,6 +547,49 @@ describe('describeNonTrackEntry', () => {
 		}
 	)
 
+	// 6:58 PM Eastern on 2025-06-04, the instant tubafrenzy's own captured
+	// sign-on row records.
+	const SIGN_ON = '2025-06-04T22:58:00.000Z'
+
+	it.each([
+		['show_start', 'DJ Starcross', 'DJ Starcross signed on at 6:58 PM'],
+		['show_end', 'DJ Starcross', 'DJ Starcross signed off at 6:58 PM'],
+		// `transformToV2` emits `dj_name: entry.dj_name ?? ''` on these two
+		// types, so an unknown handle arrives as the empty string rather than
+		// null — both have to collapse to the same unattributed wording.
+		['show_start', '', 'Signed on at 6:58 PM'],
+		['show_end', '', 'Signed off at 6:58 PM'],
+		['show_start', null, 'Signed on at 6:58 PM'],
+		['show_end', null, 'Signed off at 6:58 PM'],
+	])(
+		'names the DJ and the time on a %s row, which carries no message either',
+		(entryType, djName, expected) => {
+			expect(
+				describeNonTrackEntry({
+					entry_type: entryType,
+					dj_name: djName,
+					add_time: SIGN_ON,
+				})
+			).toBe(expected)
+		}
+	)
+
+	it.each([
+		['show_start', 'DJ Starcross signed on'],
+		['show_end', 'DJ Starcross signed off'],
+	])(
+		'drops the clock from a %s row whose add_time is unusable, rather than trailing an empty "at"',
+		(entryType, expected) => {
+			expect(
+				describeNonTrackEntry({
+					entry_type: entryType,
+					dj_name: 'DJ Starcross',
+					add_time: null,
+				})
+			).toBe(expected)
+		}
+	)
+
 	it('prefers the message when there is one', () => {
 		expect(
 			describeNonTrackEntry({entry_type: 'talkset', message: 'TALKSET'})
