@@ -131,6 +131,44 @@ describe('PostHog tracking', () => {
 			expect(mockCapture).toHaveBeenCalledWith('$pageview')
 		})
 
+		it('ignores a shallow route change, which is not a new page', async () => {
+			// `router.push`/`router.replace` with `shallow: true` changes the
+			// query string and re-renders in place; Next still emits
+			// `routeChangeComplete` for it. Three surfaces page that way — the
+			// archive's week picker, the live playlist's set controls, and the
+			// airplay search box, which rewrites `?q=` every time the query
+			// settles. Counting those as page views bills a search that was
+			// typed in three bursts as three views of the page.
+			const {usePostHogPageview} = await import('../lib/usePostHog')
+
+			renderHook(() => usePostHogPageview())
+			routeChangeHandler('/airplay-search?q=Stereolab', {shallow: true})
+
+			expect(mockCapture).not.toHaveBeenCalled()
+		})
+
+		it('still captures a real navigation between pages', async () => {
+			const {usePostHogPageview} = await import('../lib/usePostHog')
+
+			renderHook(() => usePostHogPageview())
+			routeChangeHandler('/airplay-search', {shallow: false})
+
+			expect(mockCapture).toHaveBeenCalledWith('$pageview')
+		})
+
+		it('captures when Next reports no options at all', async () => {
+			// Defensive: the second argument is documented, but a handler that
+			// destructured it unguarded would throw on any caller that omits
+			// it, and throwing inside a router event listener is worse than a
+			// miscounted view.
+			const {usePostHogPageview} = await import('../lib/usePostHog')
+
+			renderHook(() => usePostHogPageview())
+			routeChangeHandler('/blog')
+
+			expect(mockCapture).toHaveBeenCalledWith('$pageview')
+		})
+
 		it('unregisters event listener on unmount', async () => {
 			const {usePostHogPageview} = await import('../lib/usePostHog')
 
