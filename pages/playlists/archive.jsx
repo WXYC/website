@@ -59,6 +59,73 @@ function weekFromQuery(value, today) {
 	return clampWeekToArchive(value, today)
 }
 
+/**
+ * The marks a track row can carry in its leading column, and the words the
+ * key below the heading uses for them.
+ *
+ * Both are flags about a single play, so they share one column rather than
+ * being scattered across the row — a request used to be the literal text
+ * "(request)" three columns over, in a different vocabulary from the rotation
+ * mark. The bin a rotation play came from is deliberately not named: that is
+ * the library's own H/M/L/S weighting (wxyc-shared/api.yaml `RotationBin`),
+ * internal bookkeeping about how hard a record is being pushed rather than
+ * anything a listener reading a playlist is asking. See WXYC/website#236 and
+ * #239.
+ */
+const ROW_MARKERS = [
+	{
+		glyph: '\u25CF',
+		label: 'In rotation',
+		has: (entry) => Boolean(entry.rotation_bin),
+	},
+	{
+		glyph: '\u2605',
+		label: 'Listener request',
+		has: (entry) => Boolean(entry.request_flag),
+	},
+]
+
+/**
+ * The leading cell's marks for one track.
+ *
+ * Each mark keeps `sr-only` text of its own. The key is a visual aid, and a
+ * screen reader working through a table has no way back up the page to
+ * interpret a bare glyph — worse here than elsewhere, because the header row
+ * on these tables is itself `sr-only`.
+ */
+function RowMarkers({entry}) {
+	return (
+		<span className="inline-flex items-center justify-center gap-1">
+			{ROW_MARKERS.filter((marker) => marker.has(entry)).map((marker) => (
+				<span key={marker.label}>
+					<span aria-hidden="true" title={marker.label}>
+						{marker.glyph}
+					</span>
+					<span className="sr-only">{marker.label}</span>
+				</span>
+			))}
+		</span>
+	)
+}
+
+/** What the marks mean, printed once above the list. */
+function MarkerKey() {
+	return (
+		<ul
+			role="list"
+			aria-label="What the marks mean"
+			className="mb-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/60"
+		>
+			{ROW_MARKERS.map((marker) => (
+				<li key={marker.label}>
+					<span aria-hidden="true">{marker.glyph}</span>{' '}
+					{marker.label.toLowerCase()}
+				</li>
+			))}
+		</ul>
+	)
+}
+
 function EntryRow({entry}) {
 	if (!isTrack(entry)) {
 		const message = describeNonTrackEntry(entry)
@@ -76,35 +143,13 @@ function EntryRow({entry}) {
 
 	return (
 		<tr className="border-b border-white/10 last:border-0">
-			{/*
-			 * A rotation playcut is marked, but the bin it came from is not
-			 * named. `rotation_bin` is the library's own H/M/L/S weighting
-			 * (wxyc-shared/api.yaml `RotationBin`) — internal bookkeeping about
-			 * how hard a record is being pushed, which is not what a listener
-			 * reading a playlist is asking. The public answer is the binary
-			 * one: this was in rotation, that was a DJ's own pick.
-			 */}
 			<td className="px-3 py-1.5 text-center text-xs text-white/60">
-				{entry.rotation_bin ? (
-					<>
-						<span aria-hidden="true" title="In rotation">
-							&#9679;
-						</span>
-						<span className="sr-only">In rotation</span>
-					</>
-				) : null}
+				<RowMarkers entry={entry} />
 			</td>
 			<td className="px-3 py-1.5">{entry.artist_name}</td>
 			<td className="px-3 py-1.5">{entry.track_title}</td>
 			<td className="px-3 py-1.5 text-white/70">{entry.album_title}</td>
-			<td className="px-3 py-1.5 text-white/70">
-				{entry.record_label}
-				{entry.request_flag ? (
-					<span className="ml-1 text-white/50" title="Listener request">
-						(request)
-					</span>
-				) : null}
-			</td>
+			<td className="px-3 py-1.5 text-white/70">{entry.record_label}</td>
 		</tr>
 	)
 }
@@ -374,9 +419,16 @@ const ArchivePlaylists = () => {
 								: 'No playlists were recorded this week.'}
 						</p>
 					) : (
-						(days ?? []).map((day) => (
-							<DayBlock key={day.date} day={day} isFuture={day.date > today} />
-						))
+						<>
+							<MarkerKey />
+							{(days ?? []).map((day) => (
+								<DayBlock
+									key={day.date}
+									day={day}
+									isFuture={day.date > today}
+								/>
+							))}
+						</>
 					)}
 				</ReadableSurface>
 			</div>

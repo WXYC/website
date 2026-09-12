@@ -70,7 +70,8 @@ describe('Live playlist page', () => {
 		render(<LivePlaylist />)
 		await flushPromises()
 
-		expect(screen.getByText('(request)')).toBeDefined()
+		const row = screen.getByText('Juana Molina').closest('tr')
+		expect(row.querySelector('td').textContent).toContain('Listener request')
 	})
 
 	it('renders a fetch failure as an alert rather than a blank page', async () => {
@@ -833,7 +834,9 @@ describe('Live playlist page', () => {
 
 			const row = screen.getByText('Juana Molina').closest('tr')
 			expect(row.textContent).toContain('In rotation')
-			expect(row.querySelector('td').textContent).not.toMatch(/[HMLS]/)
+			// Word-bounded: the marker labels legitimately contain those
+			// letters ("Listener request"), a bare bin letter would not.
+			expect(row.querySelector('td').textContent).not.toMatch(/\b[HMLS]\b/)
 		})
 
 		it('marks every bin the same way', async () => {
@@ -857,6 +860,67 @@ describe('Live playlist page', () => {
 			await flushPromises()
 
 			expect(screen.queryByText('In rotation')).toBeNull()
+		})
+	})
+
+	describe('row markers', () => {
+		it('prints a key naming both markers above the list', async () => {
+			// The table header is sr-only, so without this a sighted reader has
+			// nothing on the page that says what a marker means.
+			mockFetchOnce(envelope([track({rotation_bin: 'H', request_flag: true})]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const key = screen.getByRole('list', {name: /what the marks mean/i})
+			expect(key.textContent).toMatch(/in rotation/i)
+			expect(key.textContent).toMatch(/listener request/i)
+		})
+
+		it('marks a listener request in the leading column, not beside the label', async () => {
+			mockFetchOnce(envelope([track({request_flag: true})]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const row = screen.getByText('Juana Molina').closest('tr')
+			expect(row.textContent).not.toContain('(request)')
+			expect(row.querySelector('td').textContent).toContain('Listener request')
+		})
+
+		it('carries both markers on a requested rotation play', async () => {
+			mockFetchOnce(envelope([track({rotation_bin: 'M', request_flag: true})]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const cell = screen
+				.getByText('Juana Molina')
+				.closest('tr')
+				.querySelector('td')
+			expect(cell.textContent).toContain('In rotation')
+			expect(cell.textContent).toContain('Listener request')
+		})
+
+		it('leaves the column empty for a plain play', async () => {
+			mockFetchOnce(
+				envelope([track({rotation_bin: null, request_flag: false})])
+			)
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const cell = screen
+				.getByText('Juana Molina')
+				.closest('tr')
+				.querySelector('td')
+			expect(cell.textContent.trim()).toBe('')
+		})
+
+		it('omits the key when there is nothing to mark', async () => {
+			mockFetchOnce(envelope([]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			expect(
+				screen.queryByRole('list', {name: /what the marks mean/i})
+			).toBeNull()
 		})
 	})
 })
