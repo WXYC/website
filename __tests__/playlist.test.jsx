@@ -822,4 +822,41 @@ describe('Live playlist page', () => {
 			screen.getByRole('table').closest('[data-readable-surface]')
 		).not.toBeNull()
 	})
+
+	describe('rotation', () => {
+		it('marks a rotation playcut without naming the bin it came from', async () => {
+			// The public surface says a record was in rotation; which bin it sat
+			// in is library bookkeeping and not part of the answer.
+			mockFetchOnce(envelope([track({rotation_bin: 'H'})]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const row = screen.getByText('Juana Molina').closest('tr')
+			expect(row.textContent).toContain('In rotation')
+			expect(row.querySelector('td').textContent).not.toMatch(/[HMLS]/)
+		})
+
+		it('marks every bin the same way', async () => {
+			mockFetchOnce(
+				envelope([
+					track({id: 1, rotation_bin: 'H'}),
+					track({id: 2, rotation_bin: 'M', track_title: 'Segunda'}),
+					track({id: 3, rotation_bin: 'L', track_title: 'Tercera'}),
+					track({id: 4, rotation_bin: 'S', track_title: 'Cuarta'}),
+				])
+			)
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			expect(screen.getAllByText('In rotation')).toHaveLength(4)
+		})
+
+		it('leaves a non-rotation playcut unmarked', async () => {
+			mockFetchOnce(envelope([track({rotation_bin: null})]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			expect(screen.queryByText('In rotation')).toBeNull()
+		})
+	})
 })

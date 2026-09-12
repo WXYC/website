@@ -417,4 +417,25 @@ describe('Playlist archive page', () => {
 		const artist = await screen.findByText('Juana Molina')
 		expect(artist.closest('[data-readable-surface]')).not.toBeNull()
 	})
+
+	describe('rotation', () => {
+		it('marks a rotation playcut without naming the bin it came from', async () => {
+			mockFetchOnce(RANGE)
+			render(<ArchivePlaylists />)
+
+			const artist = await screen.findByText('Jessica Pratt')
+			const row = artist.closest('tr')
+			expect(row.textContent).toContain('In rotation')
+			expect(row.querySelector('td').textContent).not.toMatch(/[HMLS]/)
+		})
+
+		it('leaves a non-rotation playcut unmarked', async () => {
+			// The RANGE fixture's first track carries no rotation_bin.
+			mockFetchOnce(RANGE)
+			render(<ArchivePlaylists />)
+
+			const row = (await screen.findByText('Juana Molina')).closest('tr')
+			expect(row.textContent).not.toContain('In rotation')
+		})
+	})
 })
