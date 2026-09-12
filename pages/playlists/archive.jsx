@@ -17,6 +17,7 @@ import {
 	isTrack,
 } from '../../lib/flowsheetRange'
 import {getCachedWeek, setCachedWeek} from '../../lib/weekCache'
+import ReadableSurface from '../../components/ReadableSurface'
 
 /**
  * Public historical playlist archive — the successor to
@@ -131,7 +132,7 @@ function ShowBlock({show}) {
 						{airTime}
 					</span>
 				) : null}
-				<span className="ml-2 text-sm font-normal text-white/40">
+				<span className="ml-2 text-sm font-normal text-white/50">
 					{trackCount} {trackCount === 1 ? 'track' : 'tracks'}
 				</span>
 			</summary>
@@ -287,80 +288,82 @@ const ArchivePlaylists = () => {
 			</Head>
 
 			<div className="mx-auto w-full px-4 pb-16 sm:w-5/6">
-				<h1 className="kallisto mb-2 text-5xl">Playlist Archive</h1>
-				<p className="mb-6 text-white/70">
-					Every show WXYC has logged, week by week. Use the date picker to jump
-					anywhere back to 2004.
-				</p>
+				<ReadableSurface>
+					<h1 className="kallisto mb-2 text-5xl">Playlist Archive</h1>
+					<p className="mb-6 text-white/70">
+						Every show WXYC has logged, week by week. Use the date picker to
+						jump anywhere back to 2004.
+					</p>
 
-				<div className="mb-8 flex flex-wrap items-center gap-3">
-					<button
-						type="button"
-						onClick={() => goToWeek(previousWeek)}
-						disabled={!canGoBack}
-						className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
-					>
-						← Previous week
-					</button>
-					<label className="flex items-center gap-2">
-						<span className="sr-only">Jump to a date</span>
-						<input
-							type="date"
-							value={navWeek}
-							min={EARLIEST_ARCHIVE_DATE}
-							max={today}
-							onChange={(event) => {
-								const picked = weekFromQuery(event.target.value, today)
-								if (picked) goToWeek(picked)
-							}}
-							className="rounded border border-white/30 bg-transparent px-2 py-1"
-						/>
-					</label>
-					<button
-						type="button"
-						onClick={() => goToWeek(nextWeek)}
-						disabled={!canGoForward}
-						className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
-					>
-						Next week →
-					</button>
-				</div>
-
-				{week !== null ? (
-					<h2 className="mb-6 text-xl text-white/80">
-						Week of {formatCalendarDate(week, {weekday: undefined})}
-						{!isLoading && !error ? (
-							<span className="ml-2 text-base text-white/50">
-								{totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
-							</span>
-						) : null}
-					</h2>
-				) : null}
-
-				{isLoading ? (
-					<p role="status">Loading playlists…</p>
-				) : error ? (
-					<div role="alert">
-						<p className="mb-2">{error}</p>
+					<div className="mb-8 flex flex-wrap items-center gap-3">
 						<button
 							type="button"
-							onClick={() => setReloadToken((n) => n + 1)}
-							className="rounded border border-white/30 px-3 py-1"
+							onClick={() => goToWeek(previousWeek)}
+							disabled={!canGoBack}
+							className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
 						>
-							Retry
+							← Previous week
+						</button>
+						<label className="flex items-center gap-2">
+							<span className="sr-only">Jump to a date</span>
+							<input
+								type="date"
+								value={navWeek}
+								min={EARLIEST_ARCHIVE_DATE}
+								max={today}
+								onChange={(event) => {
+									const picked = weekFromQuery(event.target.value, today)
+									if (picked) goToWeek(picked)
+								}}
+								className="rounded border border-white/30 bg-transparent px-2 py-1"
+							/>
+						</label>
+						<button
+							type="button"
+							onClick={() => goToWeek(nextWeek)}
+							disabled={!canGoForward}
+							className="rounded border border-white/30 px-3 py-1 disabled:cursor-not-allowed disabled:opacity-40"
+						>
+							Next week →
 						</button>
 					</div>
-				) : days && days.every((day) => day.shows.length === 0) ? (
-					<p>
-						{week >= currentWeek
-							? 'Nothing has aired yet this week.'
-							: 'No playlists were recorded this week.'}
-					</p>
-				) : (
-					(days ?? []).map((day) => (
-						<DayBlock key={day.date} day={day} isFuture={day.date > today} />
-					))
-				)}
+
+					{week !== null ? (
+						<h2 className="mb-6 text-xl text-white/80">
+							Week of {formatCalendarDate(week, {weekday: undefined})}
+							{!isLoading && !error ? (
+								<span className="ml-2 text-base text-white/50">
+									{totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
+								</span>
+							) : null}
+						</h2>
+					) : null}
+
+					{isLoading ? (
+						<p role="status">Loading playlists…</p>
+					) : error ? (
+						<div role="alert">
+							<p className="mb-2">{error}</p>
+							<button
+								type="button"
+								onClick={() => setReloadToken((n) => n + 1)}
+								className="rounded border border-white/30 px-3 py-1"
+							>
+								Retry
+							</button>
+						</div>
+					) : days && days.every((day) => day.shows.length === 0) ? (
+						<p>
+							{week >= currentWeek
+								? 'Nothing has aired yet this week.'
+								: 'No playlists were recorded this week.'}
+						</p>
+					) : (
+						(days ?? []).map((day) => (
+							<DayBlock key={day.date} day={day} isFuture={day.date > today} />
+						))
+					)}
+				</ReadableSurface>
 			</div>
 		</>
 	)
