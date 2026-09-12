@@ -1,8 +1,8 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import Head from 'next/head'
 import {formatNumericDate} from '../lib/easternTime'
+import {FlowsheetFetchError, fetchRecentFlowsheet} from '../lib/flowsheet'
 import {
-	API_BASE,
 	compareEntriesByAirOrderDesc,
 	describeNonTrackEntry,
 	isTrack,
@@ -15,8 +15,8 @@ import ReadableSurface from '../components/ReadableSurface'
  * `wxyc.info/playlists/recent`, which goes dark at the 2026-09-07 tubafrenzy
  * cutover (WXYC/wiki#93).
  *
- * Data source: Backend-Service `GET /flowsheet?page=0&limit=50`. This is a
- * different endpoint from the range-based historical archive
+ * Data source: Backend-Service `GET /flowsheet`, through `lib/flowsheet.js`.
+ * That is a different endpoint from the range-based historical archive
  * (`pages/playlists/archive.jsx`, `GET /flowsheet/range`): it returns one flat
  * `entries` array plus pagination metadata and the currently on-air DJ — there
  * is no separate `shows` array and so no grouping step here. Track/non-track
@@ -30,8 +30,6 @@ import ReadableSurface from '../components/ReadableSurface'
  * Next.js resolves either extension to the same `/playlist` route.
  */
 
-const PAGE_LIMIT = 50
-
 /**
  * How often to re-poll while the page is open, in milliseconds.
  *
@@ -40,50 +38,6 @@ const PAGE_LIMIT = 50
  * surface reading it.
  */
 export const REFRESH_INTERVAL_MS = 60000
-
-/**
- * Marks a message as curated copy from {@link fetchRecentFlowsheet} itself,
- * as opposed to a raw message bubbling up from `fetch()` or `response.json()`.
- * A network failure, a CORS rejection, or a non-JSON body all reject with a
- * browser-authored `Error` whose `message` is technical ("Failed to fetch",
- * `Unexpected token '<'...`) and unfit for a public error state. Only a
- * `FlowsheetFetchError` message is safe to render verbatim; every other
- * rejection collapses to a generic fallback — see the `catch` in `load`
- * below.
- */
-class FlowsheetFetchError extends Error {}
-
-/**
- * Fetch the most recent page of the flowsheet.
- *
- * @param {object} [options]
- * @param {AbortSignal} [options.signal]
- * @param {typeof fetch} [options.fetchImpl] Injectable fetch, for tests.
- * @returns {Promise<{entries: Array, total: number, page: number, limit: number, totalPages: number, on_air: ?{dj_name: ?string}}>}
- * @throws {FlowsheetFetchError} On a non-OK response.
- */
-async function fetchRecentFlowsheet(options = {}) {
-	const {signal, fetchImpl = fetch} = options
-
-	const response = await fetchImpl(
-		`${API_BASE}/flowsheet?page=0&limit=${PAGE_LIMIT}`,
-		{
-			// Public, anonymous read — no session to send, and sending one would
-			// defeat the origin-scoped CORS allowlist Backend-Service exposes to
-			// wxyc.org.
-			credentials: 'omit',
-			signal,
-		}
-	)
-
-	if (!response.ok) {
-		throw new FlowsheetFetchError(
-			`Could not load the playlist (${response.status}).`
-		)
-	}
-
-	return response.json()
-}
 
 /** An instant as a local `HH:MM` clock time, for the staleness notice. */
 function formatClockTime(date) {
