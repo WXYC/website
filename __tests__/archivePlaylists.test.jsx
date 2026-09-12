@@ -112,7 +112,10 @@ describe('Playlist archive page', () => {
 		expect(screen.getByText('DOGA')).toBeDefined()
 		expect(screen.getByText('Sonamos')).toBeDefined()
 		expect(screen.getByText('Jessica Pratt')).toBeDefined()
-		expect(screen.getByText('(request)')).toBeDefined()
+		expect(
+			screen.getByText('Jessica Pratt').closest('tr').querySelector('td')
+				.textContent
+		).toContain('Listener request')
 	})
 
 	it('keeps each playlist collapsed behind its schedule line', async () => {
@@ -426,7 +429,9 @@ describe('Playlist archive page', () => {
 			const artist = await screen.findByText('Jessica Pratt')
 			const row = artist.closest('tr')
 			expect(row.textContent).toContain('In rotation')
-			expect(row.querySelector('td').textContent).not.toMatch(/[HMLS]/)
+			// Word-bounded: the marker labels legitimately contain those
+			// letters ("Listener request"), a bare bin letter would not.
+			expect(row.querySelector('td').textContent).not.toMatch(/\b[HMLS]\b/)
 		})
 
 		it('leaves a non-rotation playcut unmarked', async () => {
@@ -436,6 +441,29 @@ describe('Playlist archive page', () => {
 
 			const row = (await screen.findByText('Juana Molina')).closest('tr')
 			expect(row.textContent).not.toContain('In rotation')
+		})
+	})
+
+	describe('row markers', () => {
+		it('prints a key naming both markers above the week', async () => {
+			mockFetchOnce(RANGE)
+			render(<ArchivePlaylists />)
+
+			const key = await screen.findByRole('list', {
+				name: /what the marks mean/i,
+			})
+			expect(key.textContent).toMatch(/in rotation/i)
+			expect(key.textContent).toMatch(/listener request/i)
+		})
+
+		it('marks a listener request in the leading column, not beside the label', async () => {
+			// The RANGE fixture's Jessica Pratt entry is flagged as a request.
+			mockFetchOnce(RANGE)
+			render(<ArchivePlaylists />)
+
+			const row = (await screen.findByText('Jessica Pratt')).closest('tr')
+			expect(row.textContent).not.toContain('(request)')
+			expect(row.querySelector('td').textContent).toContain('Listener request')
 		})
 	})
 })
