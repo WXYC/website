@@ -59,7 +59,7 @@ import logging
 import random
 import sys
 from datetime import datetime, timedelta, timezone
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 LOG = logging.getLogger("mock-backend")
@@ -124,7 +124,18 @@ def track_entry(index, show_id, play_order, aired_at):
     }
 
 
-def recent_flowsheet(limit):
+# `on_air` is a three-way contract (pages/playlist.jsx): an object names a
+# live DJ, JSON `null` confirms the station is on automation, and an absent
+# key means the server does not know. Each renders differently, so serving
+# only the first left two of the three unreachable -- exactly the kind of gap
+# this file exists to close. `?on_air=auto|unknown` picks the other two.
+ON_AIR_MODES = {
+    "live": {"dj_name": "DJ Biscuit"},
+    "auto": None,
+}
+
+
+def recent_flowsheet(limit, on_air="live"):
     """GET /flowsheet -- newest-first entries plus who is on the air."""
     now = datetime.now(timezone.utc)
     entries = []
@@ -150,7 +161,13 @@ def recent_flowsheet(limit):
         "page": 0,
         "limit": limit,
         "totalPages": TOTAL_PAGES,
-        "on_air": {"dj_name": "DJ Biscuit"},
+        # Absent entirely for "unknown", not null -- the page distinguishes
+        # those two and only key-presence can express it.
+        **(
+            {"on_air": ON_AIR_MODES[on_air]}
+            if on_air in ON_AIR_MODES
+            else {}
+        ),
     }
 
 
@@ -217,15 +234,26 @@ SEARCH_FIELDS = {
     "dj": "dj_name",
 }
 
+# `date:` and `dateRange:` filter on the play instant rather than on a text
+# column, so they are recognised separately. They have to be recognised at
+# all: falling through to the free-text branch makes `date:2026-09-11` match
+# nothing, so a supported production query looks broken in preview -- and the
+# page would already be showing "one of your field filters has no value" for a
+# bare `date:`, since `hasEmptyFieldFilter` knows the prefix even when this
+# file did not. `FIELD_PREFIXES` in lib/flowsheetSearch.js is the list both
+# sides answer to.
+SEARCH_DATE_FIELDS = ("date", "daterange")
+
 
 def _matches(row, query):
     """Whether one row satisfies `q`.
 
     A deliberately shallow stand-in for the real parser: it understands a bare
-    substring, the `field:value` prefixes, and splitting on AND. It does NOT
-    understand OR, NOT, quoting or precedence -- so a query that exercises
-    those will behave differently here than in production, and that difference
-    is the mock's, not the page's. It exists so the search box can be *seen*
+    substring, every `field:value` prefix the real parser recognises, and
+    splitting on AND. It does NOT understand OR, NOT, quoting or precedence,
+    and `dateRange:` is recognised but passes everything -- so a query that
+    exercises those will behave differently here than in production, and that
+    difference is the mock's, not the page's. It exists so the search box can be *seen*
     to filter while previewing, which matters because the page's empty,
     no-results and pagination states are unreachable when every query returns
     everything.
@@ -238,14 +266,28 @@ def _matches(row, query):
         if not clause:
             continue
         field, _, value = clause.partition(":")
+        field = field.strip().lower()
         value = value.strip().strip('"')
-        if _ and field.strip().lower() in SEARCH_FIELDS:
+        if _ and field in SEARCH_DATE_FIELDS:
             # A prefix with nothing after it is silently dropped by the real
             # backend rather than rejected -- mirrored here so the page's
             # "one of your field filters has no value" notice can be seen.
             if not value:
                 continue
-            haystack = str(row.get(SEARCH_FIELDS[field.strip().lower()], ""))
+            # `date:` matches the calendar day of the play; `dateRange:` is
+            # recognised but not implemented, and passes everything rather than
+            # matching nothing. Both beat falling through to free text, which
+            # compared the literal string "date:2026-09-11" against artist and
+            # title and returned an empty page for a query production supports.
+            if field == "daterange":
+                continue
+            if not str(row.get("play_date", "")).startswith(value):
+                return False
+            continue
+        if _ and field in SEARCH_FIELDS:
+            if not value:
+                continue
+            haystack = str(row.get(SEARCH_FIELDS[field], ""))
         else:
             haystack = " ".join(
                 str(row.get(k, ""))
@@ -257,36 +299,68 @@ def _matches(row, query):
     return True
 
 
-def search_results(query, page, limit):
-    """GET /flowsheet/search -- one page of matches, capped total."""
-    now = datetime.now(timezone.utc)
+def _search_row(i, now):
+    """The i-th most recent play, counting back from `now`."""
+    artist, title, album, label = ARTISTS[i % len(ARTISTS)]
+    played_at = now - timedelta(hours=3 * i)
+    return {
+        "id": 5292849 + i,
+        # Postgres's default text form, offset included:
+        # `2026-07-21 15:47:47.654+00`. The `[:-3]` trims microseconds to
+        # milliseconds and must land before the offset is appended -- with the
+        # offset inside the strftime string it trimmed `+00` instead, leaving a
+        # bare local-looking timestamp. That quietly made
+        # `normalizePgTimestamp`'s offset branch, the whole reason that helper
+        # exists, unreachable in preview.
+        "play_date": played_at.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + "+00",
+        "artist_name": artist,
+        "track_title": title,
+        "album_title": album,
+        "record_label": label,
+        "show_id": 1950477 - (i % 60),
+        "dj_name": DJS[i % len(DJS)],
+    }
 
-    # Build a deep pool first, then filter, so paging and the empty state are
-    # both reachable. An unfiltered query keeps the capped-sentinel total the
-    # real endpoint returns for its most-recent-tracks default.
+
+def search_results(query, page, limit):
+    """GET /flowsheet/search -- one page of matches.
+
+    The two branches report their totals differently because the real endpoint
+    does. An empty query is the most-recent-tracks default over a 2.6M-row
+    table, so `total` is the capped `COUNT_CAP + 1` sentinel and `totalPages`
+    is far beyond anything worth generating -- rows for it are therefore
+    produced on demand for whatever page is asked for, rather than sliced out
+    of a fixed pool. Slicing a 400-row pool against a 401-page claim served a
+    blank table with a live Next button from page 17 on, and put the depth-clamp
+    copy -- one of the states this file exists to make viewable -- permanently
+    behind that blank table.
+
+    A real query filters a finite pool and reports honest counts, so the
+    result-count line and the last page both say something true.
+    """
+    now = datetime.now(timezone.utc)
+    trimmed = (query or "").strip()
+
+    if not trimmed:
+        start = page * limit
+        return {
+            "results": [_search_row(start + n, now) for n in range(limit)],
+            "total": SEARCH_COUNT_SENTINEL,
+            # Derived, not hardcoded: a hardcoded 401 silently assumed
+            # `limit=25` and went inconsistent for any other page size.
+            "totalPages": -(-SEARCH_COUNT_SENTINEL // limit),
+            "page": page,
+        }
+
     pool = []
     for i in range(len(ARTISTS) * 40):
-        artist, title, album, label = ARTISTS[i % len(ARTISTS)]
-        played_at = now - timedelta(hours=3 * i)
-        pool.append(
-            {
-                "id": 5292849 + i,
-                "play_date": played_at.strftime("%Y-%m-%d %H:%M:%S.%f+00")[:-3],
-                "artist_name": artist,
-                "track_title": title,
-                "album_title": album,
-                "record_label": label,
-                "show_id": 1950477 - (i % 60),
-                "dj_name": DJS[i % len(DJS)],
-            }
-        )
+        pool.append(_search_row(i, now))
 
-    matched = [row for row in pool if _matches(row, query)]
+    matched = [row for row in pool if _matches(row, trimmed)]
     start = page * limit
     results = matched[start : start + limit]
-
-    total = SEARCH_COUNT_SENTINEL if not (query or "").strip() else len(matched)
-    total_pages = 401 if total == SEARCH_COUNT_SENTINEL else -(-total // limit)
+    total = len(matched)
+    total_pages = -(-total // limit)
 
     return {
         "results": results,
@@ -297,12 +371,25 @@ def search_results(query, page, limit):
 
 
 def week_range(start_ms):
-    """GET /flowsheet/range -- a week of shows, three a day, with entries."""
+    """GET /flowsheet/range -- a week of shows, with entries.
+
+    Two deliberate gaps, because `archive.jsx` renders both and neither was
+    reachable when every day held three shows. Wednesday is left empty, so the
+    "No playlists recorded for this day" branch can be seen. And days after
+    the present are skipped, so previewing the current week shows the "Not yet
+    aired" branch rather than a full week of shows the station has not played
+    -- which is what a visitor actually lands on.
+    """
     start = datetime.fromtimestamp(start_ms / 1000, timezone.utc)
+    now = datetime.now(timezone.utc)
     # Seeded so reloading the same week is stable rather than reshuffling.
     rng = random.Random(start_ms)
     shows, entries = [], []
     for day in range(7):
+        if day == 2:
+            continue
+        if start + timedelta(days=day) > now:
+            continue
         for slot in range(3):
             show_id = 1000 + day * 10 + slot
             begins = start + timedelta(days=day, hours=10 + slot * 3)
@@ -338,7 +425,19 @@ def week_range(start_ms):
 
 
 class MockBackendHandler(BaseHTTPRequestHandler):
+    # HTTP/1.1 means keep-alive, which means a connection stays open between
+    # requests -- and `handle_one_request` then blocks reading the next one.
+    # Paired with a single-threaded server that wedges the whole mock on the
+    # first idle socket: a browser opens several connections per origin, so the
+    # live playlist's 60s poll overlapping a navigation, or a second tab on the
+    # archive, is enough to hang every subsequent request forever. It reads as
+    # "the mock is broken" rather than "the mock is serial". Hence
+    # `ThreadingHTTPServer` below, and a read timeout here so an abandoned
+    # keep-alive socket is reaped instead of pinning a thread.
     protocol_version = "HTTP/1.1"
+    timeout = 30
+
+    headers_sent = False
 
     def end_headers(self):
         """Attach CORS to *every* response, errors included.
@@ -362,6 +461,7 @@ class MockBackendHandler(BaseHTTPRequestHandler):
         """
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "*")
+        self.headers_sent = True
         super().end_headers()
 
     def _send_json(self, payload):
@@ -411,7 +511,12 @@ class MockBackendHandler(BaseHTTPRequestHandler):
                     else:
                         self._send_json(entries)
                 else:
-                    self._send_json(recent_flowsheet(number("limit", 50)))
+                    self._send_json(
+                        recent_flowsheet(
+                            number("limit", 50),
+                            query.get("on_air", ["live"])[0],
+                        )
+                    )
             elif url.path == "/flowsheet/search":
                 self._send_json(
                     search_results(
@@ -424,9 +529,17 @@ class MockBackendHandler(BaseHTTPRequestHandler):
                 self._send_json(week_range(number("start", 0)))
             else:
                 self.send_error(404, "No mock for this path")
+        except (BrokenPipeError, ConnectionResetError):
+            # The client went away mid-response -- which both consuming pages
+            # do as a matter of course, aborting a superseded poll or a
+            # week change. Writing an error to a socket that has already
+            # failed raises again on the way out, so one abandoned request
+            # became two tracebacks that looked like server bugs.
+            LOG.info("client closed the connection during %s", self.path)
         except Exception:
             LOG.exception("failed to serve %s", self.path)
-            self.send_error(500, "Mock handler raised")
+            if not self.headers_sent:
+                self.send_error(500, "Mock handler raised")
 
     def log_message(self, fmt, *args):
         LOG.info("%s %s", self.address_string(), fmt % args)
@@ -435,15 +548,31 @@ class MockBackendHandler(BaseHTTPRequestHandler):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--port", type=int, default=8899)
-    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="loopback only; this server has no auth and sends CORS '*'",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
     )
 
+    # The wildcard CORS and the absent auth are both justified, in the module
+    # docstring and at `end_headers`, by "this only ever listens on
+    # 127.0.0.1". A `--host 0.0.0.0` would put a wide-open server on the LAN
+    # while those comments went on asserting it could not happen, so the flag
+    # is held to the claim rather than the claim softened.
+    if args.host not in ("127.0.0.1", "::1", "localhost"):
+        LOG.error(
+            "refusing to bind %s: loopback only (127.0.0.1, ::1, localhost)",
+            args.host,
+        )
+        return 1
+
     try:
-        server = HTTPServer((args.host, args.port), MockBackendHandler)
+        server = ThreadingHTTPServer((args.host, args.port), MockBackendHandler)
     except OSError as error:
         LOG.error(
             "could not bind %s:%s (%s) -- is another copy already running?",
