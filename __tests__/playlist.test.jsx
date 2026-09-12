@@ -335,6 +335,51 @@ describe('Live playlist page', () => {
 		expect(screen.getByText('TALKSET')).toBeDefined()
 	})
 
+	describe('searching from the playlist', () => {
+		it('hands the query to the airplay search page rather than filtering what is on screen', async () => {
+			// A box that filtered the 50 rows on screen would look like it
+			// searched the archive and quietly not. Handing off means one
+			// search implementation, and everything `lib/flowsheetSearch.js`
+			// knows about field filters and paging depth applies to it.
+			mockFetchOnce(envelope([track()]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			fireEvent.change(screen.getByRole('searchbox'), {
+				target: {value: 'Jessica Pratt'},
+			})
+			fireEvent.submit(screen.getByRole('search'))
+
+			expect(push).toHaveBeenCalledWith('/airplay-search?q=Jessica+Pratt')
+		})
+
+		it('encodes a query with search syntax in it', async () => {
+			mockFetchOnce(envelope([track()]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			fireEvent.change(screen.getByRole('searchbox'), {
+				target: {value: 'artist:foo AND album:"bar"'},
+			})
+			fireEvent.submit(screen.getByRole('search'))
+
+			const [target] = push.mock.calls[0]
+			expect(new URL(target, 'https://wxyc.org').searchParams.get('q')).toBe(
+				'artist:foo AND album:"bar"'
+			)
+		})
+
+		it('does nothing on an empty submit rather than navigating away', async () => {
+			mockFetchOnce(envelope([track()]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			fireEvent.submit(screen.getByRole('search'))
+
+			expect(push).not.toHaveBeenCalled()
+		})
+	})
+
 	describe('stepping back through sets', () => {
 		const signOn = {
 			id: 300,
