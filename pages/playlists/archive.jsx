@@ -76,8 +76,23 @@ function EntryRow({entry}) {
 
 	return (
 		<tr className="border-b border-white/10 last:border-0">
+			{/*
+			 * A rotation playcut is marked, but the bin it came from is not
+			 * named. `rotation_bin` is the library's own H/M/L/S weighting
+			 * (wxyc-shared/api.yaml `RotationBin`) — internal bookkeeping about
+			 * how hard a record is being pushed, which is not what a listener
+			 * reading a playlist is asking. The public answer is the binary
+			 * one: this was in rotation, that was a DJ's own pick.
+			 */}
 			<td className="px-3 py-1.5 text-center text-xs text-white/60">
-				{entry.rotation_bin || ''}
+				{entry.rotation_bin ? (
+					<>
+						<span aria-hidden="true" title="In rotation">
+							&#9679;
+						</span>
+						<span className="sr-only">In rotation</span>
+					</>
+				) : null}
 			</td>
 			<td className="px-3 py-1.5">{entry.artist_name}</td>
 			<td className="px-3 py-1.5">{entry.track_title}</td>
