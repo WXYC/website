@@ -1,10 +1,19 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import Head from 'next/head'
+import {useRouter} from 'next/router'
 import {formatNumericDate} from '../lib/easternTime'
-import {FlowsheetFetchError, fetchRecentFlowsheet} from '../lib/flowsheet'
 import {
+	EmptySetError,
+	FlowsheetFetchError,
+	describeSet,
+	fetchRecentFlowsheet,
+	fetchSet,
+} from '../lib/flowsheet'
+import {
+	UNKNOWN_DJ_LABEL,
 	compareEntriesByAirOrderDesc,
 	describeNonTrackEntry,
+	formatShowTime,
 	isTrack,
 } from '../lib/flowsheetRange'
 import ReadableSurface from '../components/ReadableSurface'
@@ -38,6 +47,46 @@ import ReadableSurface from '../components/ReadableSurface'
  * surface reading it.
  */
 export const REFRESH_INTERVAL_MS = 60000
+
+/**
+ * The `?set=` value for the landing view — the rolling window of recent plays,
+ * as opposed to any one set.
+ *
+ * Zero rather than a separate sentinel because it is also the endpoint's own
+ * depth for "the current set", and `?set=0` arriving in the URL should mean
+ * the same thing as no `?set=` at all rather than being a third state.
+ */
+const LANDING_VIEW = 0
+
+/**
+ * Deepest set reachable by URL.
+ *
+ * Not a limit anyone can click into: stepping back one set at a time, this is
+ * further than the archive goes (production holds on the order of 70,000
+ * shows, but a reader would have to press the button 5,000 times to get
+ * here). It exists to bound a hand-typed or crawled `?set=`, so the offset
+ * Backend computes stays a number rather than whatever someone put in the
+ * query string.
+ */
+const MAX_SET_PAGE = 5000
+
+/**
+ * The set depth a query string is asking for.
+ *
+ * Anything that is not a positive integer within range — a float, a negative,
+ * a word, `?set=0` — resolves to the landing view rather than an error. A bad
+ * `?set=` is a typo or a crawler, and the rolling window is a better answer
+ * than a complaint.
+ *
+ * @param {unknown} value `router.query.set`
+ * @returns {number} `LANDING_VIEW`, or a set depth of 1 or more.
+ */
+export function setPageFromQuery(value) {
+	if (typeof value !== 'string' || !/^\d+$/.test(value)) return LANDING_VIEW
+	const page = Number(value)
+	if (page < 1 || page > MAX_SET_PAGE) return LANDING_VIEW
+	return page
+}
 
 /** An instant as a local `HH:MM` clock time, for the staleness notice. */
 function formatClockTime(date) {
@@ -166,7 +215,71 @@ function PlaylistRow({entry}) {
 	)
 }
 
+/**
+ * Step between the rolling landing view and one set at a time.
+ *
+ * The two halves are labelled differently on purpose, because they are not
+ * the same unit of content. The landing view is a fixed window of the most
+ * recent rows and spans several sets — which is why the list needs a
+ * cross-show sort at all. A set is one DJ's show, start to finish, whatever
+ * length that happens to be. Calling both of them "page" and putting Previous
+ * and Next either side would imply a sequence the two halves do not share:
+ * stepping "back" from the landing view lands on a set whose last rows are
+ * already on screen above.
+ *
+ * So: from the landing view there is one way out, "Earlier sets". From a set
+ * there are two, and the one that returns to the landing view says where it
+ * goes rather than calling it the next set.
+ *
+ * Going further back is never disabled. The endpoint reports an empty set and
+ * the end of the archive with the same 404, so a button disabled on that
+ * signal would turn one empty show in the middle of the archive into a
+ * permanent wall.
+ */
+function SetNav({page, onGo}) {
+	if (page === null) return null
+	const isLanding = page === LANDING_VIEW
+
+	return (
+		<nav
+			aria-label="Move between sets"
+			className="mt-6 flex flex-wrap items-center gap-3"
+		>
+			<button
+				type="button"
+				onClick={() => onGo(page + 1)}
+				className="rounded border border-white/30 px-3 py-1"
+			>
+				&larr; {isLanding ? 'Earlier sets' : 'Previous set'}
+			</button>
+			{isLanding ? null : (
+				<>
+					<span className="text-white/60">
+						{page === 1 ? 'One set back' : `${page} sets back`}
+					</span>
+					<button
+						type="button"
+						onClick={() => onGo(page - 1)}
+						className="rounded border border-white/30 px-3 py-1"
+					>
+						{page === 1 ? 'Now playing' : 'Next set'} &rarr;
+					</button>
+				</>
+			)}
+		</nav>
+	)
+}
+
 const LivePlaylist = () => {
+	const router = useRouter()
+
+	// Null until the router has resolved the query string, which on a static
+	// export is empty on the first render and populated after hydration. The
+	// archive page gates its week the same way and for the same reason: making
+	// "we have not read the URL yet" indistinguishable from "the URL asked for
+	// the landing view" sends a request for the landing view on every shared
+	// set link, before the set-reading effect's state update lands.
+	const [setPage, setSetPage] = useState(null)
 	// null until the first fetch resolves, so "no data yet" and "fetched an
 	// empty page" are distinguishable.
 	const [entries, setEntries] = useState(null)
@@ -202,7 +315,40 @@ const LivePlaylist = () => {
 	// arrived. `entries`/`error` are only ever written by the request that is
 	// still current at the time it settles (see the guard in `load` below), so
 	// deriving from them is automatically immune to the same bug class.
-	const isLoading = entries === null && error === null
+	const isLoading = setPage === null || (entries === null && error === null)
+	const isSetView = setPage !== null && setPage !== LANDING_VIEW
+
+	// The query string is empty on the first render of a statically exported
+	// page and populated once the router is ready, so the set has to be read
+	// then rather than during initialisation.
+	useEffect(() => {
+		if (!router.isReady) return
+		setSetPage(setPageFromQuery(router.query.set))
+	}, [router.isReady, router.query.set])
+
+	const goToSet = useCallback(
+		(nextSet) => {
+			router.push(
+				nextSet === LANDING_VIEW ? '/playlist' : `/playlist?set=${nextSet}`,
+				undefined,
+				{shallow: true}
+			)
+			// Cleared in the same batch as the navigation so a click repaints
+			// once, not twice: without this the commit that flips the heading
+			// still holds the old view's rows, and one frame captions one DJ's
+			// playlist with another DJ's name.
+			//
+			// This is an optimisation, not the guarantee. The guarantee is in
+			// the two fetch effects, which clear on entry and therefore cover
+			// the paths that never reach this function at all — Back, Forward,
+			// and any link that lands on a different `?set=`.
+			setEntries(null)
+			setOnAir(undefined)
+			setError(null)
+			setSetPage(nextSet)
+		},
+		[router]
+	)
 
 	const load = useCallback(async () => {
 		abortControllerRef.current?.abort()
@@ -247,7 +393,76 @@ const LivePlaylist = () => {
 		}
 	}, [])
 
+	// One whole set, fetched once. Deliberately not polled: an archived set is
+	// immutable, and re-requesting it every minute would be pure waste. It is
+	// the same reason dj-site keeps `getShowPlaylist` cached for ten minutes.
 	useEffect(() => {
+		if (setPage === null || setPage === LANDING_VIEW) return
+
+		// Cleared on entry, before the fetch. This runs for every change of
+		// `setPage`, not only the ones a button caused — which is the point:
+		// Back and Forward change `?set=` through the router-query effect,
+		// which calls no handler of ours.
+		const controller = new AbortController()
+		setEntries(null)
+		setOnAir(undefined)
+		setError(null)
+
+		fetchSet(setPage, {signal: controller.signal})
+			.then((rows) => {
+				// Sorted with the same comparator the landing view uses rather
+				// than trusting the endpoint's order. Backend orders this branch
+				// `desc(play_order), desc(id)`, which for a single set already
+				// agrees — but one rule applied to both views beats two rules
+				// that happen to agree, since only one of them is ours.
+				//
+				// Newest-first, so the list does not invert when a reader steps
+				// back a set. Deliberately unlike the archive page, which reads
+				// a show chronologically; see `fetchSet` for why the reading
+				// direction belongs to the page rather than to the set.
+				setEntries([...rows].sort(compareEntriesByAirOrderDesc))
+			})
+			.catch((err) => {
+				if (err?.name === 'AbortError') return
+				if (err instanceof EmptySetError) {
+					// Not an error state. The set is real and simply has no rows
+					// — which is also what paging past the oldest show looks
+					// like, and the status cannot tell the two apart. So the
+					// navigation stays exactly as it was: treating this as the
+					// end of the archive would turn one empty show in the middle
+					// of it into a permanent wall.
+					setEntries([])
+					return
+				}
+				setError(
+					err instanceof FlowsheetFetchError
+						? err.message
+						: 'Could not load that set.'
+				)
+			})
+
+		return () => controller.abort()
+	}, [setPage])
+
+	useEffect(() => {
+		if (setPage !== LANDING_VIEW) return
+
+		// Entering the landing view — on first load, from a button, or from
+		// Back. Whatever is on screen belongs to a different view, and saying
+		// so here rather than only in `goToSet` is what makes the history path
+		// safe: `setPage` also changes from the router-query effect above,
+		// which runs no handler of ours. Without this, backing out of a set
+		// left that set's rows under the "Live Playlist" heading with no
+		// spinner for a whole round trip — and, if the set had failed, left
+		// its error there too. See #216's third defect, which is this one.
+		//
+		// Not a poll-time reset: the interval calls `load` directly and never
+		// re-runs this effect, so a failed refresh still keeps the last good
+		// playlist on screen.
+		setEntries(null)
+		setOnAir(undefined)
+		setError(null)
+
 		// The interval is started/stopped rather than left running while the tab
 		// is hidden: the response is ~51 KB with `Cache-Control: no-cache`, and
 		// browsers already throttle a background tab's timers to about once a
@@ -289,22 +504,61 @@ const LivePlaylist = () => {
 			stopInterval()
 			abortControllerRef.current?.abort()
 		}
-	}, [load])
+	}, [load, setPage])
+
+	// Derived from the set's own rows: the `shows_limit` branch returns no
+	// `shows` metadata, so there is nothing else to build a header from.
+	const set = useMemo(
+		() => describeSet(isSetView ? entries ?? [] : []),
+		[entries, isSetView]
+	)
+	const setAirTime = formatShowTime({
+		startTime: set.startTime,
+		endTime: set.endTime,
+	})
+	const setDate = formatNumericDate(set.startTime)
+
+	const heading = isSetView ? 'Earlier Set' : 'Live Playlist'
+	// Composed here rather than interpolated inside the element. A `<title>`
+	// may hold only a single text node, and `{heading} | WXYC` hands React an
+	// array of two — which it warns about at render time and which makes
+	// hydration fall back to client rendering for the whole page. Caught in
+	// preview: the set view rendered its server HTML and then never hydrated,
+	// so the page sat on "Loading the playlist…" with no rows and no
+	// background.
 
 	return (
 		<>
 			<Head>
-				<title>Live Playlist | WXYC</title>
+				<title>{`${heading} | WXYC`}</title>
 				<meta
 					name="description"
-					content="What WXYC 89.3 FM is playing right now."
+					content={
+						isSetView
+							? 'An earlier WXYC 89.3 FM set, start to finish.'
+							: 'What WXYC 89.3 FM is playing right now.'
+					}
 				/>
 			</Head>
 
 			<div className="mx-auto w-full px-4 pb-16 sm:w-5/6">
 				<ReadableSurface>
-					<h1 className="kallisto mb-2 text-5xl">Live Playlist</h1>
-					{onAir === null ? (
+					<h1 className="kallisto mb-2 text-5xl">{heading}</h1>
+					{isSetView ? (
+						<p className="mb-6 text-white/70">
+							{/* `UNKNOWN_DJ_LABEL`, not "Unattributed". `lib/flowsheetRange.js`
+							    reserves those two words for different facts and says so:
+							    unattributed means the rows belong to no show at all,
+							    which cannot happen here — this endpoint is addressed by
+							    show. What can happen is a show whose handle did not
+							    resolve, which is the other one. */}
+							<span className="text-white">
+								{set.djName ?? UNKNOWN_DJ_LABEL}
+							</span>
+							{setDate ? ` — ${setDate}` : null}
+							{setAirTime ? `, ${setAirTime}` : null}
+						</p>
+					) : onAir === null ? (
 						// Explicit JSON `null`, not an absent key: the backend is
 						// confirming the station is on automation, not merely silent
 						// about it. See the `onAir` state comment above.
@@ -320,12 +574,27 @@ const LivePlaylist = () => {
 						<p className="mb-6 text-white/70">The most recent songs on WXYC.</p>
 					)}
 
+					{/* Rendered once, above the list, and outside every state
+					    branch. Above, because on a set that can run to several
+					    hundred rows, navigation below the fold is navigation
+					    nobody finds. Outside the branches, because it used to be
+					    rendered twice — once beside the error and once under the
+					    table — which left the loading state with no way out at
+					    all, and had an alert region read the controls out along
+					    with the failure. Holding still across loading, error and
+					    empty also stops them jumping as a set loads. */}
+					<SetNav page={setPage} onGo={goToSet} />
+
 					{isLoading ? (
-						<p role="status">Loading the playlist…</p>
+						<p role="status">
+							{isSetView ? 'Loading the set…' : 'Loading the playlist…'}
+						</p>
 					) : error && entries === null ? (
-						<div role="alert">
-							<p>{error}</p>
-						</div>
+						<>
+							<div role="alert">
+								<p>{error}</p>
+							</div>
+						</>
 					) : (
 						<>
 							{error && entries !== null ? (
@@ -349,7 +618,16 @@ const LivePlaylist = () => {
 							) : null}
 
 							{entries && entries.length === 0 ? (
-								<p>Nothing has aired recently.</p>
+								<p>
+									{isSetView
+										? // Reached two ways the endpoint cannot tell apart
+											// — a set with no rows, and paging past the
+											// oldest show. Both are ordinary, and neither
+											// is the end of the archive. See
+											// `EmptySetError` in `lib/flowsheet.js`.
+											'Nothing was logged for this set.'
+										: 'Nothing has aired recently.'}
+								</p>
 							) : (
 								<>
 									<MarkerKey />

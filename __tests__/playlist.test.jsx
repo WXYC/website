@@ -1,6 +1,18 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {render, screen, act, fireEvent} from '@testing-library/react'
+import {render, screen, act, fireEvent, waitFor} from '@testing-library/react'
 import {createMockFetch, createTestLifecycle, testData} from './test-utils'
+
+const push = vi.fn()
+let routerQuery = {}
+let routerIsReady = true
+
+vi.mock('next/router', () => ({
+	useRouter: () => ({
+		isReady: routerIsReady,
+		query: routerQuery,
+		push,
+	}),
+}))
 
 vi.mock('next/head', () => ({
 	default: ({children}) => <>{children}</>,
@@ -37,7 +49,12 @@ async function advanceOneInterval() {
 
 const lifecycle = createTestLifecycle()
 
-beforeEach(lifecycle.beforeEach)
+beforeEach(() => {
+	lifecycle.beforeEach()
+	push.mockClear()
+	routerQuery = {}
+	routerIsReady = true
+})
 afterEach(() => {
 	lifecycle.afterEach()
 	vi.useRealTimers()
@@ -316,6 +333,299 @@ describe('Live playlist page', () => {
 			screen.getByText('Technical difficulties, back shortly')
 		).toBeDefined()
 		expect(screen.getByText('TALKSET')).toBeDefined()
+	})
+
+	describe('stepping back through sets', () => {
+		const signOn = {
+			id: 300,
+			show_id: 42,
+			play_order: 1,
+			add_time: '2026-08-10T22:39:10.563Z',
+			entry_type: 'show_start',
+			dj_name: 'DJ Decent',
+		}
+		const signOff = {
+			id: 309,
+			show_id: 42,
+			play_order: 9,
+			add_time: '2026-08-11T01:01:20.191Z',
+			entry_type: 'show_end',
+			dj_name: 'DJ Decent',
+		}
+		const setRows = [
+			signOff,
+			track({id: 305, show_id: 42, play_order: 5}),
+			signOn,
+		]
+
+		it('asks for one whole set, not a window of rows', async () => {
+			routerQuery = {set: '2'}
+			const fetchImpl = mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+
+			await waitFor(() => expect(fetchImpl).toHaveBeenCalled())
+			const url = new URL(fetchImpl.mock.calls[0][0])
+			expect(url.searchParams.get('shows_limit')).toBe('1')
+			expect(url.searchParams.get('page')).toBe('2')
+		})
+
+		it('captions the set from its own delimiter rows', async () => {
+			// This endpoint branch returns no `shows` metadata, so a header
+			// that named the DJ some other way would be naming them from
+			// nothing.
+			routerQuery = {set: '1'}
+			mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+
+			await screen.findByText('DJ Decent')
+			expect(screen.getByText(/08\/10\/2026/)).toBeDefined()
+			expect(screen.getByText(/6:39 PM – 9:01 PM/)).toBeDefined()
+		})
+
+		it('reads newest-first, like the landing view above it', async () => {
+			// Pinned deliberately. The archive page renders the same show
+			// chronologically and dj-site does too, so this looks like an
+			// oversight and has already been reported as one. It is not: the
+			// reading direction belongs to the page, and inverting the list
+			// when a reader steps back one set is the thing being avoided.
+			// Change it only on purpose.
+			routerQuery = {set: '1'}
+			mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+			await screen.findByText('DJ Decent signed off at 9:01 PM')
+
+			const rows = [...document.querySelectorAll('tbody tr')]
+			expect(rows[0].textContent).toContain('signed off')
+			expect(rows.at(-1).textContent).toContain('signed on')
+		})
+
+		it('does not poll an archived set', async () => {
+			// A set that has already aired cannot change. Polling it every
+			// minute would be pure waste, and the landing view's whole reason
+			// for a 60s interval — that the current show is still being
+			// written — does not apply.
+			vi.useFakeTimers()
+			routerQuery = {set: '1'}
+			const fetchImpl = mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+			await flushPromises()
+			await advanceOneInterval()
+			await advanceOneInterval()
+
+			expect(fetchImpl).toHaveBeenCalledTimes(1)
+		})
+
+		it('reports an empty set as empty, not as a failure, and keeps the way out', async () => {
+			// Backend answers a set with no rows — and paging past the oldest
+			// show — with the same 404. Neither is an outage, and neither is
+			// proof the archive has ended, so the navigation is untouched.
+			routerQuery = {set: '4000'}
+			mockFetchOnce({message: 'No Tracks found'}, {ok: false, status: 404})
+			render(<LivePlaylist />)
+
+			await screen.findByText(/Nothing was logged for this set/)
+			expect(screen.queryByRole('alert')).toBeNull()
+			expect(screen.getByRole('button', {name: /Previous set/})).toBeDefined()
+		})
+
+		it('renders a real failure as an alert that is not also a dead end', async () => {
+			routerQuery = {set: '1'}
+			mockFetchOnce(null, {ok: false, status: 503})
+			render(<LivePlaylist />)
+
+			const alert = await screen.findByRole('alert')
+			expect(alert.textContent).toContain('503')
+			expect(screen.getByRole('button', {name: /Previous set/})).toBeDefined()
+		})
+
+		it('keeps the controls reachable while the set is still loading', async () => {
+			// They used to be rendered only inside the loaded and errored
+			// branches, so the state you most want to leave — a slow or stuck
+			// load — was the one state with no way out of it.
+			routerQuery = {set: '2'}
+			global.fetch = vi.fn(() => new Promise(() => {}))
+			render(<LivePlaylist />)
+
+			expect(
+				screen.getByRole('navigation', {name: /move between sets/i})
+			).toBeDefined()
+			expect(screen.getByRole('status').textContent).toContain('Loading')
+		})
+
+		it('says the DJ is unknown, not that the set is unattributed', async () => {
+			// `lib/flowsheetRange.js` reserves those two words for different
+			// facts. "Unattributed" means rows that belong to no show, which
+			// this endpoint cannot return — it is addressed by show. Using it
+			// here would tell a reader something false about the data.
+			routerQuery = {set: '1'}
+			mockFetchOnce([
+				{
+					id: 400,
+					show_id: 42,
+					play_order: 1,
+					add_time: '2026-08-10T22:39:10.563Z',
+					entry_type: 'show_start',
+					dj_name: '',
+				},
+				track({id: 401, show_id: 42, play_order: 2}),
+			])
+			render(<LivePlaylist />)
+			await screen.findByText('Juana Molina')
+
+			expect(screen.getByText('Unknown DJ')).toBeDefined()
+			expect(screen.queryByText(/Unattributed/i)).toBeNull()
+		})
+
+		it('places the controls before the list in document order', async () => {
+			// On a set that can run to several hundred rows, navigation below
+			// the fold is navigation nobody finds.
+			routerQuery = {set: '1'}
+			mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+			await screen.findByText('DJ Decent')
+
+			const nav = screen.getByRole('navigation', {name: /move between sets/i})
+			const table = document.querySelector('table')
+
+			expect(
+				nav.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING
+			).toBeTruthy()
+		})
+
+		it('offers one way out of the landing view, and names it for what it is', async () => {
+			// The landing view is a window of recent rows spanning several
+			// sets; a set is one show. Labelling both halves "page" would
+			// promise a sequence they do not share.
+			mockFetchOnce(envelope([track()]))
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			const earlier = screen.getByRole('button', {name: /Earlier sets/})
+			expect(screen.queryByRole('button', {name: /Next set/})).toBeNull()
+
+			fireEvent.click(earlier)
+			expect(push).toHaveBeenCalledWith('/playlist?set=1', undefined, {
+				shallow: true,
+			})
+		})
+
+		it('returns to the landing view from the first set rather than calling it the next set', async () => {
+			routerQuery = {set: '1'}
+			mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+			await screen.findByText('DJ Decent')
+
+			fireEvent.click(screen.getByRole('button', {name: /Now playing/}))
+			expect(push).toHaveBeenCalledWith('/playlist', undefined, {
+				shallow: true,
+			})
+		})
+
+		it('steps further back from a set', async () => {
+			routerQuery = {set: '3'}
+			mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+			await screen.findByText('DJ Decent')
+
+			expect(screen.getByText('3 sets back')).toBeDefined()
+			fireEvent.click(screen.getByRole('button', {name: /Previous set/}))
+			expect(push).toHaveBeenCalledWith('/playlist?set=4', undefined, {
+				shallow: true,
+			})
+		})
+
+		it('does not render an archived set as the live playlist after Back', async () => {
+			// The regression #216 warned about, in a new place. `goToSet` is
+			// not the only thing that changes `setPage` — Back and Forward
+			// change `?set=` through the router-query effect, which calls no
+			// handler of ours. Every other test in this file drives the set
+			// through a button, so none of them can reach this path: the
+			// router mock's `push` never writes back to `routerQuery`.
+			routerQuery = {set: '1'}
+			// The landing fetch is left pending on purpose. The defect was that
+			// the archived set stayed on screen *while it was in flight*, with
+			// no spinner, so the assertion has to be made in that window
+			// rather than after fresh data has replaced it.
+			global.fetch = vi.fn((url) =>
+				String(url).includes('shows_limit')
+					? Promise.resolve({
+							ok: true,
+							status: 200,
+							json: () => Promise.resolve(setRows),
+						})
+					: new Promise(() => {})
+			)
+
+			const {rerender} = render(<LivePlaylist />)
+			await screen.findByText('DJ Decent')
+			expect(screen.getByText('Juana Molina')).toBeDefined()
+
+			// Back: the URL loses `?set=`, and nothing else happens.
+			routerQuery = {}
+			await act(async () => {
+				rerender(<LivePlaylist />)
+			})
+
+			// The heading has flipped, so the set's rows must not still be
+			// under it — neither captioned as live, nor with no spinner.
+			expect(screen.queryByText('DJ Decent')).toBeNull()
+			expect(screen.queryByText('Juana Molina')).toBeNull()
+			expect(screen.getByRole('status').textContent).toContain('Loading')
+		})
+
+		it('does not carry a failed set’s error onto the live playlist after Back', async () => {
+			// The sharper variant: `error` survives the same way `entries`
+			// does, so backing out of a set that 503'd put its alert under the
+			// "Live Playlist" heading.
+			routerQuery = {set: '1'}
+			// Landing fetch left pending for the same reason as above: if it
+			// resolves, `load` clears the error incidentally and the test
+			// passes whether or not the effect clears it on entry.
+			global.fetch = vi.fn((url) =>
+				String(url).includes('shows_limit')
+					? Promise.resolve({ok: false, status: 503, json: () => ({})})
+					: new Promise(() => {})
+			)
+
+			const {rerender} = render(<LivePlaylist />)
+			const alert = await screen.findByRole('alert')
+			expect(alert.textContent).toContain('503')
+
+			routerQuery = {}
+			await act(async () => {
+				rerender(<LivePlaylist />)
+			})
+
+			expect(screen.queryByRole('alert')).toBeNull()
+		})
+
+		it.each([['0'], ['-1'], ['1.5'], ['abc'], ['999999']])(
+			'treats ?set=%s as the landing view rather than as an error',
+			async (value) => {
+				routerQuery = {set: value}
+				const fetchImpl = mockFetchOnce(envelope([track()]))
+				render(<LivePlaylist />)
+				await waitFor(() => expect(fetchImpl).toHaveBeenCalled())
+
+				const url = new URL(fetchImpl.mock.calls[0][0])
+				expect(url.searchParams.get('shows_limit')).toBeNull()
+				expect(screen.getByRole('button', {name: /Earlier sets/})).toBeDefined()
+			}
+		)
+
+		it('waits for the router before fetching anything', async () => {
+			// On a static export the query string is empty on the first render.
+			// Fetching the landing view before reading it would spend a request
+			// on the wrong view for every shared set link.
+			routerIsReady = false
+			routerQuery = {set: '1'}
+			const fetchImpl = mockFetchOnce(setRows)
+			render(<LivePlaylist />)
+			await flushPromises()
+
+			expect(fetchImpl).not.toHaveBeenCalled()
+			expect(screen.getByRole('status').textContent).toContain('Loading')
+		})
 	})
 
 	it('shows who is currently on the air', async () => {
