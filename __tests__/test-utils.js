@@ -163,3 +163,60 @@ export const testData = {
 		...overrides,
 	}),
 }
+
+/**
+ * Installs a `window.matchMedia` stub whose match state can be flipped at will.
+ *
+ * jsdom's own `matchMedia` always reports `matches: false` and never emits a
+ * `change` event, so neither branch of a media-query-driven code path — nor
+ * the transition between them — is reachable against it.
+ *
+ * @param {Object} options
+ * @param {boolean} options.matches - Initial match state.
+ * @returns {{setMatches: Function, restore: Function}} `setMatches` flips the
+ *   state and notifies subscribers (wrap it in `act` when React is listening);
+ *   `restore` puts jsdom's implementation back.
+ */
+export function installMatchMediaStub({matches = false} = {}) {
+	const original = window.matchMedia
+	const listeners = new Set()
+	let current = matches
+	let media = ''
+
+	const queryList = {
+		get matches() {
+			return current
+		},
+		get media() {
+			return media
+		},
+		onchange: null,
+		addEventListener: (type, listener) => {
+			if (type === 'change') listeners.add(listener)
+		},
+		removeEventListener: (type, listener) => {
+			if (type === 'change') listeners.delete(listener)
+		},
+		// The deprecated Safari <14 pair, kept so a test can assert the
+		// fallback path is wired up too.
+		addListener: (listener) => listeners.add(listener),
+		removeListener: (listener) => listeners.delete(listener),
+		dispatchEvent: () => true,
+	}
+
+	window.matchMedia = vi.fn((query) => {
+		media = query
+		return queryList
+	})
+
+	return {
+		queryList,
+		setMatches(next) {
+			current = next
+			listeners.forEach((listener) => listener({matches: next, media}))
+		},
+		restore() {
+			window.matchMedia = original
+		},
+	}
+}
