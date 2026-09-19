@@ -14,7 +14,9 @@
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"check-format": "prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"deploy": "wrangler deploy",
+		"deploy:production": "wrangler deploy --env production"
 	},
 	"dependencies": {
 		"@emotion/react": "^11.11.1",
@@ -49,6 +51,7 @@
 		"prettier": "^3.1.1",
 		"prettier-plugin-tailwindcss": "^0.5.9",
 		"tailwindcss": "^3.3.2",
-		"vitest": "^4.0.16"
+		"vitest": "^4.0.16",
+		"wrangler": "^4.135.0"
 	}
 }

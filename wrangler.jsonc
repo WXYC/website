@@ -1,0 +1,45 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "wxyc-website",
+	"compatibility_date": "2026-09-01",
+
+	// Assets-only Worker: no script, wrangler serves the Next.js static
+	// export in out/. `html_handling` reproduces GitHub Pages' extensionless
+	// resolution (/privacy -> privacy.html); trailing-slash variants become
+	// 308 redirects instead of Pages' 404s, a recorded, accepted delta.
+	// wrangler also reads out/.assetsignore (deploy exclusions) and
+	// out/_headers (cache-control rules) — both copied from public/ by the
+	// Next export.
+	"assets": {
+		"directory": "./out",
+		"html_handling": "auto-trailing-slash",
+		"not_found_handling": "404-page"
+	},
+
+	// Deploy-safety layout (mirrors wxyc-links-registry): a bare
+	// `npm run deploy` publishes ONLY to workers.dev — no routes, no
+	// production traffic. `npm run deploy:production` is the only command
+	// that can touch the apex; it deploys the separately-named Worker
+	// `wxyc-website-production` (wrangler appends the env name).
+	"env": {
+		"production": {
+			"workers_dev": false,
+			// The `assets` block is inheritable, so this duplicate is
+			// belt-and-braces: it keeps the production config self-contained
+			// to read and pins the intent even if inheritance rules change.
+			"assets": {
+				"directory": "./out",
+				"html_handling": "auto-trailing-slash",
+				"not_found_handling": "404-page"
+			},
+			// Catch-all only. The more specific routes on this zone —
+			// wxyc.org/shows/* and the exact AASA path — belong to the
+			// wxyc-links-registry Worker and win by specificity; NEVER claim
+			// a /.well-known/* wildcard here. A dashboard-managed exception
+			// route (wxyc.org/.well-known/acme-challenge/* -> None) keeps
+			// this Worker away from Cloudflare's edge-certificate HTTP DCV;
+			// see README "DNS & hosting".
+			"routes": [{"pattern": "wxyc.org/*", "zone_name": "wxyc.org"}]
+		}
+	}
+}

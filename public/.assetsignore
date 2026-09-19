@@ -1,0 +1,6 @@
+# Files wrangler must not upload as Workers static assets.
+# uploads/iPhone_App_Screen_Recording.mov exceeds the 25MiB per-file cap
+# (orphaned 2026-03 upload, referenced nowhere; deploy hard-fails on it).
+uploads/iPhone_App_Screen_Recording.mov
+.gitignore
+.DS_Store
