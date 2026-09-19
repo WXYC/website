@@ -100,6 +100,21 @@ def redirect_target(base, headers):
 	location = headers.get("Location") or headers.get("location") or ""
 	return urllib.parse.urljoin(base + "/", location).replace(base, "", 1)
 
+def follow_hop(base, headers):
+	"""Fetch a redirect's Location verbatim (no re-encoding: Workers'
+	canonicalization redirects decode %28 back to '(', and re-quoting the
+	target would just bounce forever)."""
+	url = urllib.parse.urljoin(base + "/", headers.get("Location") or headers.get("location") or "")
+	req = urllib.request.Request(
+		url, method="HEAD",
+		headers={"User-Agent": "wxyc-check-parity (WXYC/website scripts/check-parity.py)"},
+	)
+	try:
+		with OPENER.open(req, timeout=30) as resp:
+			return resp.status, dict(resp.headers)
+	except urllib.error.HTTPError as err:
+		return err.code, dict(err.headers)
+
 def check(rel, base_a, base_b):
 	failures, deltas = [], []
 	canonical, probe = routes_for(rel)
@@ -122,9 +137,17 @@ def check(rel, base_a, base_b):
 				return failures, deltas
 
 	if status_a != status_b:
-		both_redirects = status_a in (301, 302, 307, 308) and status_b in (301, 302, 307, 308)
-		if both_redirects and redirect_target(base_a, headers_a) == redirect_target(base_b, headers_b):
+		redirects = (301, 302, 307, 308)
+		if status_a in redirects and status_b in redirects and redirect_target(base_a, headers_a) == redirect_target(base_b, headers_b):
 			deltas.append(f"/{canonical}: redirect status {status_a} vs {status_b}, same target")
+		elif status_b in redirects and follow_hop(base_b, headers_b)[0] == status_a:
+			# Workers canonicalizes percent-encoded punctuation with one 307
+			# hop (%28 -> "(" ); the landing matches, so content is reachable.
+			status_b, headers_b = follow_hop(base_b, headers_b)
+			deltas.append(f"/{canonical}: canonicalization redirect on B, lands {status_b}")
+		elif status_a in redirects and follow_hop(base_a, headers_a)[0] == status_b:
+			status_a, headers_a = follow_hop(base_a, headers_a)
+			deltas.append(f"/{canonical}: canonicalization redirect on A, lands {status_a}")
 		else:
 			failures.append(f"/{canonical}: status {status_a} on A vs {status_b} on B")
 			return failures, deltas
