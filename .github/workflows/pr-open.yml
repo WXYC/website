@@ -74,3 +74,8 @@ jobs:
           sleep 10
           npx next build
           kill $TINA_PID || true
+      - name: Validate Cloudflare deploy config
+        # Credential-less: --dry-run parses wrangler.jsonc, builds the asset
+        # manifest from out/, and fails on config errors or any file over the
+        # 25MiB Workers cap — so neither can first execute on main.
+        run: npm run deploy:production -- --dry-run
