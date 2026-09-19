@@ -90,15 +90,19 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./out
+      - name: Pack Cloudflare assets artifact
+        # upload-artifact validates every filename and rejects the : " < > |
+        # * ? punctuation that exists under public/uploads (36 files), so
+        # hand it a single tar instead — the same shape upload-pages-artifact
+        # uses. The tar also carries out/.assetsignore, which must survive
+        # the hand-off or the Workers deploy fails on the file it exists to
+        # exclude.
+        run: tar -cf "$RUNNER_TEMP/cloudflare-assets.tar" -C out .
       - name: Upload Cloudflare assets artifact
         uses: actions/upload-artifact@v7
         with:
           name: cloudflare-assets
-          path: out
-          # Dotfiles are dropped by default, and out/.assetsignore must
-          # survive the hand-off or the Workers deploy fails on the file it
-          # exists to exclude.
-          include-hidden-files: true
+          path: ${{ runner.temp }}/cloudflare-assets.tar
           # Already-compressed media; gzip only burns CPU.
           compression-level: 0
           retention-days: 1
@@ -142,7 +146,9 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: cloudflare-assets
-          path: out
+          path: ${{ runner.temp }}
+      - name: Unpack built site
+        run: mkdir -p out && tar -xf "$RUNNER_TEMP/cloudflare-assets.tar" -C out
       - name: Guard asset sizes
         # TinaCMS Cloud commits editor uploads straight to main with no PR,
         # so this is the only run that can catch an oversized upload before
