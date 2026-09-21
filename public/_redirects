@@ -1,0 +1,12 @@
+# Cloudflare Workers static-assets redirects. GitHub Pages ignores this file,
+# so every rule here needs a portable fallback page too (see pages/fiftieth.jsx)
+# for as long as the Pages deploy remains the #262 rollback target.
+#
+# Rules here are followed BEFORE any matching asset is served, so keep them
+# exact — never a splat. A greedy rule in this file would shadow the whole
+# site, including the /.well-known/acme-challenge path the zone's certificate
+# renewal depends on.
+
+# Vanity alias for the 50th anniversary page: wxyc.org/fiftieth
+/fiftieth /50th 301
+/fiftieth/ /50th 301
