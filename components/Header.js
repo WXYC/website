@@ -194,6 +194,18 @@ const Header = () => {
 
 						<div className="ml-10 mt-8 flex h-8 text-3xl">
 							<Link
+								href="/50th"
+								legacyBehavior={false}
+								className="cursor-pointer"
+								rel="noopener noreferrer"
+								onClick={toggleMenu}
+							>
+								50th
+							</Link>
+						</div>
+
+						<div className="ml-10 mt-8 flex h-8 text-3xl">
+							<Link
 								href="/programming"
 								legacyBehavior={false}
 								className="cursor-pointer"
@@ -303,6 +315,14 @@ const Header = () => {
 							<div className="flex h-12 grow items-center justify-center">
 								<AboutDropdown />
 							</div>
+
+							<Link href="/50th" legacyBehavior>
+								<a className="flex h-12 grow items-center justify-center">
+									<p className="cursor-pointer text-base text-white no-underline hover:text-blue-300">
+										50th
+									</p>
+								</a>
+							</Link>
 
 							<Link href="/programming" legacyBehavior>
 								<a className="flex h-12 grow items-center justify-center">
