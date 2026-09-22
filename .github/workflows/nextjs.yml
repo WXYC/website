@@ -1,8 +1,9 @@
-# Sample workflow for building and deploying a Next.js site to GitHub Pages
+# Builds the Next.js static export and deploys it to Cloudflare Workers.
 #
-# To get started with Next.js see: https://nextjs.org/docs/getting-started
-#
-name: Deploy Next.js site to Pages
+# wxyc.org is served by the assets-only Worker `wxyc-website-production`,
+# which claims the `wxyc.org/*` route declared in wrangler.jsonc's
+# env.production. GitHub Pages was retired in WXYC/website#262.
+name: Deploy to Cloudflare
 
 on:
   # Runs on pushes targeting the default branch
@@ -12,16 +13,17 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# Workflow-level GITHUB_TOKEN scope. Nothing here deploys via GITHUB_TOKEN
+# any more — the Cloudflare deploy authenticates with its own repo secret —
+# so contents:read is the floor. Re-adding pages:write would only re-arm the
+# retired pipeline.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: 'pages'
+  group: 'cloudflare'
   cancel-in-progress: false
 
 jobs:
@@ -53,14 +55,6 @@ jobs:
         with:
           node-version: '24'
           cache: ${{ steps.detect-package-manager.outputs.manager }}
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
-        with:
-          # Automatically inject basePath in your Next.js configuration file and disable
-          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
-          #
-          # You may remove this line if you want to manage the configuration yourself.
-          static_site_generator: next
       - name: Restore cache
         uses: actions/cache@v5
         with:
@@ -86,17 +80,12 @@ jobs:
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
           NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: ./out
       - name: Pack Cloudflare assets artifact
         # upload-artifact validates every filename and rejects the : " < > |
         # * ? punctuation that exists under public/uploads (36 files), so
-        # hand it a single tar instead — the same shape upload-pages-artifact
-        # uses. The tar also carries out/.assetsignore, which must survive
-        # the hand-off or the Workers deploy fails on the file it exists to
-        # exclude.
+        # hand it a single tar instead. The tar also carries
+        # out/.assetsignore, which must survive the hand-off or the Workers
+        # deploy fails on the file it exists to exclude.
         run: tar -cf "$RUNNER_TEMP/cloudflare-assets.tar" -C out .
       - name: Upload Cloudflare assets artifact
         uses: actions/upload-artifact@v7
@@ -107,31 +96,20 @@ jobs:
           compression-level: 0
           retention-days: 1
 
-  # Deployment job
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
-
   # Cloudflare Workers PRODUCTION deploy (WXYC/website#262): claims the
-  # wxyc.org/* route declared in wrangler.jsonc's env.production. Deliberately
-  # its own job:
-  # the Pages deploy above only needs `build`, so a wrangler failure here can
-  # never block it. Step order matters — checkout runs `git clean`, which
-  # would wipe a previously downloaded out/ (it is gitignored).
+  # wxyc.org/* route declared in wrangler.jsonc's env.production. This is now
+  # the only deploy path — the GitHub Pages job it used to run beside was
+  # retired with the rest of that pipeline. Kept as its own job so the deploy
+  # stays separable from the build. Step order matters — checkout runs
+  # `git clean`, which would wipe a previously downloaded out/ (it is
+  # gitignored).
   deploy-cloudflare:
     runs-on: ubuntu-latest
     needs: build
     # workflow_dispatch can fire from any ref; never deploy a branch.
     if: github.ref == 'refs/heads/main'
-    # Job-scoped floor: this job must not inherit the workflow-level
-    # pages/id-token grants alongside the Cloudflare token.
+    # Job-scoped floor, restated rather than inherited: the job holding the
+    # Cloudflare token should carry no GITHUB_TOKEN write of any kind.
     permissions:
       contents: read
     steps:
