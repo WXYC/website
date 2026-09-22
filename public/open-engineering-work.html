@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WXYC — Open Engineering Work</title>
+<style>
+:root {
+  --paper: #EFF0F3;
+  --surface: #FFFFFF;
+  --surface-2: #E7E8EE;
+  --ink: #17171E;
+  --ink-soft: #55565F;
+  --ink-faint: #7C7E8A;
+  --rule: #C9CBD4;
+  --accent: #3A2FA0;
+  --t1: #0E6E45;
+  --t2: #A85A0C;
+  --t3: #24609B;
+  --keep: #9C3527;
+  --chip: #E4E5EB;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121217;
+    --surface: #1A1A21;
+    --surface-2: #22222B;
+    --ink: #E8E8ED;
+    --ink-soft: #A0A1AC;
+    --ink-faint: #7B7C88;
+    --rule: #32333D;
+    --accent: #A99DF7;
+    --t1: #4FBE8D;
+    --t2: #E5A055;
+    --t3: #74ACE0;
+    --keep: #E08270;
+    --chip: #292932;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121217;
+  --surface: #1A1A21;
+  --surface-2: #22222B;
+  --ink: #E8E8ED;
+  --ink-soft: #A0A1AC;
+  --ink-faint: #7B7C88;
+  --rule: #32333D;
+  --accent: #A99DF7;
+  --t1: #4FBE8D;
+  --t2: #E5A055;
+  --t3: #74ACE0;
+  --keep: #E08270;
+  --chip: #292932;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- links ---- */
+a { color: inherit; }
+a.lnk {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 32%, transparent);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  transition: color .12s ease, text-decoration-color .12s ease;
+  white-space: nowrap;
+}
+a.lnk:hover { color: var(--accent); text-decoration-color: var(--accent); }
+a.plain { text-decoration: none; }
+a.plain:hover { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 1px; }
+
+/* ---- masthead ---- */
+.mast { display: flex; flex-direction: column; gap: 22px; }
+.eyebrow {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+h1 {
+  margin: 0;
+  font-family: "Helvetica Neue", "Arial Narrow", Helvetica, Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.032em;
+  line-height: 0.98;
+  font-size: clamp(38px, 6.4vw, 68px);
+}
+.dek {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 18px;
+  color: var(--ink-soft);
+}
+.dek strong { color: var(--ink); font-weight: 400; box-shadow: inset 0 -0.42em 0 color-mix(in srgb, var(--accent) 16%, transparent); }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin-top: 6px;
+}
+.stat { background: var(--surface); padding: 14px 16px 15px; display: flex; flex-direction: column; gap: 2px; }
+.stat-n {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.stat-l {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.stat.flag .stat-n { color: var(--keep); }
+
+/* ---- tier sections ---- */
+.tier { display: flex; flex-direction: column; gap: 20px; }
+.tier-head { display: flex; flex-direction: column; gap: 7px; border-top: 2px solid var(--tc); padding-top: 13px; }
+.tier-tag {
+  display: flex; align-items: center; gap: 9px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tc);
+}
+.tier-tag::before { content: ""; width: 9px; height: 9px; background: var(--tc); flex: none; }
+.tier-head h2 {
+  margin: 0;
+  font-family: "Helvetica Neue", "Arial Narrow", Helvetica, Arial, sans-serif;
+  font-weight: 800; letter-spacing: -0.024em;
+  font-size: clamp(23px, 3vw, 30px);
+  line-height: 1.1;
+}
+.tier-head p { margin: 0; max-width: 66ch; color: var(--ink-soft); font-size: 15.5px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(318px, 1fr)); gap: 14px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 17px 18px 18px;
+  display: flex; flex-direction: column; gap: 11px;
+}
+.card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.repos {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px; color: var(--tc); letter-spacing: 0.01em;
+}
+.count {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px; color: var(--ink-faint); white-space: nowrap; text-align: right;
+}
+.card h3 {
+  margin: 0;
+  font-family: "Helvetica Neue", "Arial Narrow", Helvetica, Arial, sans-serif;
+  font-weight: 800; letter-spacing: -0.018em;
+  font-size: 19px; line-height: 1.18;
+}
+.card p { margin: 0; font-size: 15px; color: var(--ink-soft); }
+.card p em { color: var(--ink); font-style: normal; box-shadow: inset 0 -0.4em 0 color-mix(in srgb, var(--tc) 15%, transparent); }
+
+.meta { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; padding-top: 11px; border-top: 1px solid var(--rule); }
+.row { display: grid; grid-template-columns: 62px 1fr; gap: 10px; align-items: baseline; }
+.row dt {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-faint);
+}
+.row dd {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px; color: var(--ink); line-height: 1.55;
+}
+.row.warn dd { color: var(--keep); }
+
+/* ---- closing ---- */
+.close { display: flex; flex-direction: column; gap: 16px; border-top: 2px solid var(--accent); padding-top: 14px; }
+.close h2 {
+  margin: 0;
+  font-family: "Helvetica Neue", "Arial Narrow", Helvetica, Arial, sans-serif;
+  font-weight: 800; letter-spacing: -0.024em; font-size: clamp(23px, 3vw, 30px); line-height: 1.1;
+}
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.step { background: var(--surface); padding: 15px 17px 17px; display: flex; flex-direction: column; gap: 6px; }
+.step .n {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px; letter-spacing: 0.1em; color: var(--accent);
+}
+.step h4 { margin: 0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: 800; font-size: 15.5px; letter-spacing: -0.012em; }
+.step p { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+
+.foot { font-size: 13.5px; color: var(--ink-faint); max-width: 70ch; }
+.foot code { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+
+@media (max-width: 560px) {
+  .wrap { padding: 28px 16px 64px; gap: 44px; }
+  .row { grid-template-columns: 56px 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">WXYC 89.3 FM &middot; open engineering work &middot; 10 August 2026</div>
+    <h1>Pick a project.</h1>
+    <p class="dek">Everything below is ticketed and ready to go, sorted by <strong>how much context you need before your first pull request</strong>. Pick a card, follow the links, and say in Slack that you're taking it.</p>
+    <div class="stats">
+      <div class="stat"><span class="stat-n"><a class="plain" href="https://github.com/search?q=org%3AWXYC+is%3Aissue+is%3Aopen&type=issues" target="_blank" rel="noopener">703</a></span><span class="stat-l">open issues</span></div>
+      <div class="stat"><span class="stat-n"><a class="plain" href="https://github.com/orgs/WXYC/repositories" target="_blank" rel="noopener">36</a></span><span class="stat-l">repos with work</span></div>
+      <div class="stat"><span class="stat-n"><a class="plain" href="https://github.com/orgs/WXYC/people" target="_blank" rel="noopener">21</a></span><span class="stat-l">org members</span></div>
+      <div class="stat flag"><span class="stat-n"><a class="plain" href="https://github.com/search?q=org%3AWXYC+is%3Aissue+is%3Aopen+is%3Aassigned&type=issues" target="_blank" rel="noopener">1</a></span><span class="stat-l">issues claimed</span></div>
+    </div>
+  </header>
+
+  <!-- ================= TIER 1 ================= -->
+  <section class="tier" style="--tc: var(--t1)">
+    <div class="tier-head">
+      <div class="tier-tag">Tier 1 &middot; start here</div>
+      <h2>One repo, no background required, specs already written</h2>
+      <p>Clone it, read the ticket, open a pull request the same afternoon. Nothing in this row touches a production data path or a deadline, so being wrong is cheap. If it's your first time in the codebase, take something from here.</p>
+    </div>
+    <div class="grid">
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/triangle-shows" target="_blank" rel="noopener">triangle-shows</a></span><span class="count">6 issues &middot; <a class="lnk" href="https://github.com/WXYC/triangle-shows/issues/52" target="_blank" rel="noopener">epic #52</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/triangle-shows/issues/52" target="_blank" rel="noopener">Venue scrapers for the Triangle calendar</a></h3>
+        <p>The single best on-ramp in the org: <em>each venue is a self-contained module with a fixture test</em>, and the result is visible on a public site the same week.</p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/triangle-shows/issues/50" target="_blank" rel="noopener">#50</a> Etix + Blue Note Grill, then <a class="lnk" href="https://github.com/WXYC/triangle-shows/issues/48" target="_blank" rel="noopener">#48</a>, <a class="lnk" href="https://github.com/WXYC/triangle-shows/issues/49" target="_blank" rel="noopener">#49</a>, <a class="lnk" href="https://github.com/WXYC/triangle-shows/issues/51" target="_blank" rel="noopener">#51</a>, <a class="lnk" href="https://github.com/WXYC/triangle-shows/issues/80" target="_blank" rel="noopener">#80</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python, HTML parsing, a little SQLAlchemy</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/wxyc-ios-64" target="_blank" rel="noopener">wxyc-ios-64</a></span><span class="count">~33 issues &middot; <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/750" target="_blank" rel="noopener">epic #750</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/wxyc-ios-64/issues/750" target="_blank" rel="noopener">iOS refactoring audit</a></h3>
+        <p>Every ticket names the two files to collapse and why. <em>Zero product risk, and it tours the whole codebase</em> &mdash; the fastest way to learn your way around the app.</p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/321" target="_blank" rel="noopener">#321</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/325" target="_blank" rel="noopener">#325</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/326" target="_blank" rel="noopener">#326</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/331" target="_blank" rel="noopener">#331</a> (byte-identical dupes)</dd></div>
+          <div class="row"><dt>Queue</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues?q=is%3Aopen+label%3Arefactor-audit-2026-08" target="_blank" rel="noopener">label: refactor-audit-2026-08</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>Swift 6, SwiftUI, Swift Testing</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/wxyc-ios-64" target="_blank" rel="noopener">wxyc-ios-64</a></span><span class="count">12 issues</span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/wxyc-ios-64/issues?q=is%3Aopen+label%3Aflaky%2Cci" target="_blank" rel="noopener">Kill the iOS test flakes</a></h3>
+        <p>Timing races, an unsynchronized mock, and two test targets that run in no CI configuration at all. <em>Unblocks every other iOS contributor</em>, and success is unambiguous.</p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/816" target="_blank" rel="noopener">#816</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/800" target="_blank" rel="noopener">#800</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/809" target="_blank" rel="noopener">#809</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/687" target="_blank" rel="noopener">#687</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/701" target="_blank" rel="noopener">#701</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-ios-64/issues/371" target="_blank" rel="noopener">#371</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>Swift, xcodebuild, CI patience</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/flowsheet-digitization" target="_blank" rel="noopener">flowsheet-digitization</a></span><span class="count">9 issues &middot; <a class="lnk" href="https://github.com/orgs/WXYC/projects/28" target="_blank" rel="noopener">project #28</a></span></div>
+        <h3><a class="plain" href="https://github.com/orgs/WXYC/projects/28" target="_blank" rel="noopener">OCR cost sprints</a></h3>
+        <p>Batch mode, context caching, and a Flash-tier calibration spike on the 1990&ndash;2001 flowsheet scan pipeline. <em>Standalone, and the win is a number</em> &mdash; cost per page.</p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/flowsheet-digitization/issues/43" target="_blank" rel="noopener">#43</a> calibration spike, then <a class="lnk" href="https://github.com/WXYC/flowsheet-digitization/issues/40" target="_blank" rel="noopener">#40</a>, <a class="lnk" href="https://github.com/WXYC/flowsheet-digitization/issues/51" target="_blank" rel="noopener">#51</a>, <a class="lnk" href="https://github.com/WXYC/flowsheet-digitization/issues/46" target="_blank" rel="noopener">#46</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python, Gemini API, cost analysis</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/dj-site" target="_blank" rel="noopener">dj-site</a></span><span class="count">6 issues</span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/dj-site/issues?q=is%3Aopen+label%3Atesting" target="_blank" rel="noopener">dj-site test coverage</a></h3>
+        <p>907 bare <code>render()</code> calls across 87 files contradict the repo's own stated rule, and four hook families have no tests. <em>Mechanical, high-volume, easy to review.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/dj-site/issues/1101" target="_blank" rel="noopener">#1101</a>, then <a class="lnk" href="https://github.com/WXYC/dj-site/issues/253" target="_blank" rel="noopener">#253</a>, <a class="lnk" href="https://github.com/WXYC/dj-site/issues/255" target="_blank" rel="noopener">#255</a>, <a class="lnk" href="https://github.com/WXYC/dj-site/issues/230" target="_blank" rel="noopener">#230</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>React, Vitest, RTK Query</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= TIER 2 ================= -->
+  <section class="tier" style="--tc: var(--t2)">
+    <div class="tier-head">
+      <div class="tier-tag">Tier 2 &middot; own a surface</div>
+      <h2>Take one of these and it's yours</h2>
+      <p>Bounded enough for one person to hold, big enough to be worth caring about. Each has its own repo, domain, or brand-new package, so mistakes stay inside the box. Figure on a few months and a weekly check-in &mdash; and on being the person everyone asks about it afterward.</p>
+    </div>
+    <div class="grid">
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/semantic-index" target="_blank" rel="noopener">semantic-index</a></span><span class="count">~24 issues &middot; <a class="lnk" href="https://github.com/orgs/WXYC/projects/23" target="_blank" rel="noopener">project #23</a></span></div>
+        <h3><a class="plain" href="https://github.com/orgs/WXYC/projects/23" target="_blank" rel="noopener">Narrative enrichment</a></h3>
+        <p>Crawl All About Jazz, Resident Advisor, Aquarium Drunkard, Songlines and Bandcamp; extract descriptors with Haiku; train skip-grams over real show sequences. <em>Research-flavored and completely off the serving path.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/semantic-index/issues/231" target="_blank" rel="noopener">#231</a> name matching, <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/232" target="_blank" rel="noopener">#232</a> extraction, then crawls <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/234" target="_blank" rel="noopener">#234</a> <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/235" target="_blank" rel="noopener">#235</a> <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/236" target="_blank" rel="noopener">#236</a> <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/237" target="_blank" rel="noopener">#237</a> <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/238" target="_blank" rel="noopener">#238</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python, crawling, LLM pipelines, embeddings</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/semantic-index" target="_blank" rel="noopener">semantic-index</a></span><span class="count">7 issues &middot; <a class="lnk" href="https://github.com/orgs/WXYC/projects/11" target="_blank" rel="noopener">project #11</a></span></div>
+        <h3><a class="plain" href="https://github.com/orgs/WXYC/projects/11" target="_blank" rel="noopener">Graph explorer front end</a></h3>
+        <p>explore.wxyc.org needs community coloring, a heat slider, discovery browsing, and shortest-DJ-transition pathfinding between artists. <em>The most visually rewarding work in the backlog.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/semantic-index/issues/128" target="_blank" rel="noopener">#128</a> explorer polish, then <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/169" target="_blank" rel="noopener">#169</a>, <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/170" target="_blank" rel="noopener">#170</a>, <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/171" target="_blank" rel="noopener">#171</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>JS/D3 or similar, graph intuition, design eye</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos">4 repos &rarr; 3 new ones</span><span class="count">21 issues &middot; <a class="lnk" href="https://github.com/orgs/WXYC/projects/27" target="_blank" rel="noopener">project #27</a></span></div>
+        <h3><a class="plain" href="https://github.com/orgs/WXYC/projects/27" target="_blank" rel="noopener">Public package extractions</a></h3>
+        <p>Three arcs, each ending in a new public repo on PyPI: <span class="mono">marker-audit-python</span>, <span class="mono">llm-claim-audit</span>, and a DuckDB rewrite of <span class="mono">verify_cache</span>. <em>New repos mean zero collision risk with anything live.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Arcs</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-etl/issues/105" target="_blank" rel="noopener">wxyc-etl#105</a> &middot; <a class="lnk" href="https://github.com/WXYC/semantic-index/issues/299" target="_blank" rel="noopener">semantic-index#299</a> &middot; <a class="lnk" href="https://github.com/WXYC/discogs-etl/issues/186" target="_blank" rel="noopener">discogs-etl#186</a></dd></div>
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-etl/issues/105" target="_blank" rel="noopener">wxyc-etl#105</a> is the smallest complete arc (6 issues)</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python packaging, parity testing, PyPI trusted publishing</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/research-data" target="_blank" rel="noopener">research-data</a></span><span class="count">7 issues &middot; <a class="lnk" href="https://github.com/WXYC/research-data/issues/25" target="_blank" rel="noopener">epic #25</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/research-data/issues/25" target="_blank" rel="noopener">Move the review crawl to AWS</a></h3>
+        <p>Containerize the crawler, push to ECR, run it on Fargate, move the token into Secrets Manager, finish the Pitchfork and RA harvests, then purge LFS from history. <em>A clean DevOps arc with an unambiguous finish line.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/research-data/issues/27" target="_blank" rel="noopener">#27</a> containerize, <a class="lnk" href="https://github.com/WXYC/research-data/issues/29" target="_blank" rel="noopener">#29</a> secrets, <a class="lnk" href="https://github.com/WXYC/research-data/issues/32" target="_blank" rel="noopener">#32</a> verify, <a class="lnk" href="https://github.com/WXYC/research-data/issues/33" target="_blank" rel="noopener">#33</a> harvest</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Docker, AWS (S3, Batch/Fargate, ECR), Python</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/wxyc-dj-ios" target="_blank" rel="noopener">wxyc-dj-ios</a></span><span class="count">5 issues &middot; <a class="lnk" href="https://github.com/WXYC/wxyc-dj-ios/issues/55" target="_blank" rel="noopener">PRD #55</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/wxyc-dj-ios/issues/55" target="_blank" rel="noopener">Offline mode for the DJ app</a></h3>
+        <p>Search, detail, and bin read/write without connectivity &mdash; optimistic edits, replay, failure surfacing &mdash; plus the QR device-auth scanner. <em>Small app, real feature, ships visibly to DJs.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-dj-ios/issues/55" target="_blank" rel="noopener">#55</a> PRD, then <a class="lnk" href="https://github.com/WXYC/wxyc-dj-ios/issues/61" target="_blank" rel="noopener">#61</a>, <a class="lnk" href="https://github.com/WXYC/wxyc-dj-ios/issues/62" target="_blank" rel="noopener">#62</a>; <a class="lnk" href="https://github.com/WXYC/wxyc-dj-ios/issues/64" target="_blank" rel="noopener">#64</a> and <a class="lnk" href="https://github.com/WXYC/wxyc-dj-ios/issues/75" target="_blank" rel="noopener">#75</a> are separable</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Swift 6, SwiftUI, local persistence</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos">wxyc-shared &rarr; BS + dj-site</span><span class="count"><a class="lnk" href="https://github.com/WXYC/wxyc-shared/issues/254" target="_blank" rel="noopener">epic #254</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/wxyc-shared/issues/254" target="_blank" rel="noopener">Ticket giveaways</a></h3>
+        <p>A modernized port of the WXDU giveaways system. <em>Genuinely greenfield &mdash; the rarest thing on this board</em> &mdash; so it's the one place here where you get to design rather than excavate.</p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/wxyc-shared/issues/254" target="_blank" rel="noopener">#254</a> needs decomposing into slices first</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Full stack: api.yaml, Express, React</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/auto-dj-orchestrator" target="_blank" rel="noopener">auto-dj-orchestrator</a></span><span class="count">4 issues &middot; <a class="lnk" href="https://github.com/WXYC/auto-dj-orchestrator/issues/26" target="_blank" rel="noopener">epic #26</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/auto-dj-orchestrator/issues/26" target="_blank" rel="noopener">Ship the auto-DJ to production</a></h3>
+        <p>Code-complete and verified in main, never deployed. Needs a host, a CI deploy job, an <span class="mono">auto-dj@wxyc.org</span> service account, and a real-stack integration test. <em>All plumbing, no design debate.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/auto-dj-orchestrator/issues/27" target="_blank" rel="noopener">#27</a> service account, <a class="lnk" href="https://github.com/WXYC/auto-dj-orchestrator/issues/29" target="_blank" rel="noopener">#29</a> hosting, <a class="lnk" href="https://github.com/WXYC/auto-dj-orchestrator/issues/28" target="_blank" rel="noopener">#28</a> integration test</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Docker, CI/CD, TypeScript</dd></div>
+          <div class="row warn"><dt>First</dt><dd>ask whether the <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/1644" target="_blank" rel="noopener">BS#1644</a> blocker has actually cleared</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= TIER 3 ================= -->
+  <section class="tier" style="--tc: var(--t3)">
+    <div class="tier-head">
+      <div class="tier-tag">Tier 3 &middot; ask before you start</div>
+      <h2>Bounded, but it touches something live</h2>
+      <p>Same shape as the row above, except a mistake here reaches real DJs, real listeners, or real data. One conversation gets you the surface boundary and the list of frozen files; after that you're on your own like anyone else. Best once you've landed a few PRs elsewhere.</p>
+    </div>
+    <div class="grid">
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/dj-site" target="_blank" rel="noopener">dj-site</a></span><span class="count">~15 issues</span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/dj-site/issues?q=is%3Aopen+label%3Acatalog" target="_blank" rel="noopener">Catalog &amp; librarian defects</a></h3>
+        <p>The duplicate-artist guard fails open, a stale entry number survives re-attribution, the rotation picker commits the wrong release under an open panel, and four handlers double-toast. <em>This is what the MDs actually feel.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/dj-site/issues/1108" target="_blank" rel="noopener">#1108</a>, <a class="lnk" href="https://github.com/WXYC/dj-site/issues/1111" target="_blank" rel="noopener">#1111</a>, <a class="lnk" href="https://github.com/WXYC/dj-site/issues/1109" target="_blank" rel="noopener">#1109</a>, <a class="lnk" href="https://github.com/WXYC/dj-site/issues/1095" target="_blank" rel="noopener">#1095</a>, <a class="lnk" href="https://github.com/WXYC/dj-site/issues/1096" target="_blank" rel="noopener">#1096</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>React, RTK Query &mdash; plus a willingness to go ask the librarians</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/wxyc-canary" target="_blank" rel="noopener">wxyc-canary</a> &middot; <a class="plain" href="https://github.com/WXYC/Backend-Service" target="_blank" rel="noopener">Backend-Service</a></span><span class="count">~19 issues</span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/wxyc-canary/issues" target="_blank" rel="noopener">Observability &amp; on-call</a></h3>
+        <p>Add an auto-DJ uptime probe, trim metric cardinality back under the free tier, make the login check a real browser round-trip, and give the EC2 crons log durability and heartbeat alarms. <em>The conventions are already documented &mdash; this is applying them.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd>canary <a class="lnk" href="https://github.com/WXYC/wxyc-canary/issues/78" target="_blank" rel="noopener">#78</a> <a class="lnk" href="https://github.com/WXYC/wxyc-canary/issues/52" target="_blank" rel="noopener">#52</a> <a class="lnk" href="https://github.com/WXYC/wxyc-canary/issues/81" target="_blank" rel="noopener">#81</a>; BS <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/1200" target="_blank" rel="noopener">#1200</a> <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/1201" target="_blank" rel="noopener">#1201</a> <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/2070" target="_blank" rel="noopener">#2070</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>TypeScript, AWS SAM, CloudWatch</dd></div>
+          <div class="row warn"><dt>First</dt><dd>the dimensionless-companion metric rule; alarms cost money</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/discogs-etl" target="_blank" rel="noopener">discogs-etl</a></span><span class="count">7 issues &middot; <a class="lnk" href="https://github.com/WXYC/discogs-etl/issues/352" target="_blank" rel="noopener">incident #352</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/discogs-etl/issues/352" target="_blank" rel="noopener">Rebuild-pipeline guardrails</a></h3>
+        <p>Advisory lock instead of an IAM check, stop fail-opening on peer-query errors, namespace the scratch tables, assert row counts before the swap, alarm on release-count drops, stop logging the DSN. <em>Guardrails against the failure that already cost 27,163 releases.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/discogs-etl/issues/354" target="_blank" rel="noopener">#354</a>, <a class="lnk" href="https://github.com/WXYC/discogs-etl/issues/357" target="_blank" rel="noopener">#357</a>, <a class="lnk" href="https://github.com/WXYC/discogs-etl/issues/361" target="_blank" rel="noopener">#361</a> (each a tight, well-specified PR)</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python, PostgreSQL, bash, ops instinct</dd></div>
+          <div class="row warn"><dt>First</dt><dd>read <a class="lnk" href="https://github.com/WXYC/discogs-etl/issues/353" target="_blank" rel="noopener">#353</a> first; uniqueness comes from the schedule, not a runtime check</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/library-metadata-lookup" target="_blank" rel="noopener">library-metadata-lookup</a></span><span class="count">~14 issues &middot; epics <a class="lnk" href="https://github.com/WXYC/library-metadata-lookup/issues/830" target="_blank" rel="noopener">#830</a> <a class="lnk" href="https://github.com/WXYC/library-metadata-lookup/issues/595" target="_blank" rel="noopener">#595</a> <a class="lnk" href="https://github.com/WXYC/library-metadata-lookup/issues/1100" target="_blank" rel="noopener">#1100</a></span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/library-metadata-lookup/issues/830" target="_blank" rel="noopener">Streaming-link coverage</a></h3>
+        <p>Replace persisted search-URL fallbacks with verified links: Bandcamp and Spotify drains, YouTube Music, the Deezer tail. <em>Lives in the streaming module &mdash; clear of the frozen orchestrator.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/library-metadata-lookup/issues/832" target="_blank" rel="noopener">#832</a> Bandcamp drain, <a class="lnk" href="https://github.com/WXYC/library-metadata-lookup/issues/831" target="_blank" rel="noopener">#831</a> Spotify drain, <a class="lnk" href="https://github.com/WXYC/library-metadata-lookup/issues/833" target="_blank" rel="noopener">#833</a> YTM spike</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python, FastAPI, third-party API integration</dd></div>
+          <div class="row warn"><dt>First</dt><dd><span class="mono">lookup/orchestrator.py</span> and <span class="mono">artwork.py</span> are frozen for <a class="lnk" href="https://github.com/orgs/WXYC/projects/32" target="_blank" rel="noopener">project&nbsp;#32</a></dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/Backend-Service" target="_blank" rel="noopener">Backend-Service</a></span><span class="count">11 issues</span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/Backend-Service/issues?q=is%3Aopen+label%3Aorchestrator-eligible+label%3Astatus%3Aready" target="_blank" rel="noopener">Backend consolidation sweep</a></h3>
+        <p>Eleven issues already labeled <span class="mono">status:ready</span> and low-severity: collapse eleven near-identical job Dockerfiles, extract the batched-UPDATE skeleton, parameterize the schema name, drop the legacy anonymous-devices system. <em>Acceptance criteria are written.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/614" target="_blank" rel="noopener">#614</a>, <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/613" target="_blank" rel="noopener">#613</a>, <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/681" target="_blank" rel="noopener">#681</a>, <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/615" target="_blank" rel="noopener">#615</a>, <a class="lnk" href="https://github.com/WXYC/Backend-Service/issues/610" target="_blank" rel="noopener">#610</a></dd></div>
+          <div class="row"><dt>Skills</dt><dd>TypeScript, Express, Drizzle, Docker</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="card-top"><span class="repos"><a class="plain" href="https://github.com/WXYC/request-o-matic" target="_blank" rel="noopener">request-o-matic</a></span><span class="count">11 issues</span></div>
+        <h3><a class="plain" href="https://github.com/WXYC/request-o-matic/issues" target="_blank" rel="noopener">The request line</a></h3>
+        <p>Quarantine banned listeners into a private mods channel instead of dropping them, alert on the degraded-request rate (a ten-week outage went unnoticed), and drop the synchronous analytics flush blocking the event loop. <em>Small service, whole-service ownership.</em></p>
+        <dl class="meta">
+          <div class="row"><dt>Start</dt><dd><a class="lnk" href="https://github.com/WXYC/request-o-matic/issues/241" target="_blank" rel="noopener">#241</a> moderation, <a class="lnk" href="https://github.com/WXYC/request-o-matic/issues/214" target="_blank" rel="noopener">#214</a> alerting, <a class="lnk" href="https://github.com/WXYC/request-o-matic/issues/192" target="_blank" rel="noopener">#192</a> flush</dd></div>
+          <div class="row"><dt>Skills</dt><dd>Python, FastAPI, Slack API</dd></div>
+        </dl>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ================= CLOSING ================= -->
+  <section class="close">
+    <h2>Before you start</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="n">01</span>
+        <h4>Claim it out loud</h4>
+        <p>Say in Slack which card you're taking and comment on the linked epic, so two people don't quietly start the same thing. Claim the epic, not one ticket &mdash; that's how it survives past the first PR.</p>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <h4>Read the repo's CLAUDE.md</h4>
+        <p>Every repo has one: patterns, env vars, test conventions, the local gotchas. Python repos also point at the <a class="lnk" href="https://github.com/WXYC/wiki/blob/main/plans/test-patterns.md" target="_blank" rel="noopener">shared test patterns</a> in the wiki.</p>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <h4>Ask where the fence is</h4>
+        <p>For anything in Tier&nbsp;3, ask which files are yours and which are frozen <em>before</em> you write code. The cards flag what's known, but the freezes move.</p>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <h4>Small PRs, green CI</h4>
+        <p>Aim under a thousand lines, run lint and tests locally first, then rebase-merge. If a review is sitting for more than a day, say something &mdash; that's a bug in us, not in you.</p>
+      </div>
+    </div>
+    <p class="foot">Counts are open issues as of 10 August 2026, PT, and drift daily. Tiers reflect coupling and how well-specified the work is, not difficulty &mdash; Tier 1 is not easier, it is just safer to be wrong about. All links point into <a class="lnk" href="https://github.com/WXYC" target="_blank" rel="noopener">github.com/WXYC</a>; a few repos are private, so ask if a link 404s. Something you want to work on that isn't here? Say so &mdash; this board is a starting point, not the whole list.</p>
+  </section>
+
+</div>
+</body>
+</html>

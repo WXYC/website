@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WXYC for Credit — A Student's Guide to Independent Study</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --ink: #1c1b19;
+    --ink-soft: #55524c;
+    --ink-faint: #817d75;
+    --rule: #e3dfd6;
+    --accent: #8a2f24;
+    --accent-soft: #f6ece9;
+    --flag: #7a5a12;
+    --flag-soft: #fbf3df;
+    --ok: #2f6b48;
+    --ok-soft: #e9f3ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #171614;
+      --surface: #1f1e1b;
+      --ink: #eceae5;
+      --ink-soft: #b5b0a6;
+      --ink-faint: #8a857b;
+      --rule: #34322d;
+      --accent: #e9897a;
+      --accent-soft: #2d201d;
+      --flag: #e0bd71;
+      --flag-soft: #2b2417;
+      --ok: #8ccfa5;
+      --ok-soft: #1b2820;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.62 ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  }
+  .wrap { max-width: 47rem; margin: 0 auto; padding: 3.5rem 1.5rem 6rem; }
+  h1, h2, h3, h4 {
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.22;
+    letter-spacing: -0.014em;
+  }
+  h1 { font-size: 2.35rem; margin: 0 0 .45rem; font-weight: 700; }
+  .sub { font-size: 1.12rem; color: var(--ink-soft); margin: 0 0 .4rem; }
+  .stamp { font-family: ui-sans-serif, -apple-system, system-ui, sans-serif; font-size: .8rem; color: var(--ink-faint); letter-spacing: .02em; margin: 0; }
+  h2 {
+    font-size: 1.5rem; margin: 3.4rem 0 .9rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--rule); scroll-margin-top: 1rem;
+  }
+  h2 .num { color: var(--ink-faint); font-weight: 400; margin-right: .5rem; }
+  h3 { font-size: 1.12rem; margin: 2.2rem 0 .5rem; scroll-margin-top: 1rem; }
+  h4 { font-size: .96rem; margin: 2rem 0 .5rem; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .07em; }
+  p { margin: 0 0 1rem; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  ul, ol { margin: 0 0 1rem; padding-left: 1.3rem; }
+  li { margin-bottom: .45rem; }
+  strong { font-weight: 650; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; background: var(--accent-soft); padding: .08em .3em; border-radius: 3px; }
+
+  .lede { font-size: 1.14rem; color: var(--ink-soft); }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.3rem 1.5rem;
+    margin: 2.5rem 0 1rem;
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: .94rem;
+  }
+  nav.toc h2 { border: 0; padding: 0; margin: 0 0 .85rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-faint); }
+  nav.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  nav.toc > ol > li { counter-increment: toc; margin-bottom: .5rem; }
+  nav.toc > ol > li > a::before { content: counter(toc) ". "; color: var(--ink-faint); }
+  nav.toc > ol > li > a { text-decoration: none; font-weight: 600; color: var(--ink); }
+  nav.toc > ol > li > a:hover { color: var(--accent); }
+  nav.toc ol ol { padding-left: 1.55rem; margin-top: .3rem; list-style: none; }
+  nav.toc ol ol li { margin-bottom: .22rem; font-size: .9rem; }
+  nav.toc ol ol a { color: var(--ink-soft); text-decoration: none; }
+  nav.toc ol ol a:hover { color: var(--accent); text-decoration: underline; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1.15rem 1.35rem;
+    margin: 1.5rem 0 1.9rem;
+  }
+  .card h3 { margin-top: 0; }
+  .facts {
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: .88rem;
+    color: var(--ink-soft);
+    margin: 0 0 .95rem;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .3rem .9rem;
+  }
+  .facts dt { color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; font-size: .75rem; padding-top: .18rem; }
+  .facts dd { margin: 0; }
+  @media (max-width: 30rem) {
+    .facts { grid-template-columns: 1fr; gap: .05rem; }
+    .facts dd { margin-bottom: .5rem; }
+  }
+
+  .note, .flag, .win {
+    font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+    font-size: .93rem;
+    border-radius: 7px;
+    padding: .85rem 1.05rem;
+    margin: 1.2rem 0;
+    line-height: 1.5;
+  }
+  .flag { background: var(--flag-soft); border: 1px solid color-mix(in srgb, var(--flag) 35%, transparent); }
+  .flag b { color: var(--flag); }
+  .win { background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent); }
+  .win b { color: var(--ok); }
+  .note { background: var(--surface); border: 1px solid var(--rule); color: var(--ink-soft); }
+
+  .scroller { overflow-x: auto; margin: 1.4rem 0; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-family: ui-sans-serif, -apple-system, system-ui, sans-serif; font-size: .88rem; }
+  th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); font-weight: 600; border-bottom: 1.5px solid var(--rule); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td .proj { font-weight: 650; color: var(--ink); }
+
+  .tag {
+    display: inline-block; font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+    padding: .12rem .45rem; border-radius: 4px; background: var(--accent-soft); color: var(--accent);
+    vertical-align: .1em; margin-left: .35rem; font-weight: 600;
+  }
+  .risk {
+    display: inline-block; font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: .7rem; letter-spacing: .04em; white-space: nowrap;
+    padding: .1rem .4rem; border-radius: 4px; font-weight: 600;
+  }
+  .risk.self { background: var(--ok-soft); color: var(--ok); }
+  .risk.sup { background: var(--flag-soft); color: var(--flag); }
+  .risk.prod { background: var(--accent-soft); color: var(--accent); }
+
+  .src { margin-top: .55rem; font-size: .79rem; line-height: 1.5; color: var(--ink-faint); }
+  .src::before { content: "Read more · "; letter-spacing: .05em; font-size: .68rem; text-transform: uppercase; font-weight: 700; }
+  .src a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 38%, transparent); }
+  .src a:hover { border-bottom-color: var(--accent); }
+  .src .priv { font-style: italic; }
+  .pipeline { counter-reset: stage; list-style: none; padding: 0; margin: 1.2rem 0; }
+  .pipeline > li { counter-increment: stage; position: relative; padding-left: 2.5rem; margin-bottom: .9rem; }
+  .pipeline > li::before {
+    content: counter(stage);
+    position: absolute; left: 0; top: .05rem;
+    width: 1.7rem; height: 1.7rem; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font-family: ui-sans-serif, system-ui, sans-serif; font-size: .82rem; font-weight: 700;
+    display: grid; place-items: center;
+  }
+
+  blockquote.tpl {
+    margin: 1.3rem 0; padding: 1.1rem 1.25rem;
+    background: var(--surface); border: 1px dashed var(--rule); border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; line-height: 1.58;
+    color: var(--ink-soft); white-space: pre-wrap; overflow-x: auto;
+  }
+
+  footer { margin-top: 4rem; padding-top: 1.4rem; border-top: 1px solid var(--rule); font-family: ui-sans-serif, system-ui, sans-serif; font-size: .85rem; color: var(--ink-faint); }
+
+  @media print {
+    html { scroll-behavior: auto; }
+    body { background: #fff; color: #000; font-size: 10.5pt; }
+    .wrap { max-width: none; padding: 0; }
+    nav.toc { break-after: page; }
+    h2 { break-after: avoid; }
+    .card, .flag, .win, .note, blockquote.tpl { break-inside: avoid; }
+    a { color: #000; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>WXYC for Credit</h1>
+  <p class="sub">How to turn work at the radio station into an independent study, a practicum, a field experience, or a funded summer of research at UNC.</p>
+  <p class="stamp">For UNC–Chapel Hill undergraduates · Course details from the 2026–27 catalog, checked August 2026 · Next realistic term: Spring 2027</p>
+</header>
+
+<p class="lede">The station's software is built and maintained by DJs, and there is more to do than there are people to do it. This guide is about how to get academic credit for taking on some of it — and what's available to take on.</p>
+
+<p>There are about ten routes to that credit — client courses where you build something the station will actually use, independent studies, field experiences, even a funded summer of research — and every one of them is open to a student who plans one term ahead. Start with the projects in <a href="#projects">§1</a> and find the one you'd want to spend a semester on. Then <a href="#start">§2</a> matches you to a route, and the rest of the guide walks you through the paperwork in order.</p>
+
+<div class="flag">
+  Nearly every route requires a signed learning contract finalized in the first week of classes, and the research route (URES 295) requires it <b>two to four weeks before classes begin</b>. Plan one term ahead.
+</div>
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#projects">The project menu</a>
+      <ol>
+        <li><a href="#proj-se">Software engineering</a></li>
+        <li><a href="#proj-ds">Data science &amp; music information retrieval</a></li>
+        <li><a href="#proj-ils">Information &amp; library science, archives</a></li>
+        <li><a href="#proj-ux">UX design &amp; HCI</a></li>
+        <li><a href="#flowsheet">Why the four flowsheet projects aren't duplicates</a></li>
+      </ol>
+    </li>
+    <li><a href="#start">Start here: which route is yours</a></li>
+    <li><a href="#obstacles">The three things that stop people</a></li>
+    <li><a href="#rules">Ground rules that apply to everything</a></li>
+    <li><a href="#client">Routes where WXYC is your client or mentor</a>
+      <ol>
+        <li><a href="#comp393">COMP 393 — Software Engineering Practicum</a></li>
+        <li><a href="#comp523">COMP 523 — Software Engineering Laboratory</a></li>
+        <li><a href="#ures295">URES 295 — Undergraduate Research</a></li>
+        <li><a href="#data481">DATA 481 — Data Science Practicum</a></li>
+        <li><a href="#inls393">INLS 393 — Information Science Internship</a></li>
+        <li><a href="#comp293">COMP 293 — Internship in Computer Science</a></li>
+      </ol>
+    </li>
+    <li><a href="#faculty">Routes where a faculty sponsor directs the project</a>
+      <ol>
+        <li><a href="#inls396">INLS 396 — Independent Study in Information Systems</a></li>
+        <li><a href="#comp495">COMP 495 — Mentored Research in Computer Science</a></li>
+        <li><a href="#comp496">COMP 496 — Independent Study in Computer Science</a></li>
+        <li><a href="#musc395">MUSC 395 — Undergraduate Research in Music</a></li>
+      </ol>
+    </li>
+    <li><a href="#bigger">Bigger commitments: honors, funding, UX coursework</a>
+      <ol>
+        <li><a href="#honors">691H / 692H — Honors thesis</a></li>
+        <li><a href="#surf">SURF — Summer research fellowship</a></li>
+        <li><a href="#ux">UX coursework in SDIS and Hussman</a></li>
+      </ol>
+    </li>
+    <li><a href="#glance">At a glance</a></li>
+    <li><a href="#calendar">The calendar: what is due when</a></li>
+    <li><a href="#prospectus">Writing your one-page prospectus</a></li>
+    <li><a href="#sponsor">Asking a faculty member</a></li>
+    <li><a href="#verify">Things this guide can't settle for you</a></li>
+    <li><a href="#contacts">Contacts</a></li>
+  </ol>
+</nav>
+
+<h2 id="projects"><span class="num">1</span>The project menu</h2>
+
+<p>Sixteen semester-sized projects drawn from the station's repositories and planning documents, grouped by what you would be practicing. Every one maps to a written plan, an existing proposal, or a scoping conversation the station can have on demand — and several have complete specs waiting for someone to execute them. This is a sample, not the live list: ask the station what's open, because priorities move.</p>
+
+<p><span class="risk self">self-contained</span> means no production access and low blast radius — the safe default for a first-time student. <span class="risk sup">supervised</span> means real data, credentials, PII, or licensing questions are in play — you would work against a fixture or a copy wherever one exists. The <em>Fits</em> column names the credit routes each project suits; every course code links to its details later in the guide.</p>
+
+<h3 id="proj-se">1.1 Software engineering</h3>
+<p class="stamp">Fits <a href="#comp393">COMP 393</a> · <a href="#comp523">COMP 523</a> · <a href="#comp495">COMP 495</a>/<a href="#comp496">496</a></p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>Project</th><th>The semester's work</th><th>Fits</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="proj">Genre-walking auto DJ ★</span></td>
+      <td>Build a specialty-programming playlist generator that traverses the semantic artist graph by genre: seed artist + duration + a "freeform-ness" dial → an airable set, validated against the catalog and evaluated against real historical DJ transitions. Ships as an offline CLI plus an evaluation, deliberately outside the frozen auto-DJ deploy path.
+        <div class="src"><a href="https://github.com/WXYC/semantic-index/issues/372">semantic-index#372</a> (the open spike) · <a href="https://github.com/WXYC/semantic-index/blob/main/docs/graph-api.md">docs/graph-api.md</a> · <a href="https://github.com/WXYC/semantic-index/blob/main/docs/architecture.md">docs/architecture.md</a></div>
+      </td>
+      <td><a href="#comp495">COMP 495</a>/<a href="#comp393">393</a>, <a href="#data481">DATA 481</a>, <a href="#honors">honors</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Blind multi-reviewer OCR verifier ★</span></td>
+      <td>Finish and run the blind-review protocol for the handwritten-flowsheet corpus. The backend — consensus merge, agreement metrics, blind-access enforcement — has already shipped; what remains is the reviewer SPA and then the part no code can do for you: recruiting real volunteers, running the protocol, and reporting the human noise floor. See <a href="#flowsheet">§1.5</a> for how this fits with the other flowsheet projects.
+        <div class="src"><a href="https://github.com/WXYC/flowsheet-digitization/blob/main/plans/multi-reviewer-calibration.md">plans/multi-reviewer-calibration.md</a> (the full spec) · <a href="https://github.com/WXYC/flowsheet-digitization/issues/75">#75</a> (SPA, open) · <a href="https://github.com/WXYC/flowsheet-digitization/issues/72">#72</a> (umbrella) · <a href="https://github.com/WXYC/flowsheet-digitization/issues/81">#81</a> (backend, merged)</div>
+      </td>
+      <td><a href="#comp393">COMP 393</a>, <a href="#inls396">INLS 396</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Archive-reconciler package ★</span></td>
+      <td>Extract the station's metadata-reconciliation machinery — strategy pipeline, tiered caches, identity store, implemented three separate times across three repositories — into one installable package any small archive could use. There is a real gap here: the open-source world has heavy catalog systems and statistical entity-resolution libraries, but nothing small that an independent station could stand up in a day. The station wrote an introduction to this project specifically as an on-ramp for someone who has never worked across more than one repository.
+        <div class="src"><a href="https://github.com/WXYC/library-metadata-lookup/issues/1140">library-metadata-lookup#1140</a> · <a href="https://github.com/WXYC/wxyc-catalog/issues/35">wxyc-catalog#35</a> (the source seam) · newcomer introduction + full proposal: <span class="priv">private — ask the station</span></div>
+      </td>
+      <td><a href="#comp393">COMP 393</a>/<a href="#comp496">496</a></td><td><span class="risk sup">supervised</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Fixity &amp; restore-drill tooling</span></td>
+      <td>Build the digital archive's preservation regime: scheduled checksum sweeps, a manifest-rebuild-from-bucket tool, and a rehearsed restore drill with a runbook — developable entirely against a synthetic bucket. The design is already settled in the station's archive proposal; this is the build.
+        <div class="src">Proposal §6 "Offsite mirror, fixity &amp; recovery" and §13.3 "Test strategy": <span class="priv">private — ask the station</span>. No ticket filed yet.</div>
+      </td>
+      <td><a href="#comp393">COMP 393</a>, <a href="#inls396">INLS 396</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="proj-ds">1.2 Data science &amp; music information retrieval</h3>
+<p class="stamp">Fits <a href="#data481">DATA 481</a> · <a href="#comp495">COMP 495</a> · <a href="#ures295">URES 295</a> · <a href="#surf">SURF</a></p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>Project</th><th>The semester's work</th><th>Fits</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="proj">Vision-model handwriting calibration</span></td>
+      <td>A real ML-evaluation experiment: vision-model variants × resolution × prompt design, scored against hand-transcribed golden flowsheets; deliver accuracy/cost curves and a recommended operating point. Harness scaffolding exists, and there is an open decision waiting on the numbers — whether the cheaper model becomes the default for the full corpus run. See <a href="#flowsheet">§1.5</a>.
+        <div class="src"><a href="https://github.com/WXYC/flowsheet-digitization/issues/43">#43</a> (the spike) · <a href="https://github.com/WXYC/flowsheet-digitization/issues/38">#38</a> (the decision it feeds) · <a href="https://github.com/WXYC/flowsheet-digitization/issues/66">#66</a> (per-year drift sampling) · <a href="https://github.com/WXYC/flowsheet-digitization/issues/4">#4</a> (harness, merged)</div>
+      </td>
+      <td><a href="#data481">DATA 481</a>, <a href="#comp495">COMP 495</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">1990s flowsheet entity resolution</span></td>
+      <td>Resolve OCR'd artist and track guesses against the library catalog with fuzzy matching; handle rotation codes, margins, and crossed-out rows; report match rates by year and confidence. A first attempt exists on an unmerged branch and was deliberately parked — the open question is what auto-correction should be allowed to do, which is a design problem before it is a code problem. See <a href="#flowsheet">§1.5</a>.
+        <div class="src"><a href="https://github.com/WXYC/flowsheet-digitization/issues/62">#62</a> (open — carries the parked attempt's post-mortem)</div>
+      </td>
+      <td><a href="#data481">DATA 481</a>, <a href="#inls396">INLS 396</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Three decades of freeform</span></td>
+      <td>Extend the semantic graph back to 1990 using the digitized flowsheets: how did WXYC's genre mix evolve, and which artist pairings persist across DJ generations? A research report, not production code — and the payoff the other three flowsheet projects exist to make possible. See <a href="#flowsheet">§1.5</a>.
+        <div class="src">No ticket yet — it waits on the corpus. Scope it with the station; <a href="https://github.com/WXYC/semantic-index/blob/main/docs/architecture.md">semantic-index/docs/architecture.md</a> describes the graph you would extend.</div>
+      </td>
+      <td><a href="#musc395">MUSC 395</a>, <a href="#data481">DATA 481</a>, <a href="#honors">honors</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">LLM narrative hallucination study</span></td>
+      <td>Run the existing labeling protocol over the <code>explore.wxyc.org</code> artist narratives at scale, then A/B the documented mitigations and report which ones actually reduce severe errors. The evaluation harness is already built, and there is an open issue for exactly the next step — clustering the flags into prompt-evolution candidates.
+        <div class="src"><a href="https://github.com/WXYC/semantic-index/issues/298">semantic-index#298</a> · <a href="https://github.com/WXYC/semantic-index/blob/main/docs/eval-set-rubric.md">docs/eval-set-rubric.md</a> · <a href="https://github.com/WXYC/semantic-index/blob/main/docs/eval-set-baseline-findings.md">docs/eval-set-baseline-findings.md</a> · <a href="https://github.com/WXYC/semantic-index/blob/main/docs/narrative-enrichment-plan.md">docs/narrative-enrichment-plan.md</a></div>
+      </td>
+      <td><a href="#data481">DATA 481</a>, <a href="#ures295">URES 295</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Broadcast audio fingerprinting</span></td>
+      <td>Expand acoustic-feature coverage by running the audio classifier over the station's own broadcast archive — the public datasets cover only about 13% of WXYC artists, because they skew toward well-known recordings and WXYC does not mostly play well-known recordings — then test whether home-grown acoustic-similarity edges differ from the public ones. A natural SURF summer.
+        <div class="src"><a href="https://github.com/WXYC/semantic-index/blob/main/docs/audio-ingest.md">docs/audio-ingest.md</a> (the 13% figure and the three ingest paths) · <a href="https://github.com/WXYC/semantic-index/issues/276">semantic-index#276</a> (the coverage bias this would address)</div>
+      </td>
+      <td><a href="#surf">SURF</a>, <a href="#comp495">COMP 495</a></td><td><span class="risk sup">supervised</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Artist-identity benchmark</span></td>
+      <td>Build a labeled gold set of hard artist-identity cases — aliases, side projects, joined credits, diacritics — and benchmark the resolution cascade: precision and recall by tier, plus a failure taxonomy. The cascade runs in production and is tuned largely by intuition; nobody has measured it end to end.
+        <div class="src"><a href="https://github.com/WXYC/library-metadata-lookup/blob/main/docs/architecture.md">library-metadata-lookup/docs/architecture.md</a> (the cascade and its tiers). No ticket yet — scope it with the station.</div>
+      </td>
+      <td><a href="#data481">DATA 481</a>, <a href="#inls396">INLS 396</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Triangle concert coverage</span></td>
+      <td>Only about 7% of local concerts feature a recently played WXYC artist — and that number is measured, not guessed. Add venues to the concert scraper, improve artist-name matching against the library, and re-measure coverage with proper confidence intervals.
+        <div class="src"><a href="https://github.com/WXYC/triangle-shows/issues/52">triangle-shows#52</a> (venue-expansion epic) · <a href="https://github.com/WXYC/triangle-shows/issues/48">#48</a> · <a href="https://github.com/WXYC/Backend-Service/issues/1368">Backend-Service#1368</a> (the frequency analysis that produced the 7%)</div>
+      </td>
+      <td><a href="#data481">DATA 481</a>, <a href="#comp393">COMP 393</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="proj-ils">1.3 Information &amp; library science, archives</h3>
+<p class="stamp">Fits <a href="#inls396">INLS 396</a> · <a href="#inls393">INLS 393</a> · pair with <a href="#bigger">INLS 651/556</a></p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>Project</th><th>The semester's work</th><th>Fits</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="proj">alt.music.chapel-hill ★</span></td>
+      <td>Turn two raw Usenet mbox archives into a structured, searchable corpus of the 1990s Chapel Hill music scene; cross-reference it against the station's library and flowsheets; and grapple honestly with the ethics of posters who never consented to being a dataset. The purest self-contained digital-humanities project at the station.
+        <div class="src">No repository and no ticket — the station holds the raw archives and this one starts from zero. Ask for the mbox files and a scoping conversation.</div>
+      </td>
+      <td><a href="#inls396">INLS 396</a>, <a href="#musc395">MUSC 395</a>, <a href="#honors">honors</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Pre-2004 alumni recovery</span></td>
+      <td>Twenty-seven years of station history (1977–2003) has no digital roster. Survey what paper records exist, then build the OCR and intake pipeline that feeds them into the alumni system for the 2027 50th anniversary. Real archival practice with real stakes.
+        <div class="src"><span class="priv">The alumni repository is private and holds personal data</span> — access is arranged case by case, and the project is scoped so you work against a synthetic fixture wherever possible. Ask the station first.</div>
+      </td>
+      <td><a href="#inls393">INLS 393</a>/<a href="#inls396">396</a></td><td><span class="risk sup">supervised</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="proj-ux">1.4 UX design &amp; HCI</h3>
+<p class="stamp">Fits <a href="#inls396">INLS 396</a> · <a href="#ux">INLS 318/718/719</a> · <a href="#ux">MEJO 433/581</a></p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>Project</th><th>The semester's work</th><th>Fits</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="proj">Freeform map, guided</span></td>
+      <td>Redesign <code>explore.wxyc.org</code> around <em>walking</em> the artist graph instead of staring at it: surface the existing path-finding API and the co-occurrence↔surprise dial as a first-class experience, with task-based usability testing. Runs entirely locally.
+        <div class="src"><a href="https://github.com/WXYC/semantic-index/issues/169">semantic-index#169</a> (discovery UI, open) · <a href="https://github.com/WXYC/semantic-index/blob/main/docs/graph-api.md">docs/graph-api.md</a> (the API you would surface) · the site itself at <a href="https://explore.wxyc.org">explore.wxyc.org</a></div>
+      </td>
+      <td><a href="#inls396">INLS 396</a>, <a href="#ux">MEJO 581</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Card catalog usability study</span></td>
+      <td>A proper study of the DJ site's two interfaces, classic versus modern, with real DJs and the music director: task analysis, contextual inquiry in the studio, analytics backing. The two interfaces exist because some librarians genuinely prefer the older one, and nobody has studied why. The deliverable is findings and prioritized recommendations — zero code risk.
+        <div class="src"><a href="https://github.com/WXYC/dj-site/issues/1436">dj-site#1436</a> (parity gaps reported from the control room — the anecdotal version of what you would study properly) · <a href="https://github.com/WXYC/dj-site/issues/1510">#1510</a> (a UX question held for want of evidence)</div>
+      </td>
+      <td><a href="#inls396">INLS 396</a>/<a href="#ux">318</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+    <tr>
+      <td><span class="proj">Archive findability</span></td>
+      <td>How do listeners actually look for an old show — "that jazz show from last October"? Study it, then prototype search-and-browse affordances over the archive player's existing search API, instrumented before and after.
+        <div class="src"><a href="https://github.com/WXYC/archive">WXYC/archive</a> (the player) · <a href="https://github.com/WXYC/wxyc-archive-search">wxyc-archive-search</a> (the search API) · <a href="https://archive.wxyc.org">archive.wxyc.org</a>. No ticket yet.</div>
+      </td>
+      <td><a href="#inls396">INLS 396</a>, <a href="#ux">MEJO 581</a></td><td><span class="risk self">self-contained</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note"><b>About these links.</b> Most point at public GitHub repositories you can read right now without an account. A few point at station documents in private repositories — those are marked, and the station will share them with you once you are working on the project. "No ticket yet" is not a warning: it means the work is real but nobody has written it up, which usually makes it <em>easier</em> to shape around your own interests.</div>
+
+<h3 id="flowsheet">1.5 The four flowsheet projects are one pipeline, not four versions of the same idea</h3>
+
+<p>Four projects above touch the same corpus — 1990–2001 DJ logs, handwritten, run through a vision model. At a glance they look like overlapping takes on "digitize the flowsheets." They are not. Each answers a different question, and they answer them in order:</p>
+
+<ol class="pipeline">
+  <li><strong>The blind multi-reviewer verifier asks: how good is the <em>ground truth</em>?</strong> When a single volunteer transcribes a page, their reading simply <em>becomes</em> the truth, and you learn nothing about how reliable that is. Having two or three people read the same page independently, and measuring where they disagree, produces both a better transcript and a number — the human noise floor.</li>
+  <li><strong>The calibration study asks: how good is the <em>machine</em>?</strong> It scores model variants against those hand-transcribed pages. This is exactly why it depends on the stage above: "the model disagrees with truth on 8% of rows" is uninterpretable until you know that two careful humans disagree with <em>each other</em> on 5% of rows. Without the noise floor you are measuring the model against an assumption of perfect truth, and your answer is wrong by an unknown amount.</li>
+  <li><strong>Entity resolution asks something different: what <em>is</em> this record?</strong> The first two are about transcription — did we read the handwriting correctly? This one begins after the reading is already correct and asks which row in a fifty-year catalog the words "Guided by Voices — Alien Lanes" actually refer to, given rotation codes, abbreviations, and multiple pressings of the same album. That is record linkage, not handwriting recognition: different methods, different literature, different failure modes.</li>
+  <li><strong>The historical analysis asks: so what?</strong> It touches no OCR at all. It consumes the finished corpus as research data and asks how a freeform station's taste moved across three decades and several DJ generations.</li>
+</ol>
+
+<p>They are stages, then, not duplicates — and that has three consequences for picking one:</p>
+
+<ul>
+  <li><strong>They are sized and shaped differently.</strong> Stage 1 is a build-and-operate project with real people in it. Stage 2 is a contained experiment and the cleanest single-semester deliverable. Stage 3 is the most intellectually open — what an automatic correction should be <em>permitted</em> to do is genuinely unsettled, which is why the first attempt was parked. Stage 4 is a paper.</li>
+  <li><strong>Later stages depend on earlier ones being done well, but you don't have to wait your turn.</strong> Stages 1 and 2 can run concurrently by two students who talk to each other — arguably the ideal pairing, and a good argument for the shared-project route in <a href="#sponsor">§11</a>, where one faculty sponsor covers you both.</li>
+  <li><strong>Only stages 2 and 3 are single-person, single-semester projects with no dependency on recruiting anyone.</strong> If you want the cleanest possible start, take one of those.</li>
+</ul>
+
+<p class="stamp">★ = the strongest openers for a first-time student. Three projects have a complete written specification already waiting for an executor rather than a scoping conversation: the OCR verifier, the archive-reconciler package, and the fixity tooling.</p>
+
+
+<div class="win"><b>Pick something finite.</b> The projects that finish are the ones with a clear "done": a screen that works, a report that exists, a number that got better. The ones that stall are open-ended platform rewrites. Your sponsor is evaluating one semester, not a roadmap.</div>
+
+<h2 id="start"><span class="num">2</span>Start here: which route is yours</h2>
+
+<p>Read the five sentences below and take the first one that describes you.</p>
+
+<ul>
+  <li><strong>"I want to try this without committing to much, and I'd rather not go hunting for a professor."</strong> → <a href="#ures295">URES 295</a>. One credit, pass/fail, repeatable twice, satisfies the RESEARCH gen-ed, and it is <em>the only route on this page</em> where a non-faculty WXYC mentor can sign as your mentor of record. If you are unsure, this is the door.</li>
+  <li><strong>"I'm a CS major and I want this to count."</strong> → <a href="#comp393">COMP 393</a> to build something for the station as a real client; <a href="#comp523">COMP 523</a> to join a senior team and have WXYC pitch you a project; <a href="#comp495">COMP 495</a> if the work has a research question in it — that's the only CS independent study that counts toward the major, and only once.</li>
+  <li><strong>"I care about the library, the archive, the metadata, or the taxonomy."</strong> → <a href="#inls396">INLS 396</a> for a graded independent study with no prerequisites, or <a href="#inls393">INLS 393</a> for a 135-hour field experience if you're a junior with the prereqs. Pair either with <a href="#ux">INLS 651</a>.</li>
+  <li><strong>"I want to design something and test it with real users."</strong> → <a href="#inls396">INLS 396</a> with a UX brief, or take one of the <a href="#ux">UX courses</a> in SDIS or Hussman and bring a WXYC surface as your project.</li>
+  <li><strong>"I want money and a summer."</strong> → <a href="#surf">SURF</a>. Roughly $4,000 for at least nine weeks, applications due in early February, and it requires a UNC faculty research advisor — so that conversation happens over winter break at the latest.</li>
+</ul>
+
+<p>These are not mutually exclusive across terms. A common arc is URES 295 in one semester to prove the collaboration works, then INLS 396 or COMP 495 for a larger graded project, then an honors thesis built on top of both.</p>
+
+<h2 id="obstacles"><span class="num">3</span>The three things that stop people</h2>
+
+<p>Almost nobody has done this, and the reasons are structural rather than personal. Knowing them is most of the battle:</p>
+
+<ol>
+  <li><strong>The window closes before curiosity opens.</strong> Every for-credit path at UNC needs a signed learning contract finalized by roughly the first week of classes — and URES needs it weeks <em>before</em> classes start. If you get interested in week four, you have already missed the semester. The fix is to treat this as a decision you make one term early.</li>
+  <li><strong>You have to find a faculty sponsor yourself.</strong> Almost every route needs a UNC faculty instructor of record, and departments do no matchmaking. "Go convince a professor" is where most independent studies quietly die. See <a href="#sponsor">§11</a> — and note that faculty are capped at two independent-study <em>projects</em> per semester, but a single project can hold several students, so "I'm full" is sometimes answerable with "can I join the project you already have?"</li>
+  <li><strong>Nobody knows the menu.</strong> Not the courses (COMP 393? URES 295? INLS 651?) and not the fact that WXYC has shovel-ready projects with written specs waiting for someone to execute them. That's <a href="#projects">§1</a>.</li>
+</ol>
+
+<div class="win"><b>What the station will do for you.</b> WXYC can hand you a scoped project with a written problem statement, supply the data and code review, sign as client where the course allows it, act as your mentor of record for URES 295, and write the end-of-term evaluation. What it cannot do is be your faculty sponsor for the routes that require faculty. Bring the prospectus to the station <em>first</em>; a named project with a client already attached is a far easier ask of a busy professor than "I'd like to do something with the radio station."</div>
+
+<h2 id="rules"><span class="num">4</span>Ground rules that apply to everything</h2>
+
+<p>One university policy — the <a href="https://policies.unc.edu/TDClient/2833/Portal/KB/Article/159791/Independent-Study-Courses-Policy">Independent Study Courses Policy</a>, formerly UPM #30 — governs every independent study, mentored research, internship, and honors thesis course at UNC:</p>
+
+<ul>
+  <li><strong>A learning contract is mandatory.</strong> It specifies weekly hours, meeting cadence, assignments with due dates, and exactly how your grade is determined. Departments run it through the <a href="https://olcm.oasis.unc.edu/">Online Learning Contract Manager (OLCM)</a>. Computer Science <a href="https://cs.unc.edu/undergraduate/learning-contracts/">asks for approval at least 24 hours before the university deadline</a>, so don't file at the buzzer.</li>
+  <li><strong>Three hours of work per week per credit hour, minimum.</strong> A 3-credit independent study is a nine-hour-a-week commitment. This is a floor, not a suggestion, and your sponsor is expected to hold you to it. Scope accordingly.</li>
+  <li><strong>There is always a final written product and a final assessment.</strong> A substantial paper, portfolio, or thesis. Pure code with no write-up does not satisfy the policy — budget for the artifact from week one. <a href="#prospectus">§10</a> shows how to make that artifact something the station actually keeps.</li>
+  <li><strong>Registration closes early.</strong> The policy says the end of the first week of classes; the <a href="https://curricula.unc.edu/independent-study-courses/">curricula office</a> says the second week. The two official pages disagree, so treat <em>"before the semester starts"</em> as the real deadline and you are never wrong.</li>
+  <li><strong>Caps.</strong> At most 12 graded independent-study credits count toward graduation (honors thesis hours excluded), and at most 12 in any one semester. Spend them deliberately.</li>
+  <li><strong>Faculty caps.</strong> Two independent-study projects per faculty member per semester, plus two honors students — but CS explicitly notes a project may include multiple students.</li>
+</ul>
+
+<h2 id="client"><span class="num">5</span>Routes where WXYC is your client or mentor</h2>
+
+<p>In these, the station has a formal, named role: it signs something, hosts you, or is the outside organization with the problem. The academic scaffolding already exists, so you are not inventing a syllabus. The cost is that the station has to be lined up before the term begins.</p>
+
+<div class="card" id="comp393">
+  <h3>COMP 393 — Software Engineering Practicum <span class="tag">best fit</span></h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>1–3, repeatable to a maximum of 6</dd>
+    <dt>Open to</dt><dd>CS majors, after COMP 211 and COMP 301 (C or better)</dd>
+    <dt>Who signs</dt><dd>WXYC as client, plus a COMP faculty mentor as instructor of record</dd>
+    <dt>Counts toward</dt><dd>Degree credit (not major electives)</dd>
+  </dl>
+  <p>The catalog describes it as: <em>"Students develop a software program for a real client under the supervision of a faculty member. Projects may be proposed by the student but must have real users."</em> The bar is requirements defined by the client, intended use beyond development, and substantive computer science — all three of which a WXYC project clears easily.</p>
+  <p>This is the one course where WXYC has a formal role: the client <strong>digitally signs the learning contract</strong> and <strong>submits a written evaluation</strong> alongside the faculty mentor's. Multiple students may share one project (two is the recommended maximum). The client and the instructor of record are allowed to be the same person, which matters if you find a COMP faculty member willing to act as the station-side contact too.</p>
+  <p><strong>How to start:</strong> pick a project from <a href="#projects">§1</a>, write the one-pager in <a href="#prospectus">§10</a>, bring it to WXYC, then bring it to the department. <a href="https://cs.unc.edu/undergraduate/learning-contracts/">Department process</a> · <a href="https://catalog.unc.edu/courses/comp/">catalog</a>.</p>
+  <div class="flag"><b>Verify before you rely on it:</b> the catalog lists COMP 393 as letter-graded while the department's own course table lists it pass/fail. Ask the CS undergraduate office which applies in your term — it changes whether this can carry a major GPA.</div>
+</div>
+
+<div class="card" id="comp523">
+  <h3>COMP 523 — Software Engineering Laboratory <span class="tag">free team</span></h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>4 — it is a regular course, not an independent study</dd>
+    <dt>Who does the work</dt><dd>A team of three to five CS seniors</dd>
+    <dt>WXYC's role</dt><dd>Client: pitch the project, meet roughly weekly, take the hand-off</dd>
+    <dt>Instructor</dt><dd>Dr. David Stotts — <a href="mailto:stotts@cs.unc.edu">stotts@cs.unc.edu</a></dd>
+  </dl>
+  <p>The classic client course: teams spend a semester building a working system the client <em>"can use properly, and maintain and extend."</em> Clients propose before the semester, pitch to the class in about week two (historically around six minutes), and get a documented hand-off in November or April. There is no fee; historically clients covered incidentals such as hosting. NDAs are off the table, and projects are expected to be back-burner rather than business-critical.</p>
+  <p>You don't take 523 <em>as</em> a WXYC student so much as make sure WXYC is on the client list and then take the course. The "nothing business-critical" constraint genuinely shapes eligibility: a semester team should not own the flowsheet write path a live DJ depends on at 2 a.m. Good 523 projects are adjacent and self-contained — a visualization, an analysis tool, a client app, an offline ingestion pipeline.</p>
+  <p>Not every proposed project gets a team, so submit early. <a href="https://www.cs.unc.edu/~stotts/COMP523-F26/">Course site</a>. The formal client-application channel is unverified after a staffing change — email Stotts directly.</p>
+</div>
+
+<div class="card" id="ures295">
+  <h3>URES 295 — Undergraduate Research <span class="tag">non-faculty mentor OK</span></h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>1, pass/fail, repeatable twice</dd>
+    <dt>Open to</dt><dd>Any UNC undergraduate, any major</dd>
+    <dt>Who signs</dt><dd>The mentor — explicitly <strong>not</strong> required to be UNC faculty</dd>
+    <dt>Deadline</dt><dd>2 weeks before fall classes; <strong>4 weeks before spring classes</strong></dd>
+    <dt>Gen-ed</dt><dd>Carries the RESEARCH attribute</dd>
+  </dl>
+  <p>The only credit vehicle where the station's tech lead can be your mentor of record, with no professor required. It is registered through the <a href="https://our.unc.edu/find/ures/">Office for Undergraduate Research</a> with a learning contract, and the final product is a paper of five pages or more.</p>
+  <p>One credit is small enough that nobody has to be convinced of much, the sponsor problem disappears entirely, and it satisfies a gen-ed you have to satisfy anyway. Its sibling <strong>URES 195</strong> is zero credits and free: it puts the research experience on your transcript without credit hours. Both feed the 300-hour pathway to the <a href="https://our.unc.edu/find/crsp/">Carolina Research Scholar</a> transcript designation — a semester at three hours a week is about 45 of those hours. <a href="https://catalog.unc.edu/courses/ures/">Catalog</a>.</p>
+  <div class="flag"><b>Watch the spring deadline.</b> Four weeks before spring classes puts the contract in <b>early December</b>, in the middle of fall finals. If you want URES for spring, the conversation with WXYC happens in October or November.</div>
+</div>
+
+<div class="card" id="data481">
+  <h3>DATA 481 — Data Science Practicum <span class="tag">verify first</span></h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>3</dd>
+    <dt>Open to</dt><dd>Students past MATH 347, STOR 455, STOR 120/320</dd>
+    <dt>WXYC's role</dt><dd>Submits a project "feasible within a 12-week period"</dd>
+    <dt>Home</dt><dd>SDIS — the School of Data and Information Sciences</dd>
+  </dl>
+  <p>The catalog says: <em>"Students complete a project from an external client. Clients from an array of industries, as well as those from within UNC, will submit project requests."</em> WXYC qualifies as an internal-UNC client on the catalog's face, and the station has no shortage of twelve-week data problems — play-history analysis, genre misfiling audits against external catalogs, artist identity resolution across four music databases. <a href="https://catalog.unc.edu/courses/data/">Catalog</a>.</p>
+  <div class="flag"><b>Unverified:</b> the client submission process and portal are not documented anywhere we could find. Ask SDIS how a client actually submits before you build a plan around this one.</div>
+</div>
+
+<div class="card" id="inls393">
+  <h3>INLS 393 — Information Science Internship <span class="tag">135 hours</span></h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>3, pass/fail (+1 later via INLS 493)</dd>
+    <dt>Open to</dt><dd>Juniors with INLS 161, 201, and 382</dd>
+    <dt>The bar</dt><dd>135 hours on site, a seminar, and a short paper</dd>
+    <dt>Site supervisor</dt><dd>"A practicing professional"</dd>
+    <dt>Deadline</dt><dd>Field Experience Agreement due at least one week before the first day of classes</dd>
+  </dl>
+  <p>Field experience <em>"can be in any information setting"</em> — you may propose your own site, and being paid is allowed alongside credit. Structurally this is the best match for archive and library work: 135 hours is enough to <em>finish</em> something substantial in the card catalog or the audio archive rather than just scope it. <a href="https://catalog.unc.edu/undergraduate/programs-study/information-science-major-bs/">BSIS catalog page</a>.</p>
+  <div class="flag"><b>Two catches.</b> First, if you already volunteer at WXYC, the work has to be <b>demonstrably new</b> with new learning objectives — existing duties cannot be converted to credit retroactively. Second, whether the station's tech lead clears the "practicing professional" supervisor bar is a coordinator's judgment call, not a settled fact; a professional engineer or a partnering UNC Libraries staffer is the safe supervisor of record. Ask before you plan around it.</div>
+</div>
+
+<div class="card" id="comp293">
+  <h3>COMP 293 — Internship in Computer Science</h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>3, pass/fail, not repeatable</dd>
+    <dt>Open to</dt><dd>CS majors past COMP 210/211 and 301</dd>
+    <dt>The bar</dt><dd>At least 180 hours; "substantive… equivalent to a 500-level course"</dd>
+    <dt>Counts toward</dt><dd>HI-INTERN gen-ed; not the major</dd>
+  </dl>
+  <p>Framed around employment, but nothing on the department's page requires pay — a WXYC summer role is plausible. Your site supervisor sends a checkpoint email at two weeks and a final confirmation at the end. <a href="https://cs.unc.edu/undergraduate/learning-contracts/">Department process</a>.</p>
+</div>
+
+<h2 id="faculty"><span class="num">6</span>Routes where a faculty sponsor directs the project</h2>
+
+<p>Here there is no course. You propose the work, you find someone to supervise it, and the two of you write the contract that becomes your syllabus. More freedom, more setup cost, earlier deadlines.</p>
+
+<div class="card" id="inls396">
+  <h3>INLS 396 — Independent Study in Information Systems <span class="tag">most flexible</span></h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>1–3, letter grade, repeatable to 6</dd>
+    <dt>Open to</dt><dd>No prerequisites listed — any undergraduate an SDIS faculty member will take on</dd>
+    <dt>The bar</dt><dd>"A special topic under the direction of a specific faculty member"; prospectus required before registration</dd>
+    <dt>Counts toward</dt><dd>BSIS electives and, by name, the Information Science minor</dd>
+  </dl>
+  <p>The most flexible graded option on this page and the one with the fewest gates. The topic is unrestricted — UX, archives, metadata, entity resolution, data analysis all fit, and no published rule distinguishes research from applied work. The whole gate is one SDIS faculty member agreeing to direct it, which is exactly what a pre-written prospectus is for. Because it names the IS minor explicitly, it is also the best route for a non-major who has picked up the minor. <a href="https://catalog.unc.edu/courses/inls/">Catalog</a>.</p>
+  <div class="flag"><b>Form location unresolved.</b> Enrollment historically ran through a SILS instructor-approval form; after the school merger the form's new home is unclear. Route through SDIS advising.</div>
+</div>
+
+<div class="card" id="comp495">
+  <h3>COMP 495 — Mentored Research in Computer Science</h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>3, letter grade</dd>
+    <dt>Open to</dt><dd>CS majors</dd>
+    <dt>The bar</dt><dd>Real research with "an independent task and deliverable" — not task-work</dd>
+    <dt>Counts toward</dt><dd>The major, once, plus the RESEARCH gen-ed</dd>
+  </dl>
+  <p>The strongest academic sell in CS, because unlike 496 it actually counts toward the major. The framing matters, though: the department warns that it <em>"is not to be used as a way to assign a series of unrelated tasks."</em> Shape the work as a question — not "I implemented a feature" but "I measured whether this approach beats that one, and here is the evidence." The semantic-graph and OCR-calibration projects in <a href="#projects">§1</a> fit naturally. Note that your advisor may be UNC faculty from <em>outside</em> the CS department. <a href="https://cs.unc.edu/undergraduate/learning-contracts/">Department process</a>.</p>
+</div>
+
+<div class="card" id="comp496">
+  <h3>COMP 496 — Independent Study in Computer Science</h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>3, letter grade, repeatable to 6</dd>
+    <dt>Open to</dt><dd>Advanced CS majors</dd>
+    <dt>The bar</dt><dd>A topic "not offered in the regular curriculum," structured like a syllabus</dd>
+    <dt>Counts toward</dt><dd>Degree credit only — excluded from major electives</dd>
+  </dl>
+  <p>The weakest sell in CS: real credit that does not advance the major. Use it only when 393 and 495 don't fit — if the work isn't research-shaped, COMP 393 gives you the same practical experience and counts the same. <a href="https://catalog.unc.edu/undergraduate/programs-study/computer-science-major-bs/">B.S. exclusion</a> · <a href="https://catalog.unc.edu/undergraduate/programs-study/computer-science-major-ba/">B.A. exclusion</a>.</p>
+</div>
+
+<div class="card" id="musc395">
+  <h3>MUSC 395 — Undergraduate Research in Music</h3>
+  <dl class="facts">
+    <dt>Credits</dt><dd>3, repeatable to 6, RESEARCH gen-ed</dd>
+    <dt>Open to</dt><dd>No restriction listed (non-major access unverified)</dd>
+    <dt>The bar</dt><dd>Research or creative work with a tangible outcome, faculty-guided</dd>
+  </dl>
+  <p>A plausible home for the music-history and archive projects — the 1990s flowsheet corpus, the Usenet archive — with a Music faculty mentor. MUSC 296 is majors-only; 395 lists no restriction, though whether that holds in practice is worth confirming. <a href="https://catalog.unc.edu/courses/musc/">Catalog</a>.</p>
+</div>
+
+<h2 id="bigger"><span class="num">7</span>Bigger commitments: honors, funding, UX coursework</h2>
+
+<div class="card" id="honors">
+  <h3>COMP 691H / 692H and INLS 691H / 692H — Honors thesis</h3>
+  <dl class="facts">
+    <dt>CS bar</dt><dd>3.3 cumulative GPA; a thesis "may include software development" but needs original research</dd>
+    <dt>IS bar</dt><dd>BSIS majors; INLS GPA ≥ 3.5, overall ≥ 3.3; apply in the spring of your junior year</dd>
+    <dt>Shape</dt><dd>Two semesters, 3 + 3 credits, written thesis plus a defense</dd>
+    <dt>Counts toward</dt><dd>Honors designation; excluded from the 12-hour independent-study cap</dd>
+  </dl>
+  <p>For the right senior, a WXYC system wrapped in a genuine research question — graph-based playlist generation, handwriting-recognition evaluation, record linkage — is thesis material. CS requires the 691H/692H pair with a public defense; IS requires an A− in INLS 691H to continue into 692H.</p>
+  <p>A thesis needs a question, not a task list. The realistic path is a term of URES 295 or INLS 396 first, building enough familiarity with the station's systems that the question becomes obvious, and then applying.</p>
+</div>
+
+<div class="card" id="surf">
+  <h3>SURF — Summer Undergraduate Research Fellowship <span class="tag">funding</span></h3>
+  <dl class="facts">
+    <dt>Funding</dt><dd>$4,000 stipend</dd>
+    <dt>Commitment</dt><dd>At least 9 weeks at 20+ hours/week; one per undergraduate career</dd>
+    <dt>Deadline</dt><dd>Early February, for the following summer</dd>
+    <dt>Requires</dt><dd>A UNC faculty research advisor and a genuine research question</dd>
+  </dl>
+  <p>Spend a summer on a WXYC research project and get paid $4,000 for it. Two constraints: the advisor must be UNC faculty (the station's tech lead cannot sign), and the project needs research framing — "all departments and all majors" are encouraged, but a pure product build makes a weak application. <a href="https://our.unc.edu/fund/surf/">OUR SURF page</a>.</p>
+</div>
+
+<div class="card" id="ux">
+  <h3>UX coursework — SDIS and Hussman</h3>
+  <dl class="facts">
+    <dt>In SDIS</dt><dd>INLS 318 HCI (undergrad); INLS 718/719 UI design &amp; usability testing (graduate, by permission)</dd>
+    <dt>In Hussman</dt><dd>MEJO 433 UX Strategy; MEJO 581 UX Design &amp; Usability</dd>
+    <dt>The hook</dt><dd>MEJO 581 (Laura Ruel) uses real community clients</dd>
+    <dt>Access</dt><dd>Non-Hussman seat availability unverified</dd>
+  </dl>
+  <p>UX at UNC lives in two places, and a WXYC redesign brief — the card catalog, the archive player, <code>explore.wxyc.org</code> — is exactly the kind of artifact a course project or an INLS 396 needs. Several MEJO courses (187, 433, 581 and others) sit on the BSIS approved-electives list, so information-science students can build a UX track across both schools. <a href="https://catalog.unc.edu/courses/inls/">INLS catalog</a> · <a href="https://catalog.unc.edu/courses/mejo/">MEJO catalog</a> · <a href="https://hussman.unc.edu/news/user-friendly-laura-ruel-teaches-students-the-art-and-science-of-ux-while-engaging-community-clients">MEJO 581 clients</a>.</p>
+</div>
+
+<div class="win"><b>Courses worth knowing about even if you never file a learning contract.</b> On the SDIS shelf: <b>INLS 651 Audio-Visual Archives Management</b> (1.5 credits — recording history, media preservation, copyright) is the single most on-mission course in the catalog for the station's library and archive. Also INLS 556 Archives &amp; Records Management, INLS 465 Managing Digital Collections, INLS 541 Information Visualization, and with permission the graduate metadata and curation sequence (INLS 720, 750, 752, 757, and 759 Community Archiving). Pairing 651 with an archives project from <a href="#proj-ils">§1.3</a> as an INLS 396 makes a complete package: the course supplies the theory, the independent study supplies the collection.</div>
+
+<h2 id="glance"><span class="num">8</span>At a glance</h2>
+
+<div class="scroller">
+<table>
+  <thead>
+    <tr><th>Route</th><th>Credits</th><th>Grading</th><th>Open to</th><th>WXYC's role</th><th>Contract deadline</th><th>Counts toward</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><span class="proj">COMP 393</span><br>practicum</td><td>1–3 (→6)</td><td>Letter*</td><td>CS majors, 211+301</td><td>Client — signs contract, evaluates</td><td>~First week of classes</td><td>Degree credit</td></tr>
+    <tr><td><span class="proj">COMP 523</span><br>SE lab</td><td>4</td><td>Letter</td><td>CS seniors (course)</td><td>Client — pitches to teams</td><td>Proposal before semester</td><td>Major (regular course)</td></tr>
+    <tr><td><span class="proj">URES 295</span></td><td>1 (×2)</td><td>P/F</td><td>Any undergrad</td><td>Mentor of record</td><td>2–4 weeks before classes</td><td>RESEARCH gen-ed</td></tr>
+    <tr><td><span class="proj">DATA 481</span><br>practicum</td><td>3</td><td>Letter</td><td>Past MATH 347 + STOR</td><td>Client — submits project</td><td>Before semester (course)</td><td>DS program</td></tr>
+    <tr><td><span class="proj">INLS 393</span><br>field exp.</td><td>3 (+1)</td><td>P/F</td><td>Juniors, 3 INLS courses</td><td>Host site (135 hrs, new work)</td><td>≥1 week before classes</td><td>BSIS + IS minor, HI-INTERN</td></tr>
+    <tr><td><span class="proj">INLS 396</span><br>indep. study</td><td>1–3 (→6)</td><td>Letter</td><td>Any undergrad w/ SDIS sponsor</td><td>Project + prospectus source</td><td>~First week of classes</td><td>BSIS + IS minor</td></tr>
+    <tr><td><span class="proj">COMP 495</span><br>research</td><td>3 (→6)</td><td>Letter</td><td>CS majors</td><td>Research setting</td><td>~First week of classes</td><td>Major elective ×1, RESEARCH</td></tr>
+    <tr><td><span class="proj">COMP 496</span><br>indep. study</td><td>3 (→6)</td><td>Letter</td><td>Advanced CS majors</td><td>Project source</td><td>~First week of classes</td><td>Degree credit only</td></tr>
+    <tr><td><span class="proj">COMP 293</span><br>internship</td><td>3</td><td>P/F</td><td>CS majors</td><td>Host site (≥180 hrs)</td><td>Before the internship</td><td>HI-INTERN gen-ed</td></tr>
+    <tr><td><span class="proj">MUSC 395</span><br>research</td><td>3 (→6)</td><td>Letter</td><td>No restriction listed</td><td>Research setting</td><td>~First week of classes</td><td>RESEARCH gen-ed</td></tr>
+    <tr><td><span class="proj">691H/692H</span><br>honors</td><td>3+3</td><td>Letter</td><td>GPA 3.3 (CS) / 3.5 INLS (IS)</td><td>Thesis setting</td><td>Apply spring of junior year</td><td>Honors designation</td></tr>
+    <tr><td><span class="proj">SURF</span></td><td>$4,000</td><td>—</td><td>Any undergrad, once</td><td>Summer research setting</td><td>Early February</td><td>Funding, not credit</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="stamp">* COMP 393's grading basis conflicts between the catalog (letter) and the department table (pass/fail) — confirm with the CS department. "~First week of classes" reflects the university policy; a second official page says the second week. Get your contract done before the semester regardless.</p>
+
+<h2 id="calendar"><span class="num">9</span>The calendar: what is due when</h2>
+
+<p>Fall 2026 is effectively closed — self-service add ended August 21, and even the generous reading of the add policy closes departmental adds on August 28. <strong>Spring 2027 is the first realistic term.</strong> Working backward from it:</p>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>When</th><th>What you do</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Now – late October 2026</strong></td><td>Pick a project from <a href="#projects">§1</a> and talk to WXYC. Draft your one-page prospectus (<a href="#prospectus">§10</a>). Start the faculty-sponsor conversation (<a href="#sponsor">§11</a>). This is the window that actually determines whether spring happens.</td></tr>
+    <tr><td><strong>September 1 – October 1, 2026</strong></td><td>BSIS spring application window, if you are adding the Information Science major.</td></tr>
+    <tr><td><strong>November 2026</strong></td><td>COMP 523 spring client proposals go in. Lock your sponsor down.</td></tr>
+    <tr><td><strong>Early December 2026</strong></td><td>URES 295 spring contract due — four weeks before spring classes, which lands in the middle of fall finals.</td></tr>
+    <tr><td><strong>≥ 1 week before spring classes</strong></td><td>INLS 393 Field Experience Agreement due. INLS 396 prospectus and faculty director settled before you can register.</td></tr>
+    <tr><td><strong>Week 1–2 of spring classes</strong></td><td>COMP 393 / 495 / 496 learning contracts finalized in OLCM — CS wants them at least 24 hours before its own deadline. COMP 523 clients pitch to the class.</td></tr>
+    <tr><td><strong>Early February 2027</strong></td><td>SURF application deadline for summer 2027.</td></tr>
+    <tr><td><strong>~April 1, 2027</strong></td><td>Honors thesis applications for the 2027–28 academic year.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="flag"><b>Sources disagree about the add deadline</b> — some say the end of week 1 of classes, others week 2. Plan for "before the semester starts" and you are never wrong.</div>
+
+<h2 id="prospectus"><span class="num">10</span>Writing your one-page prospectus</h2>
+
+<p>Every route wants some version of the same document under a different name — prospectus, learning contract, project proposal. Write it once, well, and reuse it. One page is the right length. The template below is what a faculty sponsor needs in order to say yes without scheduling a meeting first, and it maps onto the fields OLCM will ask you for.</p>
+
+<blockquote class="tpl">TITLE — one concrete noun phrase, not a theme.
+
+PROBLEM (3–4 sentences)
+What is broken, missing, or unknown today. Include one specific fact
+that proves you have actually looked — a number, a file, a behavior
+you observed.
+
+DELIVERABLE (2–3 sentences)
+What will exist at the end of the semester that does not exist now.
+Be physical: "a working X", "a report that answers Y", "a measurement
+of Z." Name the final written product explicitly — the policy requires one.
+
+METHOD / PLAN (5–8 bullets)
+Roughly one bullet per two weeks. Name the tools and the data you will
+use. Include the point where you show something to the station.
+
+HOW IT WILL BE EVALUATED
+What counts as success, in terms your sponsor can check without reading
+the code. Tie this to the final written product.
+
+TIME
+Hours per week × weeks, meeting the 3-hours-per-credit-hour floor.
+
+SUPERVISION
+Who at WXYC you work with, how often you meet, and what the station
+provides: data access, code review, the end-of-term evaluation.
+
+BACKGROUND
+Courses you have taken and anything you have built that is relevant.
+Two sentences.</blockquote>
+
+<p>Bring this to WXYC before you bring it to a professor. A prospectus that already names a station contact and a scoped project is a much easier ask than an open-ended request to supervise "something."</p>
+
+<h2 id="sponsor"><span class="num">11</span>Asking a faculty member</h2>
+
+<ul>
+  <li><strong>Start with someone who already knows you.</strong> An instructor from a course you did well in, with a project adjacent to what they teach, is a far better first ask than a stranger whose research area matches on paper.</li>
+  <li><strong>Ask in person, or in a short and specific email.</strong> Attach the one-pager. Say what you want (to sponsor a 3-credit INLS 396 in spring), what it costs them (a meeting every two weeks and a grade at the end), and that the project and the client are already arranged.</li>
+  <li><strong>Know the cap.</strong> Faculty are limited to two independent-study <em>projects</em> per semester — but a single project can hold more than one student. If a professor says they're full, ask whether you can join a project they are already running.</li>
+  <li><strong>For URES 295, skip this step entirely.</strong> A WXYC mentor can sign as mentor of record. That is the whole reason URES is the recommended entry point.</li>
+  <li><strong>If you get a no, ask for a redirect.</strong> "Is there someone in the department who'd be a better fit for this?" is a question most faculty answer generously.</li>
+  <li><strong>Remember COMP 495's advisor rule.</strong> Your advisor may be UNC faculty from outside Computer Science, which widens the pool considerably for a project that spans music, archives, and code.</li>
+</ul>
+
+<h2 id="verify"><span class="num">12</span>Things this guide can't settle for you</h2>
+
+<p>These were researched and came back ambiguous. Verify each one with the relevant office before it becomes load-bearing in your plan.</p>
+
+<ul>
+  <li><strong>COMP 393 grading basis.</strong> The catalog says letter-graded; the department's course table says pass/fail. Ask the CS undergraduate office — it determines whether the credits can carry a major GPA.</li>
+  <li><strong>The add deadline.</strong> End of week 1 versus week 2 of classes, depending on which official page you read. Plan for before the term starts.</li>
+  <li><strong>DATA 481 client submission.</strong> No documented process or portal for an internal UNC client to submit a project. Ask SDIS.</li>
+  <li><strong>COMP 523 client application.</strong> The formal client-application channel is unverified after a staffing change. Email Dr. Stotts directly.</li>
+  <li><strong>INLS 393 site supervisor.</strong> Whether a WXYC technical mentor clears the "practicing professional" bar is the course coordinator's judgment call, not a published rule.</li>
+  <li><strong>INLS 396 instructor-approval form.</strong> Enrollment historically ran through a SILS form whose post-merger home is unresolved. Route through SDIS advising.</li>
+  <li><strong>MUSC 395 non-major access.</strong> The catalog lists no restriction, but whether a non-major is actually admitted is unconfirmed.</li>
+  <li><strong>MEJO seat availability.</strong> Whether non-Hussman students can get into MEJO 433 or 581 is unverified.</li>
+  <li><strong>APPLES service-learning</strong> is probably <em>not</em> a path — the program partners with off-campus nonprofits, and WXYC is a campus student organization.</li>
+</ul>
+
+<div class="note"><b>One structural change to know about.</b> The School of Information and Library Science (SILS) no longer exists as a standalone school: it merged with the School of Data Science and Society into the <a href="https://www.unc.edu/posts/2026/07/01/collaboration-is-key-for-carolinas-newest-school/">School of Data and Information Sciences (SDIS)</a> on July 1, 2026. All INLS course numbers and programs survive intact in the 2026–27 catalog, but old SILS forms pages currently return 404. If a link you find is dead, that is why — go to the SDIS site instead.</div>
+
+<h2 id="contacts"><span class="num">13</span>Contacts</h2>
+
+<div class="scroller">
+<table>
+  <thead><tr><th>For</th><th>Who</th></tr></thead>
+  <tbody>
+    <tr><td>SDIS undergraduate advising (INLS 393, 396, BSIS, IS minor)</td><td>Benjamin Levine — <a href="mailto:bjlevine@unc.edu">bjlevine@unc.edu</a></td></tr>
+    <tr><td>SDIS general, including DATA 481 client questions</td><td><a href="mailto:info@sdis.unc.edu">info@sdis.unc.edu</a></td></tr>
+    <tr><td>COMP 523 client projects</td><td>David Stotts — <a href="mailto:stotts@cs.unc.edu">stotts@cs.unc.edu</a></td></tr>
+    <tr><td>CS learning contracts (COMP 293, 393, 495, 496)</td><td><a href="https://cs.unc.edu/undergraduate/learning-contracts/">cs.unc.edu/undergraduate/learning-contracts</a></td></tr>
+    <tr><td>URES 195/295, SURF, Carolina Research Scholar</td><td>Office for Undergraduate Research — <a href="https://our.unc.edu/find/ures/">our.unc.edu</a></td></tr>
+    <tr><td>Learning contract system</td><td><a href="https://olcm.oasis.unc.edu/">olcm.oasis.unc.edu</a></td></tr>
+    <tr><td>University independent-study policy</td><td><a href="https://policies.unc.edu/TDClient/2833/Portal/KB/Article/159791/Independent-Study-Courses-Policy">Independent Study Courses Policy</a></td></tr>
+    <tr><td><strong>WXYC technical projects</strong></td><td>[ fill in the station contact before circulating ]</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 style="border-top:1px solid var(--rule)">Your next step</h2>
+
+<p>If you want spring 2027: pick a project from <a href="#projects">§1</a>, choose a route from <a href="#start">§2</a>, draft the one-pager from <a href="#prospectus">§10</a>, and get it in front of WXYC in October. The station can help you scope the work and, for URES 295, supply the mentor. Everything else on this page is paperwork that only works if you start it early.</p>
+
+<footer>
+  Course numbers, credit values, and deadlines reflect the 2026–27 UNC–Chapel Hill catalog, department pages, and university policy as researched in August 2026. Catalogs change, departments have discretion, and every item in §12 was ambiguous at the time of writing. Confirm anything you plan to rely on with the department in question before you build a semester around it.
+</footer>
+
+</div>
+</body>
+</html>
