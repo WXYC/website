@@ -44,3 +44,12 @@ tina/tina-lock.json
 # tina-generated content
 
 content
+
+# standalone documents
+
+# Hand-authored single-file HTML served straight out of public/ (see
+# __tests__/standaloneDocuments.test.js). They are exports, replaced wholesale
+# rather than edited in place, so reformatting them only makes the next
+# replacement read as a rewrite of every line.
+/public/open-engineering-work.html
+/public/for-credit.html
