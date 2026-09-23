@@ -55,11 +55,36 @@ describe('generate-sitemap.py', () => {
 
 		expect(locs()).toEqual([
 			`${BASE}/`,
-			`${BASE}/blog`,
+			`${BASE}/blog/`,
 			`${BASE}/blog/a-post`,
 			`${BASE}/blog/category/album-review`,
 			`${BASE}/privacy`,
 		])
+	})
+
+	it('gives a directory index the trailing slash the Worker canonicalises to', () => {
+		// Under html_handling: "auto-trailing-slash" the slashed form is
+		// canonical and the bare path 307s to it, so emitting the bare path
+		// would put a redirect in the sitemap. Verified live: wxyc.org/listen
+		// answers 307 -> /listen/. Only the root is slash-free.
+		page('index.html')
+		page(path.join('deep', 'nested', 'index.html'))
+
+		run()
+
+		expect(locs()).toEqual([`${BASE}/`, `${BASE}/deep/nested/`])
+	})
+
+	it('leaves out the /listen meta-refresh shim', () => {
+		// public/listen/index.html is a meta refresh whose own rel=canonical
+		// points at the site root -- the same duplicate-content case as
+		// /fiftieth, redirecting by markup rather than by a _redirects rule.
+		page('index.html')
+		page(path.join('listen', 'index.html'))
+
+		run()
+
+		expect(locs()).toEqual([`${BASE}/`])
 	})
 
 	it('leaves out the error page, the Tina admin SPA and build artifacts', () => {

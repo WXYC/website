@@ -25,6 +25,10 @@ Deliberate exclusions, each for its own reason:
     crawler exactly what the pages were designed not to be.
   * fiftieth -- a 301 alias for /50th (public/_redirects). Listing both
     would be duplicate content pointing at one page.
+  * listen/ -- public/listen/index.html is a meta-refresh shim whose own
+    rel=canonical points at the site root. Same duplicate-content case as
+    /fiftieth; it just redirects by markup instead of by a _redirects rule,
+    which is why it is easy to miss.
 
 No <lastmod>. A CI checkout stamps every file with the checkout time, so a
 mtime-derived lastmod would claim the whole site changed on every deploy --
@@ -50,6 +54,7 @@ EXCLUDED_ROUTES = frozenset(
 		"/open-engineering-work",
 		"/for-credit",
 		"/fiftieth",
+		"/listen/",
 	}
 )
 
@@ -65,16 +70,20 @@ def html_files(root):
 
 
 def route_for(relpath):
-	"""Map a built file to the URL path it is served at.
+	"""Map a built file to the URL path the Worker serves it at.
 
-	index.html -> /, blog/index.html -> /blog, privacy.html -> /privacy.
-	Mirrors the Worker's html_handling: "auto-trailing-slash".
+	index.html -> /, privacy.html -> /privacy, listen/index.html -> /listen/.
+
+	The trailing slash on a directory index is not cosmetic. Under the
+	Worker's html_handling: "auto-trailing-slash" the slashed form is
+	canonical and the bare path redirects to it -- https://wxyc.org/listen
+	answers 307 to /listen/. Emitting the bare path would fill the sitemap
+	with URLs Search Console files under "Page with redirect" and drops.
 	"""
 	parts = relpath.split(os.sep)
 	if parts[-1] == "index.html":
-		parts = parts[:-1]
-	else:
-		parts[-1] = parts[-1][: -len(".html")]
+		return "/" + "".join(part + "/" for part in parts[:-1])
+	parts[-1] = parts[-1][: -len(".html")]
 	return "/" + "/".join(parts)
 
 
