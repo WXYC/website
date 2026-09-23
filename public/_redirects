@@ -1,6 +1,7 @@
-# Cloudflare Workers static-assets redirects. GitHub Pages ignores this file,
-# so every rule here needs a portable fallback page too (see pages/fiftieth.jsx)
-# for as long as the Pages deploy remains the #262 rollback target.
+# Cloudflare Workers static-assets redirects. Rules here are authoritative:
+# the GitHub Pages deploy that ignored this file was retired in #262, so a rule
+# no longer needs a portable fallback page. (pages/fiftieth.jsx still carries
+# one, which is now belt-and-braces plus a working `next dev` route.)
 #
 # Rules here are followed BEFORE any matching asset is served, so keep them
 # exact — never a splat. A greedy rule in this file would shadow the whole
@@ -10,3 +11,7 @@
 # Vanity alias for the 50th anniversary page: wxyc.org/fiftieth
 /fiftieth /50th 301
 /fiftieth/ /50th 301
+
+# iOS asks for the -precomposed variant on older devices. One icon serves both;
+# components/Layout.js declares /apple-touch-icon.png for everything current.
+/apple-touch-icon-precomposed.png /apple-touch-icon.png 301
