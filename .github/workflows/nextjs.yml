@@ -80,6 +80,10 @@ jobs:
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
           NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Generate sitemap
+        # Order is load-bearing: after next build (it enumerates the built
+        # pages) and before the tar, which is what the deploy job uploads.
+        run: python3 scripts/generate-sitemap.py
       - name: Pack Cloudflare assets artifact
         # upload-artifact validates every filename and rejects the : " < > |
         # * ? punctuation that exists under public/uploads (36 files), so

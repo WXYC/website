@@ -66,6 +66,10 @@ jobs:
           sleep 10
           npx next build
           kill $TINA_PID || true
+      - name: Generate sitemap
+        # Same step as the deploy workflow, so a PR exercises the generator
+        # and the dry-run below sees the file it will publish.
+        run: python3 scripts/generate-sitemap.py
       - name: Validate Cloudflare deploy config
         # Credential-less: --dry-run parses wrangler.jsonc, builds the asset
         # manifest from out/, and fails on config errors or any file over the
