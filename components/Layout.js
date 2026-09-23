@@ -11,10 +11,13 @@ export const Layout = (props) => {
 					name="description"
 					content="UNC-Chapel Hill's student-run, freeform radio station"
 				/>
-				<link
-					rel="icon"
-					href="https://is4-ssl.mzstatic.com/image/thumb/Purple116/v4/6c/55/f8/6c55f8ad-cfed-ddd7-e63d-9e8c979d7251/source/512x512bb.jpg"
-				/>
+				{/* Both icons are generated from images/app-icon.png by
+				    scripts/generate-icons.py -- never hand-edited, so they cannot
+				    drift from the station's artwork. This used to point at an
+				    Apple CDN thumbnail (is4-ssl.mzstatic.com), which made every
+				    page load depend on a third party for a first-party asset and
+				    would have broken silently if that URL ever rotated. */}
+				<link rel="icon" href="/favicon.ico" />
 
 				{/* iOS probes /apple-touch-icon.png and the -precomposed variant at the
 				    site root when no link declares one, which is where a few hundred
