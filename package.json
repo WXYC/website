@@ -8,14 +8,16 @@
 	},
 	"scripts": {
 		"dev": "tinacms dev -c \"next dev\"",
-		"build": "tinacms build && next build",
+		"build": "tinacms build && next build && python3 scripts/generate-sitemap.py",
 		"start": "tinacms build && next start",
 		"lint": "next lint",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"check-format": "prettier --check .",
 		"format": "prettier --write .",
+		"predeploy": "test -f out/sitemap.xml || { echo 'out/sitemap.xml is missing -- a Workers deploy replaces the whole asset manifest, so this would delete it from production. Run: python3 scripts/generate-sitemap.py'; exit 1; }",
 		"deploy": "wrangler deploy",
+		"predeploy:production": "npm run predeploy",
 		"deploy:production": "wrangler deploy --env production"
 	},
 	"dependencies": {
