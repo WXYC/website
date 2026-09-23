@@ -40,18 +40,59 @@ FAVICON_SIZES = (16, 32, 48)
 
 
 def resize(source, size, destination):
-	"""Square-resize with sips. Exits nonzero if sips does."""
-	subprocess.run(
+	"""Square-resize with sips, then verify the result actually appeared.
+
+	The exit code cannot carry this on its own: sips answers 0 and merely
+	warns for a source it cannot read ("not a valid file - skipping"), so a
+	returncode check alone would let a bad master through. Worse, when the
+	destination already holds the previous icon, skipping leaves that stale
+	file in place and every later check passes on it -- so the destination is
+	removed first and its dimensions confirmed afterwards.
+	"""
+	if os.path.exists(destination):
+		os.remove(destination)
+
+	result = subprocess.run(
 		["sips", "-z", str(size), str(size), source, "--out", destination],
-		check=True,
 		stdout=subprocess.DEVNULL,
 		stderr=subprocess.PIPE,
 	)
+	reported = result.stderr.decode().strip() or "no error reported"
+
+	if result.returncode != 0:
+		sys.exit(
+			f"sips failed resizing {source} to {size}x{size} "
+			f"(exit {result.returncode}): {reported}"
+		)
+	if not os.path.isfile(destination):
+		sys.exit(f"sips wrote nothing for {source} at {size}x{size}: {reported}")
+
+	with open(destination, "rb") as handle:
+		actual = png_dimensions(handle.read())
+	if actual != (size, size):
+		sys.exit(
+			f"sips wrote {actual[0]}x{actual[1]} to {destination}, "
+			f"expected {size}x{size}"
+		)
 	return destination
 
 
+def png_dimensions(payload):
+	"""Read width and height out of a PNG's IHDR chunk."""
+	if payload[:8] != b"\x89PNG\r\n\x1a\n" or payload[12:16] != b"IHDR":
+		raise ValueError("not a PNG, or no IHDR where one is required")
+	return struct.unpack(">II", payload[16:24])
+
+
 def build_ico(png_paths):
-	"""Assemble a multi-size .ico whose entries are PNG payloads."""
+	"""Assemble a multi-size .ico whose entries are PNG payloads.
+
+	Each directory entry's declared size is read back out of the payload it
+	describes rather than taken from FAVICON_SIZES. An entry that claims a
+	size its PNG does not have is the one corruption a browser resolves by
+	silently displaying nothing, and trusting the requested size would let a
+	clamped or non-square resize produce exactly that, undetected.
+	"""
 	payloads = []
 	for path in png_paths:
 		with open(path, "rb") as handle:
@@ -62,12 +103,15 @@ def build_ico(png_paths):
 	offset = len(header) + 16 * len(payloads)
 
 	directory = b""
-	for size, payload in zip(FAVICON_SIZES, payloads):
-		# A 0 in the width/height byte means 256; our sizes are all smaller.
+	for payload in payloads:
+		width, height = png_dimensions(payload)
+		if width > 256 or height > 256:
+			raise ValueError(f"{width}x{height} does not fit an .ico entry")
 		directory += struct.pack(
 			"<BBBBHHII",
-			size if size < 256 else 0,
-			size if size < 256 else 0,
+			# A 0 in these bytes means 256.
+			width % 256,
+			height % 256,
 			0,  # palette size, 0 for non-palettised
 			0,  # reserved
 			1,  # colour planes
