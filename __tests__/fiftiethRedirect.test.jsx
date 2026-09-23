@@ -23,12 +23,16 @@ beforeEach(lifecycle.beforeEach)
 afterEach(lifecycle.afterEach)
 
 /**
- * `/fiftieth` is an alias for `/50th`, and it is served two different ways
- * because the site has two origins with different capabilities: a real 301
- * from `public/_redirects` on the Cloudflare Worker, and a meta refresh from
- * `pages/fiftieth.jsx` on the GitHub Pages deploy, which ignores that file and
- * is still the WXYC/website#262 rollback target. Both are pinned here; losing
- * either one silently drops the alias on one of the two origins.
+ * `/fiftieth` is an alias for `/50th`, served two ways. The real one is the
+ * 301 in `public/_redirects`, which the Cloudflare Worker follows before it
+ * serves any asset. The meta refresh in `pages/fiftieth.jsx` was the fallback
+ * for the GitHub Pages deploy, which ignored that file — Pages was retired in
+ * WXYC/website#262, so it is no longer a second origin to keep parity with.
+ *
+ * Both are still pinned, because the meta refresh has a job after the
+ * retirement: `next dev` ignores `_redirects` too, so without it the alias is
+ * broken for anyone running the site locally. Losing the `_redirects` rule
+ * breaks the alias in production; losing the page breaks it in development.
  */
 describe('/fiftieth alias', () => {
 	describe('public/_redirects (Cloudflare origin)', () => {
@@ -56,7 +60,7 @@ describe('/fiftieth alias', () => {
 		})
 	})
 
-	describe('pages/fiftieth.jsx (GitHub Pages fallback)', () => {
+	describe('pages/fiftieth.jsx (the `next dev` fallback)', () => {
 		it('sends a reader with no JavaScript on to /50th', () => {
 			const {container} = render(<Fiftieth />)
 			const refresh = container.querySelector('meta[http-equiv="refresh"]')
