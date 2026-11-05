@@ -1,6 +1,6 @@
 ---
 title: Indie Night at Cat's Cradle
-author: 'By Imani Wright, aka DJ Jinky'
+author: 'Imani Wright, aka DJ Jinky'
 cover: /uploads/P8232005.JPG
 coverCredit: Imani Wright
 categories:
