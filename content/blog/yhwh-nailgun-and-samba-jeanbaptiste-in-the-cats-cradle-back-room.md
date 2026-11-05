@@ -1,6 +1,6 @@
 ---
 title: YHWH Nailgun and Samba Jean-Baptiste in the Cat’s Cradle Back Room
-author: By DJ CoolSoccer
+author: DJ CoolSoccer101
 cover: /uploads/Nailgun-1.jpg
 coverCredit: Photo by Julian Swart
 categories:
