@@ -11,6 +11,7 @@ import {
 	isAtDepthLimit,
 } from '../lib/flowsheetSearch'
 import ReadableSurface from '../components/ReadableSurface'
+import Link from 'next/link'
 
 /**
  * Public airplay-search page — the successor to
@@ -247,6 +248,13 @@ const AirplaySearch = () => {
 							ignored — add a value or remove it.
 						</p>
 					) : null}
+
+                    <Link
+                      href="/playlist"
+                      className="block w-fit rounded border border-white/30 px-3 py-1"
+                    >
+                      &larr; Live playlist
+                    </Link>
 
 					<label className="mb-6 block">
 						<span className="sr-only">Search airplay records</span>
